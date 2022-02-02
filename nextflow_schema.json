@@ -65,6 +65,15 @@
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
                 },
+                "database": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "msh",
+                    "description": "Path to pre-built mash sketch file.",
+                    "help_text": "This parameter is *mandatory*. If you do not have a pre-built mash sketch file, you must generate that file before using the tool.",
+                    "fa_icon": "far fa-file-code"
+                },
                 "igenomes_base": {
                     "type": "string",
                     "format": "directory-path",
