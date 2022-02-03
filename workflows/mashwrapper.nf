@@ -16,7 +16,7 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
-//if (params.sketch) { ch_sketch = file(params.sketch) } else { exit 1, 'Mash Sketch file is not specified!' }
+if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
 ========================================================================================
     CONFIG FILES
@@ -32,7 +32,8 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 ========================================================================================
 */
 
-//
+// Local: Modules  
+include { SPECIES_ID } from '../modules/local/species_id'
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
@@ -72,6 +73,15 @@ workflow MASHWRAPPER {
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
+    //
+    // MODULE: Run Species_Id
+    //
+    SPECIES_ID (
+
+    ch_database
+    )
+
 
     //
     // MODULE: Run FastQC
