@@ -20,11 +20,16 @@ class ParserWithErrors(argparse.ArgumentParser):
         fdistIn = float(arg)
         if fdistIn <= 0:
             parser.error('%s is not a positive number (e.g., a float, aka a \
- number iwth a decimal point)' % fdistIn)
+ number with a decimal point)' % fdistIn)
         else:
             return arg
 
-
+    def is_valid_Int(self, parser, arg):
+        ivalIn = int(arg)
+        if ivalIn <= 0:
+            parser.error('%s is not a positive number' % ivalIn)
+        else:
+            return arg
 
 def argparser():
     description = """
@@ -32,12 +37,19 @@ def argparser():
  species of interest.
     """
     parser = ParserWithErrors(description = description)
-    parser.add_argument("-d", "--database", required=True,
+    optional = parser._action_groups.pop()
+    required = parser.add_argument_group('required arguments')
+    parser._action_groups.append(optional)
+
+    required.add_argument("-d", "--database", required=True,
                         help="Pre-built Mash Sketch",
                         type=lambda x: parser.is_valid_file(parser, x))
-    parser.add_argument("-m", "--max_dist", default=0.05,
+    optional.add_argument("-m", "--max_dist", default=0.05,
                         help="reference fasta file path",
                         type=lambda x: parser.is_valid_distance(parser, x))
+    optional.add_argument("-k", "--min_kmer",
+                        help="Minimum copies of each kmer count to use",
+                        type=lambda x: parser.is_valid_Int(parser, x))
     return parser
 
 
