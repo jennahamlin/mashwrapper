@@ -70,6 +70,6 @@ inMaxDist = args.max_dist
 inKmer = args.min_kmer
 inThreads = args.num_threads
 print(inMash)
-print(inMaxDist)
+print("This should be the max distance: ", inMaxDist)
 print("This is min_kmer :", inKmer)
 print(inThreads)
