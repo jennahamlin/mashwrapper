@@ -20,11 +20,11 @@ class ParserWithErrors(argparse.ArgumentParser):
         fdistIn = float(arg)
         if fdistIn <= 0:
             parser.error('%s is not a positive number (e.g., a float, aka a \
- number with a decimal point)' % fdistIn)
+number with a decimal point)' % fdistIn)
         else:
             return arg
 
-    def is_valid_Int(self, parser, arg):
+    def is_valid_Int(self, parser, arg):                                         #How to get it to print nice message as int?
         ivalIn = int(arg)
         if ivalIn <= 0:
             parser.error('%s is not a positive number' % ivalIn)
@@ -50,6 +50,9 @@ def argparser():
     optional.add_argument("-k", "--min_kmer",
                         help="Minimum copies of each kmer count to use",
                         type=lambda x: parser.is_valid_Int(parser, x))
+    optional.add_argument("-t", "--num_threads", default=4,
+                        help="Number of computing threads to use",
+                        type=lambda x: parser.is_valid_Int(parser, x))
     return parser
 
 
@@ -64,5 +67,9 @@ if __name__ == '__main__':
 
 inMash = args.database
 inMaxDist = args.max_dist
+inKmer = args.min_kmer
+inThreads = args.num_threads
 print(inMash)
 print(inMaxDist)
+print("This is min_kmer :", inKmer)
+print(inThreads)
