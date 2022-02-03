@@ -2,6 +2,9 @@ params:options = [:]
 
 process SPECIES_ID {
 
+  publishDir "${params.outdir}/speciesId",
+        mode: "copy"
+
   input:
   path database
 
@@ -11,7 +14,7 @@ process SPECIES_ID {
 
   script:
   """
-  run_species_id.py -d ${database}
+  run_species_id.py -d ${database} > out.txt
   """
 
 }
