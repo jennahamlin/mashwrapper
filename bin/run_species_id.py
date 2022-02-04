@@ -39,7 +39,7 @@ def argparser():
     parser = ParserWithErrors(description = description)
     #optional = parser._action_groups.pop()                                     #convert help menu to display as required and optional
     #required = parser.add_argument_group('required arguments')                 #flags. Change word parser in the below add_arguement
-    #parser._action_groups.append(optional)                                     #to be either 'required' or 'optional' & uncomment out 
+    #parser._action_groups.append(optional)                                     #to be either 'required' or 'optional' & uncomment out
                                                                                 #these lines to take effect
     parser.add_argument("-d", "--database", required=True,
                         help="Pre-built Mash Sketch",
@@ -47,10 +47,10 @@ def argparser():
     parser.add_argument("-m", "--max_dist", default=0.05,
                         help="reference fasta file path",
                         type=lambda x: parser.is_valid_distance(parser, x))
-    parser.add_argument("-k", "--min_kmer",
+    parser.add_argument("-k", "--min_kmer", default=2,
                         help="Minimum copies of each kmer count to use",
                         type=lambda x: parser.is_valid_Int(parser, x))
-    parser.add_argument("-t", "--num_threads", default=4,
+    parser.add_argument("-t", "--num_threads", default=2,
                         help="Number of computing threads to use",
                         type=lambda x: parser.is_valid_Int(parser, x))
     return parser

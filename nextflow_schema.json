@@ -110,7 +110,15 @@
                     "type": "integer",
                     "default": 2,
                     "fa_icon": "far fa-minus-square",
-                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number of interest. For both instances though the lowest value possible is 2, which is the default."
+                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number of interest. For both instances though the lowest value possible is 2, which is the default.",
+                    "minimum": 2
+                },
+                "num_threads": {
+                    "type": "integer",
+                    "default": 2,
+                    "fa_icon": "fas fa-tshirt",
+                    "description": "Default is 2. This parameter allows one to adjust the number of threads used.",
+                    "minimum": 2
                 }
             }
         },
