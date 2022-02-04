@@ -25,10 +25,10 @@ number with a decimal point)' % fdistIn)
             return arg
 
     def is_valid_Int(self, parser, arg):                                         #How to get it to print nice message as int?
-        ivalIn = int(arg)
-        if ivalIn <= 0:
-            parser.error('%s is not a positive number' % ivalIn)
-        else:
+        ivalIn = int(arg)                                                        #as is the error message is as follows
+        if ivalIn <= 0:                                                          #invalid <lambda> value: '0.1' but I need
+            parser.error('%s is not a positive number' % ivalIn)                 #but message should tell explicitly that
+        else:                                                                    #it requires a whole number (integer)
             return arg
 
 def argparser():
@@ -70,6 +70,6 @@ inMaxDist = args.max_dist
 inKmer = args.min_kmer
 inThreads = args.num_threads
 print(inMash)
-print("This should be the max distance: ", inMaxDist)
+print("This is the max distance: ", inMaxDist)
 print("This is min_kmer :", inKmer)
-print(inThreads)
+print("This is default number of threads: ", inThreads)

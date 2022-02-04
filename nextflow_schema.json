@@ -41,13 +41,6 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
-                },
-                "max_dist": {
-                    "type": "integer",
-                    "pattern": "^[0-9]*$",
-                    "description": "Need to update.",
-                    "help_text": "Need to include.",
-                    "fa_icon": "fas fa-dist"
                 }
             }
         },
@@ -95,6 +88,20 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                }
+            }
+        },
+        "optional_parameters": {
+            "title": "Optional pipeline steps",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+              "max_dist": {
+                "type": "number",
+                "default": 0.05,
+                "fa_icon": "fas fa-percent",
+                "help_text": "This is an optional parameter that is used as a threshold for parsing results."
                 }
             }
         },
@@ -264,6 +271,9 @@
         },
         {
             "$ref": "#/definitions/reference_genome_options"
+        },
+        {
+            "$ref": "#/definitions/optional_parameters"
         },
         {
             "$ref": "#/definitions/institutional_config_options"
