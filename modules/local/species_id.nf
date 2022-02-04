@@ -12,7 +12,7 @@ process SPECIES_ID {
 
   script:
   """
-  run_species_id.py -d ${database} --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${num_threads} > out.txt
+  run_species_id.py -d ${database} --max_dist ${params.max_dist} > out.txt
   """
 
 }
