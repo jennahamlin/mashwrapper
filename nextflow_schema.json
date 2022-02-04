@@ -105,6 +105,12 @@
                     "description": "This is a mash distance threshold. By adjusting this value, one can use the cut-off as a mechanism for including or excluding isolates based on this value.",
                     "minimum": 0,
                     "maximum": 1
+                },
+                "min_kmer": {
+                    "type": "integer",
+                    "default": 2,
+                    "fa_icon": "far fa-minus-square",
+                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number of interest. For both instances though the lowest value possible is 2, which is the default."
                 }
             }
         },
