@@ -1,4 +1,8 @@
-params:options = [:]
+// Import generic module functions
+include { initOptions; saveFiles; getSoftwareName } from './functions'
+
+params.options = [:]
+options        = initOptions(params.options)
 
 process SPECIES_ID {
 
@@ -14,7 +18,7 @@ process SPECIES_ID {
 
   script:
   """
-  run_species_id.py -d ${database} > out.txt
+  run_species_id.py -d ${database} --max_dist ${params.max_dist} > out.txt
   """
 
 }

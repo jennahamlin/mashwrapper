@@ -32,10 +32,10 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 ========================================================================================
 */
 
-// Local: Modules  
+// Local: Modules
 include { SPECIES_ID } from '../modules/local/species_id'
+
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
 /*
