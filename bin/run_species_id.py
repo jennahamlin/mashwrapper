@@ -55,6 +55,9 @@ def argparser():
     parser.add_argument("--read1", "-r1", help="Input Read 1 (forward) file",
                         required=False,
                         type=lambda x: parser.is_valid_fastq(parser, x))
+    parser.add_argument("--read2", "-r2", help="Input Read 2 (reverse) file",
+                        required=False,
+                        type=lambda x: parser.is_valid_fastq(parser, x))
     parser.add_argument("--max_dist", "-m", default=0.05,
                         help="reference fasta file path",
                         type=lambda x: parser.is_valid_distance(parser, x))
@@ -81,8 +84,10 @@ inMaxDist = args.max_dist
 inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
+inRead2 = args.read2
 print(inMash)
 print("This is read 1: ", inRead1)
+print("This is read 2: ", inRead2)
 print("This is the max distance: ", inMaxDist)
 print("This is min_kmer :", inKmer)
 print("This is default number of threads: ", inThreads)

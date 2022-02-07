@@ -1,18 +1,15 @@
 process SPECIES_ID {
+publishDir "${params.outdir}/speciesId",
+      mode: "copy"
 
-  publishDir "${params.outdir}/speciesId",
-        mode: "copy"
+input:
+path database
 
-  input:
-  path database
+output:
+file "out.txt"
 
-  output:
-  file "out.txt"
-
-
-  script:
-  """
-  run_species_id.py -d ${database} --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}  > out.txt
-  """
-
+script:
+"""
+ run_species_id.py -d ${database} --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}  > out.txt
+"""
 }
