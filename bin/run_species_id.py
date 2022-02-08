@@ -25,19 +25,27 @@ class ParserWithErrors(argparse.ArgumentParser):
             return arg
 
     def is_valid_distance(self, parser, arg):
-        fdistIn = float(arg)
-        if fdistIn <= 0:
-            parser.error('%s is not a positive number (e.g., a float, aka a \
-number with a decimal point)' % fdistIn)
+        #    parser.error('%s is not a positive number (e.g., a float, aka a \
+# number with a decimal point)' % arg)
+        if float(arg) < 0:
+            parser.error("%s is not a positive number (e.g., a float, aka a \
+    # number with a decimal point)" % arg)
         else:
             return arg
 
-    def is_valid_int(self, parser, arg):                                         #How to get it to print nice message as int?
-        ivalIn = int(arg)                                                        #as is the error message is as follows
-        if ivalIn <= 0:                                                          #invalid <lambda> value: '0.1' but I want
-            parser.error('%s is not a positive number' % ivalIn)                 #the message to tell explicitly that
-        else:                                                                    #it requires a whole number (integer).
-            return arg                                                           #This is only an issue via python
+
+    def is_valid_int(self, parser, arg):
+        isInt = True
+        try:
+            int(arg)
+        except ValueError:
+            isInt = False
+        if isInt == False :
+            parser.error("Input value is NOT an integer")
+        elif arg.isnumeric() == False:
+            parser.error("This is not a positive number")
+        else:
+            return arg
 
 def argparser():
     description = """
