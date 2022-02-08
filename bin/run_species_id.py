@@ -25,11 +25,14 @@ class ParserWithErrors(argparse.ArgumentParser):
             return arg
 
     def is_valid_distance(self, parser, arg):
-        #    parser.error('%s is not a positive number (e.g., a float, aka a \
-# number with a decimal point)' % arg)
-        if float(arg) < 0:
-            parser.error("%s is not a positive number (e.g., a float, aka a \
-    # number with a decimal point)" % arg)
+        isFloat = True
+        try:
+            float(arg)
+        except ValueError:
+            isFloat = False
+        if (isFloat == False) or (float(arg) < 0) :
+            parser.error('%s is not a positive number (e.g., a float, aka a \
+ number with a decimal point)' % arg)
         else:
             return arg
 
@@ -40,10 +43,10 @@ class ParserWithErrors(argparse.ArgumentParser):
             int(arg)
         except ValueError:
             isInt = False
-        if isInt == False :
-            parser.error("Input value is NOT an integer")
+        if isInt == False:
+            parser.error("You input %s. This is NOT an integer." % arg)
         elif arg.isnumeric() == False:
-            parser.error("This is not a positive number")
+            parser.error("You input %s. This is NOT a positive number." % arg)
         else:
             return arg
 
