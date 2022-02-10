@@ -1,26 +1,38 @@
 #!/usr/bin/env python
 
 import argparse, sys, os
+import logging
+import shutil
+
+## preset some arguments
+# class Inputs:
+class Inputs:
+    out_prefix = "out"
+    log = os.path.join(out_prefix, "run.log")
+    logging_message = " "
+#############################
+## Argument Error Messages ##
+#############################
 
 class ParserWithErrors(argparse.ArgumentParser):
     def error(self, message):
-        print('{0}\n\n'.format(message))
+        print('\n{0}\n\n'.format(message))
         self.print_help()
         sys.exit(2)
 
     def is_valid_mash(self, parser, arg):
         base, ext = os.path.splitext(arg)
-        if ext not in ('.msh'):
+        if ext not in ('.msh') or ext in ('') :
             parser.error('This is not a file ending with .msh.\
  Did you generate the mash sketch and specified that file to be uploaded?')
         else:
             return arg
 
-    def is_valid_fastq(self, parser, arg):                                      #should I
+    def is_valid_fastq(self, parser, arg):
         base, ext = os.path.splitext(arg)
         if ext not in ('.gz', '.fastq', '.fastq.gz'):
             parser.error('This is not a file ending with either .fastq or \
- .fastq.gz. This flag requires the input of a fastq file.')
+.fastq.gz. This flag requires the input of a fastq file.')
         else:
             return arg
 
@@ -36,7 +48,6 @@ class ParserWithErrors(argparse.ArgumentParser):
         else:
             return arg
 
-
     def is_valid_int(self, parser, arg):
         isInt = True
         try:
@@ -50,39 +61,89 @@ class ParserWithErrors(argparse.ArgumentParser):
         else:
             return arg
 
+#########################
+## ArgParser Arguments ##
+#########################
+
 def argparser():
-    description = """
-    A script to parse the output from Mash and give you the most similar \
- species of interest.
     """
+    Returns an argument parser for this script
+    """
+    description = """
+    A script to parse the output from Mash and sorts the output to give you the\
+    most similar species/isolate determined using various thresholds.
+    """
+
     parser = ParserWithErrors(description = description)
-    #optional = parser._action_groups.pop()                                     #convert help menu to display as required and optional
-    #required = parser.add_argument_group('required arguments')                 #flags. Change word parser in the below add_arguement
-    #parser._action_groups.append(optional)                                     #to be either 'required' or 'optional' & uncomment out
-                                                                                #these lines to take effect. Not necessary via NF.
-    parser.add_argument("--database", "-d", required=True,
+
+    ## Define required and optional groups
+    parser._action_groups.pop()
+    required = parser.add_argument_group('Required Arguments')
+    optional = parser.add_argument_group('Optional Arguments')
+
+    required.add_argument("--database", "-d", required=True,
                         help="Pre-built Mash Sketch",
                         type=lambda x: parser.is_valid_mash(parser, x))
-    parser.add_argument("--read1", "-r1", help="Input Read 1 (forward) file",
-                        required=False,
+    required.add_argument("--read1", "-r1", required=True,
+                        help="Input Read 1 (forward) file",
                         type=lambda x: parser.is_valid_fastq(parser, x))
-    parser.add_argument("--read2", "-r2", help="Input Read 2 (reverse) file",
-                        required=False,
+    required.add_argument("--read2", "-r2", required=True,
+                        help="Input Read 2 (reverse) file",
                         type=lambda x: parser.is_valid_fastq(parser, x))
-    parser.add_argument("--max_dist", "-m", default=0.05,
-                        help="reference fasta file path",
+    optional.add_argument("--max_dist", "-m", default=0.05,
+                        help="User specified mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
-    parser.add_argument("--min_kmer", "-k", default=2,
-                        help="Minimum copies of each kmer count to use",
+    optional.add_argument("--min_kmer", "-k", default=2,
+                        help="Minimum copies of kmer count to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    parser.add_argument("--num_threads", "-t", default=2,
-                        help="Number of computing threads to use",
+    optional.add_argument("--num_threads", "-t", default=2,
+                        help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
+    optional.add_argument("--out", "-o", default=Inputs.out_prefix,
+                        help="Output folder name (default: %(default)s)",
+                         required=False)
     return parser
 
+def set_inputs():
+    """Carries over the arguments supplied in argparse into a local class Inputs
+    Returns
+    -------
+    None
+        Inputs are set
+    """
+    Inputs.out_prefix = args.out
+    Inputs.log = os.path.join(args.out, "run.log")
 
+def make_output_directory():
+    """Makes the output directory
+    """
+    #print(os.path.isdir(out_prefix))           ## should say false if never created
+    if os.path.isdir(Inputs.out_prefix):               ## check if out_prefix is already a created directory
+        print(f"Output directory '{Inputs.out_prefix}' exists. Please remove or \
+rename the directory. Exiting.")
+        sys.exit(1)
+    else:
+        os.mkdir(Inputs.out_prefix)
+        Inputs.logging_message += f"New output directory created\n"
 
-
+def configure_logger():
+    """Configures the logging for printing
+    Returns
+    -------
+    None
+        Logger behavior is set based on the Inputs variable
+    """
+    try:
+        logging.basicConfig(filename=Inputs.log, filemode="w", level=logging.DEBUG,
+                            format=f"[%(asctime)s | {Inputs.out_prefix} ]  %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+    except FileNotFoundError:
+        print(
+            f"The supplied location for the log file '{Inputs.log}' doesn't exist. Please check if the location exists.")
+        sys.exit(1)
+    except IOError:
+        print(
+            f"I don't seem to have access to make the log file. Are the permissions correct or is there a directory with the same name?")
+        sys.exit(1)
 ## Add in next function
 
 
@@ -96,6 +157,14 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
+
+
+set_inputs()
+make_output_directory()
+configure_logger()
+logging.info("Starting preprocessing")
+
+
 print(inMash)
 print("This is read 1: ", inRead1)
 print("This is read 2: ", inRead2)
