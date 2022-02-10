@@ -104,27 +104,18 @@ def argparser():
                          required=False)
     return parser
 
-def set_inputs():
-    """Carries over the arguments supplied in argparse into a local class Inputs
-    Returns
-    -------
-    None
-        Inputs are set
-    """
-    Inputs.out_prefix = args.out
-    Inputs.log = os.path.join(args.out, "run.log")
-
 def make_output_directory():
     """Makes the output directory
     """
-    #print(os.path.isdir(out_prefix))           ## should say false if never created
-    if os.path.isdir(Inputs.out_prefix):               ## check if out_prefix is already a created directory
-        print(f"Output directory '{Inputs.out_prefix}' exists. Please remove or \
+    #print(os.path.isdir(out_prefix))                                           ## should say false if never created
+    if os.path.isdir(Inputs.out_prefix):
+        print(f"Output directory '{Inputs.out_prefix}' exists. Please remove or\
 rename the directory. Exiting.")
         sys.exit(1)
     else:
         os.mkdir(Inputs.out_prefix)
-        Inputs.logging_message += f"New output directory created\n"
+        Inputs.logging_message += "New output directory created\n"
+        print(Inputs.logging_message)
 
 def configure_logger():
     """Configures the logging for printing
@@ -159,11 +150,12 @@ inRead1 = args.read1
 inRead2 = args.read2
 
 
-set_inputs()
+#set_inputs()
 make_output_directory()
 configure_logger()
 logging.info("Starting preprocessing")
-
+for line in Inputs.logging_message.rstrip().split("\n"):
+    logging.info(line)
 
 print(inMash)
 print("This is read 1: ", inRead1)
