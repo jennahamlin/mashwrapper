@@ -97,32 +97,37 @@ def argparser():
                          required=False)
     return parser
 
-def make_output_directory(arg):
+def make_output_directory():
     """
     Makes the output directory
     """
     global logging_message                                                      ## make global so visible outside function
-    #print(os.path.isdir(out_prefix))                                           ## should say false if never created
-    if os.path.isdir(arg):
+
+    if os.path.isdir(out_prefix):                                                      ## should be false if output folder hasnt been created
         print("Output directory - %s - exists. Please remove or rename the\
- directory. Exiting." % arg)
+ directory. Exiting." % out_prefix)
         sys.exit(1)
     else:
-        os.mkdir(arg)
-        logging_message += "New output directory created, called: %s\n" % out_prefix
+        os.mkdir(out_prefix)
+        logging_message += "New output directory created,\
+ called: %s\n" % out_prefix
 
 def configure_logger():
-
+    """
+    Configures the logger
+    """
     try:
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                            format=f"[%(asctime)s | {out_prefix} ] %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+                            format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
     except FileNotFoundError:
         print(
-            f"The supplied location for the log file '{log}' doesn't exist. Please check if the location exists.")
+            "The supplied location for the log file %s doesn't exist. Please\
+check if the location exists." % log)
         sys.exit(1)
     except IOError:
         print(
-            "I don't seem to have access to make the log file. Are the permissions correct or is there a directory with the same name?")
+            "I don't seem to have access to make the log file. Are the \
+permissions correct or is there a directory with the same name?")
         sys.exit(1)
 
 if __name__ == '__main__':
@@ -139,10 +144,9 @@ out_prefix = args.out
 log = os.path.join(out_prefix, "run.log")
 logging_message = " "
 
-#set_inputs()
-make_output_directory(out_prefix)
+make_output_directory()
 configure_logger()
-logging.info("Starting preprocessing")
+logging.info(" Starting preprocessing")
 for line in logging_message.rstrip().split("\n"):
     logging.info(line)
 
