@@ -4,15 +4,17 @@ import argparse, sys, os
 import logging
 import shutil
 
-## preset some arguments
-# class Inputs:
-class Inputs:
-    out_prefix = "out"
-    log = os.path.join(out_prefix, "run.log")
-    logging_message = " "
 #############################
 ## Argument Error Messages ##
 #############################
+out_prefix = "out"
+log = os.path.join(out_prefix, "run.log")
+logging_message = " "
+## preset some arguments
+# class Inputs:
+# out_prefix = "out"
+# log = os.path.join(out_prefix, "run.log")
+# logging_message = " "
 
 class ParserWithErrors(argparse.ArgumentParser):
     def error(self, message):
@@ -99,48 +101,45 @@ def argparser():
     optional.add_argument("--num_threads", "-t", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--out", "-o", default=Inputs.out_prefix,
+    optional.add_argument("--out", "-o", default=out_prefix,
                         help="Output folder name (default: %(default)s)",
                          required=False)
     return parser
 
-def make_output_directory():
-    """Makes the output directory
+def make_output_directory(arg):
     """
+    Makes the output directory
+    """
+    global logging_message
     #print(os.path.isdir(out_prefix))                                           ## should say false if never created
-    if os.path.isdir(Inputs.out_prefix):
-        print(f"Output directory '{Inputs.out_prefix}' exists. Please remove or\
-rename the directory. Exiting.")
+    if os.path.isdir(arg):
+        print("Output directory - %s - exists. Please remove or rename the\
+ directory. Exiting." % arg)
         sys.exit(1)
     else:
-        os.mkdir(Inputs.out_prefix)
-        Inputs.logging_message += "New output directory created\n"
-        print(Inputs.logging_message)
+        os.mkdir(out_prefix)
+        logging_message += "New output directory created\n"
 
 def configure_logger():
-    """Configures the logging for printing
-    Returns
-    -------
-    None
-        Logger behavior is set based on the Inputs variable
-    """
     try:
-        logging.basicConfig(filename=Inputs.log, filemode="w", level=logging.DEBUG,
-                            format=f"[%(asctime)s | {Inputs.out_prefix} ]  %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+        print(logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
+                            format=f"[%(asctime)s | {out_prefix} ]  %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p"))
     except FileNotFoundError:
         print(
-            f"The supplied location for the log file '{Inputs.log}' doesn't exist. Please check if the location exists.")
+            f"The supplied location for the log file '{log}' doesn't exist. Please check if the location exists.")
         sys.exit(1)
     except IOError:
         print(
             f"I don't seem to have access to make the log file. Are the permissions correct or is there a directory with the same name?")
         sys.exit(1)
-## Add in next function
 
 
 if __name__ == '__main__':
     parser = argparser()
     args = parser.parse_args()
+
+log = os.path.join(out_prefix, "run.log")
+logging_message = " "
 
 inMash = args.database
 inMaxDist = args.max_dist
@@ -148,13 +147,13 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
-
+inOut = args.out
 
 #set_inputs()
-make_output_directory()
+make_output_directory(inOut)
 configure_logger()
 logging.info("Starting preprocessing")
-for line in Inputs.logging_message.rstrip().split("\n"):
+for line in logging_message.rstrip().split("\n"):
     logging.info(line)
 
 print(inMash)
