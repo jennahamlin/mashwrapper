@@ -7,6 +7,9 @@ import shutil
 #############################
 ## Argument Error Messages ##
 #############################
+
+## create class of formatted error messages
+## input variable is argparse.ArgumentParser, which initializes the parser
 class ParserWithErrors(argparse.ArgumentParser):
     def error(self, message):
         print('\n{0}\n\n'.format(message))
@@ -67,6 +70,8 @@ def argparser():
     most similar species/isolate determined using various thresholds.
     """
 
+    ## use class to parse the arguments with formatted error message
+
     parser = ParserWithErrors(description = description)
 
     ## Define required and optional groups
@@ -92,7 +97,7 @@ def argparser():
     optional.add_argument("--num_threads", "-t", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--out", "-o", default="out",
+    optional.add_argument("--out_folder", "-o", default="out",
                         help="Output folder name (default: %(default)s)",
                          required=False)
     return parser
@@ -103,7 +108,7 @@ def make_output_directory():
     """
     global logging_message                                                      ## make global so visible outside function
 
-    if os.path.isdir(out_prefix):                                                      ## should be false if output folder hasnt been created
+    if os.path.isdir(out_prefix):                                               ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
  directory. Exiting." % out_prefix)
         sys.exit(1)
@@ -119,18 +124,44 @@ def configure_logger():
     try:
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
                             format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-    except FileNotFoundError:
-        print(
-            "The supplied location for the log file %s doesn't exist. Please\
-check if the location exists." % log)
-        sys.exit(1)
+#     except FileNotFoundError:
+#         print(
+#             "The supplied location for the log file %s doesn't exist. Please\
+# check if the location exists." % log)
+#         sys.exit(1)
     except IOError:
         print(
             "I don't seem to have access to make the log file. Are the \
 permissions correct or is there a directory with the same name?")
         sys.exit(1)
 
+
+def check_program(program_name=None):
+    """Checks if the supplied program_name exists
+    Parameters
+    ----------
+    program_name : str
+        Name of the program to check if it exists
+    Returns
+    -------
+    None
+        Exits the program if a dependency doesn't exist
+    """
+    logging.info(" Checking for program %s" % program_name)
+
+    path = shutil.which(program_name)
+    if path is None:
+            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled." % program_name)
+            print(" Looks like the program Mash is not available")
+            #if not Inputs.verbose:
+            #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
+            sys.exit(1)
+    else:
+        logging.info(" Great, the program %s is loaded." % program_name)
+
 if __name__ == '__main__':
+    ## parser is created from the function argparser
+    ## parse the arguments
     parser = argparser()
     args = parser.parse_args()
 
@@ -140,15 +171,23 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
-out_prefix = args.out
+out_prefix = args.out_folder
 log = os.path.join(out_prefix, "run.log")
 logging_message = " "
+req_programs=['mash']
 
 make_output_directory()
 configure_logger()
-logging.info(" Starting preprocessing")
+logging.info(" Starting the tool...")
 for line in logging_message.rstrip().split("\n"):
     logging.info(line)
+
+logging.info(" Checking if all the prerequisite programs are installed")
+for program in req_programs:
+    check_program(program)
+logging.info(" All prerequisite programs are accessible")
+
+
 
 print(inMash)
 print("This is read 1: ", inRead1)
