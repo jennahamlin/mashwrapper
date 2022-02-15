@@ -102,6 +102,21 @@ def argparser():
                          required=False)
     return parser
 
+
+def configure_logger():
+    """
+    Configures the logger
+    """
+    try:
+        logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
+                            format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+        logging.info(" Starting the tool...")
+    except IOError:
+        print(
+            "I don't seem to have access to make the log file. Are the \
+permissions correct or is there a directory with the same name?")
+        sys.exit(1)
+
 def make_output_directory():
     """
     Makes the output directory
@@ -117,24 +132,6 @@ def make_output_directory():
         logging_message += "New output directory created,\
  called: %s\n" % out_prefix
 
-def configure_logger():
-    """
-    Configures the logger
-    """
-    try:
-        logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                            format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-#     except FileNotFoundError:
-#         print(
-#             "The supplied location for the log file %s doesn't exist. Please\
-# check if the location exists." % log)
-#         sys.exit(1)
-    except IOError:
-        print(
-            "I don't seem to have access to make the log file. Are the \
-permissions correct or is there a directory with the same name?")
-        sys.exit(1)
-
 
 def check_program(program_name=None):
     """Checks if the supplied program_name exists
@@ -148,7 +145,6 @@ def check_program(program_name=None):
         Exits the program if a dependency doesn't exist
     """
     logging.info(" Checking for program %s" % program_name)
-
     path = shutil.which(program_name)
     if path is None:
             logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled." % program_name)
@@ -158,6 +154,29 @@ def check_program(program_name=None):
             sys.exit(1)
     else:
         logging.info(" Great, the program %s is loaded." % program_name)
+
+def check_files() -> None:
+    """Checks if all the input files exists; exits if file not found or if file is a directory
+    Returns
+    -------
+    None
+        Exits the program if file doesn't exist
+    """
+    if inRead1 and not os.path.isfile(inRead1):
+        logging.critical("Read file 1: %s doesn't exist. Exiting" % inRead1)
+        #if not Inputs.verbose:
+        #    print(f"Read file 1: '{Inputs.read1}' doesn't exist. Exiting")
+        sys.exit(1)
+    if inRead2 and not os.path.isfile(inRead2):
+        logging.critical("Read file 2: %s doesn't exist. Exiting" % inRead2)
+        #if not Inputs.verbose:
+        #    print(f"Read file 2: '{Inputs.read2}' doesn't exist. Exiting")
+        sys.exit(1)
+    if inMash and not os.path.isfile(inMash):
+        logging.critical("Mash database file: %s doesn't exist. Exiting" %inMash)
+        #if not Inputs.verbose:
+        #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
+        sys.exit(1)
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -178,7 +197,6 @@ req_programs=['mash']
 
 make_output_directory()
 configure_logger()
-logging.info(" Starting the tool...")
 for line in logging_message.rstrip().split("\n"):
     logging.info(line)
 
@@ -187,6 +205,9 @@ for program in req_programs:
     check_program(program)
 logging.info(" All prerequisite programs are accessible")
 
+logging.info(" Checking if all the required input files exist")
+check_files()
+logging.info(" Input files are present")
 
 
 print(inMash)
