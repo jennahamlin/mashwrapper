@@ -109,13 +109,16 @@ def make_output_w_log(log, out_prefix):
     Parameters
     ----------
 
+    log : str
+        Name of the log file
+    out_prefix : str
+        Name of the output folder where the log file and results are stored
 
     Returns
     -------
-
-
+    None
+        Exits the program if unable to make output directory
     """
-
     if os.path.isdir(out_prefix):                                               ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
  directory. Exiting." % out_prefix)
@@ -123,9 +126,10 @@ def make_output_w_log(log, out_prefix):
     else:
         os.mkdir(out_prefix)
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                             format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info(" Starting the tool...")
-        logging.info(" New output directory created - %s " % out_prefix)
+                             format="%(asctime)s | %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+        logging.info(" New output directory created - %s... " % out_prefix)
+        logging.info(" New log file created within output directory - %s... " % log)
+
 
 def check_program(program_name):
     """
@@ -141,18 +145,18 @@ def check_program(program_name):
     None
         Exits the program if a dependency doesn't exist
     """
-    logging.info(" Checking for program %s" % program_name)
+    logging.info(" Checking for program %s..." % program_name)
     path = shutil.which(program_name)
     if path is None:
-            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled." % program_name)
-            print(" Looks like the program Mash is not available")
+            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
+            print("Looks like the program Mash is not available. Exiting.")
             #if not Inputs.verbose:
             #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
             sys.exit(1)
     else:
-        logging.info(" Great, the program %s is loaded." % program_name)
+        logging.info(" Great, the program %s is loaded..." % program_name)
 
-def check_files():
+def check_files(inRead1, inRead2, inMash):
     """
     Checks if all the input files exists; exits if file not found or if file is a directory
 
@@ -162,17 +166,21 @@ def check_files():
         Exits the program if file doesn't exist
     """
     if inRead1 and not os.path.isfile(inRead1):
-        logging.critical(" Read file 1: %s doesn't exist. Exiting" % inRead1)
+        logging.critical(" Read file 1: %s doesn't exist. Exiting." % inRead1)
+        print("Your read 1 file - %s - does not exist. Exiting." % inRead2)
         #if not Inputs.verbose:
         #    print(f"Read file 1: '{Inputs.read1}' doesn't exist. Exiting")
         sys.exit(1)
     if inRead2 and not os.path.isfile(inRead2):
-        logging.critical(" Read file 2: %s doesn't exist. Exiting" % inRead2)
+        logging.critical(" Read file 2: %s doesn't exist. Exiting." % inRead2)
+        print("Your read 2 file - %s - does not exist. Exiting." % inRead2)
+
         #if not Inputs.verbose:
         #    print(f"Read file 2: '{Inputs.read2}' doesn't exist. Exiting")
         sys.exit(1)
     if inMash and not os.path.isfile(inMash):
-        logging.critical(" Mash database file: %s doesn't exist. Exiting" %inMash)
+        logging.critical(" Mash database - %s - doesn't exist. Exiting." % inMash)
+        print("Your mash database - %s - does not exist. Exiting." % inMash)
         #if not Inputs.verbose:
         #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
         sys.exit(1)
@@ -192,17 +200,17 @@ inRead2 = args.read2
 out_prefix = args.out_folder
 log = os.path.join(out_prefix, "run.log")
 req_programs="mash"
-print(type(req_programs))
 
 make_output_w_log(log, out_prefix)
+logging.info(" Starting the tool...")
 
-logging.info(" Checking if all the prerequisite programs are installed")
+logging.info(" Checking if all the prerequisite programs are installed...")
 check_program(req_programs)
-logging.info(" All prerequisite programs are accessible")
+logging.info(" All prerequisite programs are accessible...")
 
-logging.info(" Checking if all the required input files exist")
-check_files()
-logging.info(" Input files are present")
+logging.info(" Checking if all the required input files exist...")
+check_files(inRead1, inRead2, inMash)
+logging.info(" Input files are present...")
 
 
 print(inMash)
