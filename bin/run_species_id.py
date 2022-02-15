@@ -126,7 +126,7 @@ def make_output_w_log(log, out_prefix):
     else:
         os.mkdir(out_prefix)
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                             format="%(asctime)s | %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+                             format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
         logging.info(" New output directory created - %s... " % out_prefix)
         logging.info(" New log file created within output directory - %s... " % log)
 
@@ -165,6 +165,12 @@ def check_files(inRead1, inRead2, inMash):
     None
         Exits the program if file doesn't exist
     """
+    if inMash and not os.path.isfile(inMash):
+        logging.critical(" Mash database - %s - doesn't exist. Exiting." % inMash)
+        print("Your mash database - %s - does not exist. Exiting." % inMash)
+        #if not Inputs.verbose:
+        #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
+        sys.exit(1)
     if inRead1 and not os.path.isfile(inRead1):
         logging.critical(" Read file 1: %s doesn't exist. Exiting." % inRead1)
         print("Your read 1 file - %s - does not exist. Exiting." % inRead2)
@@ -174,16 +180,20 @@ def check_files(inRead1, inRead2, inMash):
     if inRead2 and not os.path.isfile(inRead2):
         logging.critical(" Read file 2: %s doesn't exist. Exiting." % inRead2)
         print("Your read 2 file - %s - does not exist. Exiting." % inRead2)
-
         #if not Inputs.verbose:
         #    print(f"Read file 2: '{Inputs.read2}' doesn't exist. Exiting")
         sys.exit(1)
-    if inMash and not os.path.isfile(inMash):
-        logging.critical(" Mash database - %s - doesn't exist. Exiting." % inMash)
-        print("Your mash database - %s - does not exist. Exiting." % inMash)
-        #if not Inputs.verbose:
-        #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
+    if inRead1 == inRead2:
+        logging.critical(" Read1 - %s" % inRead1)
+        logging.critical(" Read2 - %s" % inRead2)
+        logging.critical(" Looks like you entered the same read file twice. Exiting.")
+        print("It appears the read names not unique, please enter Read1 (R1)\
+ and Read2 (R2). Exiting")
         sys.exit(1)
+    else:
+        logging.info(" Read1 - %s" % inRead1)
+        logging.info(" Read2 - %s" % inRead2)
+
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -199,7 +209,7 @@ inRead1 = args.read1
 inRead2 = args.read2
 out_prefix = args.out_folder
 log = os.path.join(out_prefix, "run.log")
-req_programs="mash"
+req_programs="Mash"
 
 make_output_w_log(log, out_prefix)
 logging.info(" Starting the tool...")
