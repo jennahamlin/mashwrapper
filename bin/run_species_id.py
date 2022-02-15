@@ -102,26 +102,19 @@ def argparser():
                          required=False)
     return parser
 
+def make_output_w_log(log, out_prefix):
+    """
+    Makes the output directory and the log file
 
-def configure_logger():
-    """
-    Configures the logger
-    """
-    try:
-        logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                            format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info(" Starting the tool...")
-    except IOError:
-        print(
-            "I don't seem to have access to make the log file. Are the \
-permissions correct or is there a directory with the same name?")
-        sys.exit(1)
+    Parameters
+    ----------
 
-def make_output_directory():
+
+    Returns
+    -------
+
+
     """
-    Makes the output directory
-    """
-    global logging_message                                                      ## make global so visible outside function
 
     if os.path.isdir(out_prefix):                                               ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
@@ -129,16 +122,20 @@ def make_output_directory():
         sys.exit(1)
     else:
         os.mkdir(out_prefix)
-        logging_message += "New output directory created,\
- called: %s\n" % out_prefix
+        logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
+                             format=f"%(asctime)s | Result folder {out_prefix}: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+        logging.info(" Starting the tool...")
+        logging.info(" New output directory created - %s " % out_prefix)
 
+def check_program(program_name):
+    """
+    Checks if the supplied program_name exists
 
-def check_program(program_name=None):
-    """Checks if the supplied program_name exists
     Parameters
     ----------
     program_name : str
         Name of the program to check if it exists
+
     Returns
     -------
     None
@@ -155,25 +152,27 @@ def check_program(program_name=None):
     else:
         logging.info(" Great, the program %s is loaded." % program_name)
 
-def check_files() -> None:
-    """Checks if all the input files exists; exits if file not found or if file is a directory
+def check_files():
+    """
+    Checks if all the input files exists; exits if file not found or if file is a directory
+
     Returns
     -------
     None
         Exits the program if file doesn't exist
     """
     if inRead1 and not os.path.isfile(inRead1):
-        logging.critical("Read file 1: %s doesn't exist. Exiting" % inRead1)
+        logging.critical(" Read file 1: %s doesn't exist. Exiting" % inRead1)
         #if not Inputs.verbose:
         #    print(f"Read file 1: '{Inputs.read1}' doesn't exist. Exiting")
         sys.exit(1)
     if inRead2 and not os.path.isfile(inRead2):
-        logging.critical("Read file 2: %s doesn't exist. Exiting" % inRead2)
+        logging.critical(" Read file 2: %s doesn't exist. Exiting" % inRead2)
         #if not Inputs.verbose:
         #    print(f"Read file 2: '{Inputs.read2}' doesn't exist. Exiting")
         sys.exit(1)
     if inMash and not os.path.isfile(inMash):
-        logging.critical("Mash database file: %s doesn't exist. Exiting" %inMash)
+        logging.critical(" Mash database file: %s doesn't exist. Exiting" %inMash)
         #if not Inputs.verbose:
         #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
         sys.exit(1)
@@ -192,17 +191,13 @@ inRead1 = args.read1
 inRead2 = args.read2
 out_prefix = args.out_folder
 log = os.path.join(out_prefix, "run.log")
-logging_message = " "
-req_programs=['mash']
+req_programs="mash"
+print(type(req_programs))
 
-make_output_directory()
-configure_logger()
-for line in logging_message.rstrip().split("\n"):
-    logging.info(line)
+make_output_w_log(log, out_prefix)
 
 logging.info(" Checking if all the prerequisite programs are installed")
-for program in req_programs:
-    check_program(program)
+check_program(req_programs)
 logging.info(" All prerequisite programs are accessible")
 
 logging.info(" Checking if all the required input files exist")
