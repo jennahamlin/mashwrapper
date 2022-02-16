@@ -133,14 +133,14 @@ def make_output_w_log(log, inResults):
 
 #, inMash, inMaxDist, inKmer, inThreads, inResults
 def get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults):
-    logging.debug(" The parameters supplied include... \n \
+    logging.info(" The parameters supplied include... \n \n \
  * Read1: %s \n \
  * Read2: %s \n \
  * Mash Databse: %s \n \
  * Maximum Distance: %s \n \
  * Minimum Kmer Count: %s \n \
  * Number of Threads: %s \n \
- * Result Folder: %s "  % \
+ * Result Folder: %s \n "  % \
  (inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, os.path.abspath(inResults)))
 
 def check_files(inRead1, inRead2, inMash):
@@ -221,21 +221,12 @@ req_programs="mash"
 
 make_output_w_log(log, inResults)
 
-logging.info(" These are the inputs supplied...")
 get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults)
-
-logging.info(" Checking if all the prerequisite programs are installed...")
-check_program(req_programs)
-logging.info(" All prerequisite programs are accessible...")
 
 logging.info(" Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
 logging.info(" Input files are present...")
 
-
-print(inMash)
-print("This is read 1: ", inRead1)
-print("This is read 2: ", inRead2)
-print("This is the max distance: ", inMaxDist)
-print("This is min_kmer :", inKmer)
-print("This is default number of threads: ", inThreads)
+logging.info(" Checking if all the prerequisite programs are installed...")
+check_program(req_programs)
+logging.info(" All prerequisite programs are accessible...")
