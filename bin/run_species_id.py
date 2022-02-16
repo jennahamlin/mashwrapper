@@ -3,6 +3,7 @@
 import argparse, sys, os
 import logging
 import shutil
+import subprocess
 
 #############################
 ## Argument Error Messages ##
@@ -225,7 +226,12 @@ def cat_files(inResults, inRead1, inRead2):
 
 def run_cmd():
     f = open('myCatFile', 'r')
-    print(f.read())
+    fastqCmd = ['mash', 'dist', '-r', inMash, 'myCatFile']
+
+    outputFastq = subprocess.run(fastqCmd, capture_output=True,
+    check=True, text=True)
+    print(outputFastq)
+    #print(f.read())
 
 
 if __name__ == '__main__':
