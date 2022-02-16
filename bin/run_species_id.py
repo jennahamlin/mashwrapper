@@ -102,7 +102,7 @@ def argparser():
                          required=False)
     return parser
 
-def make_output_w_log(log, out_prefix):
+def make_output_w_log(log, inResults):
     """
     Makes the output directory and the log file
 
@@ -111,7 +111,7 @@ def make_output_w_log(log, out_prefix):
 
     log : str
         Name of the log file
-    out_prefix : str
+    inResults : str
         Name of the output folder where the log file and results are stored
 
     Returns
@@ -119,42 +119,29 @@ def make_output_w_log(log, out_prefix):
     None
         Exits the program if unable to make output directory
     """
-    if os.path.isdir(out_prefix):                                               ## false if no output folder of same name
+    if os.path.isdir(inResults):                                               ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
- directory. Exiting." % out_prefix)
+ directory. Exiting." % inResults)
         sys.exit(1)
     else:
-        os.mkdir(out_prefix)
+        os.mkdir(inResults)
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
                              format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info(" New output directory created - %s... " % out_prefix)
+        logging.info(" Starting the tool...")
+        logging.info(" New output directory created - %s... " % inResults)
         logging.info(" New log file created within output directory - %s... " % log)
 
-
-def check_program(program_name):
-    """
-    Checks if the supplied program_name exists
-
-    Parameters
-    ----------
-    program_name : str
-        Name of the program to check if it exists
-
-    Returns
-    -------
-    None
-        Exits the program if a dependency doesn't exist
-    """
-    logging.info(" Checking for program %s..." % program_name)
-    path = shutil.which(program_name)
-    if path is None:
-            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
-            print("Looks like the program Mash is not available. Exiting.")
-            #if not Inputs.verbose:
-            #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
-            sys.exit(1)
-    else:
-        logging.info(" Great, the program %s is loaded..." % program_name)
+#, inMash, inMaxDist, inKmer, inThreads, inResults
+def get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults):
+    logging.debug(" The parameters supplied include... \n \
+ * Read1: %s \n \
+ * Read2: %s \n \
+ * Mash Databse: %s \n \
+ * Maximum Distance: %s \n \
+ * Minimum Kmer Count: %s \n \
+ * Number of Threads: %s \n \
+ * Result Folder: %s "  % \
+ (inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, os.path.abspath(inResults)))
 
 def check_files(inRead1, inRead2, inMash):
     """
@@ -190,10 +177,31 @@ def check_files(inRead1, inRead2, inMash):
         print("It appears the read names not unique, please enter Read1 (R1)\
  and Read2 (R2). Exiting")
         sys.exit(1)
-    else:
-        logging.info(" Read1 - %s" % inRead1)
-        logging.info(" Read2 - %s" % inRead2)
 
+def check_program(program_name):
+    """
+    Checks if the supplied program_name exists
+
+    Parameters
+    ----------
+    program_name : str
+        Name of the program to check if it exists
+
+    Returns
+    -------
+    None
+        Exits the program if a dependency doesn't exist
+    """
+    logging.info(" Checking for program %s..." % program_name)
+    path = shutil.which(program_name)                                           ## assumes that programs are lower case
+    if path is None:
+            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
+            print("Looks like the program Mash is not available. Exiting.")
+            #if not Inputs.verbose:
+            #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
+            sys.exit(1)
+    else:
+        logging.info(" Great, the program %s is loaded..." % program_name)
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -207,12 +215,14 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
-out_prefix = args.out_folder
-log = os.path.join(out_prefix, "run.log")
-req_programs="Mash"
+inResults= args.out_folder
+log = os.path.join(inResults, "run.log")
+req_programs="mash"
 
-make_output_w_log(log, out_prefix)
-logging.info(" Starting the tool...")
+make_output_w_log(log, inResults)
+
+logging.info(" These are the inputs supplied...")
+get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults)
 
 logging.info(" Checking if all the prerequisite programs are installed...")
 check_program(req_programs)
