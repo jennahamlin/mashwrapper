@@ -127,13 +127,13 @@ def make_output_w_log(log, inResults):
         os.mkdir(inResults)
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
                              format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info(" Starting the tool...")
-        logging.info(" New output directory created - %s... " % inResults)
-        logging.info(" New log file created within output directory - %s... " % log)
+        logging.info("Starting the tool...")
+        logging.info("New output directory created - %s... " % inResults)
+        logging.info("New log file created within output directory - %s... " % log)
 
 #, inMash, inMaxDist, inKmer, inThreads, inResults
 def get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults):
-    logging.info(" The parameters supplied include... \n \n \
+    logging.info("This is what the parameters are set to... \n \n \
  * Read1: %s \n \
  * Read2: %s \n \
  * Mash Databse: %s \n \
@@ -153,27 +153,27 @@ def check_files(inRead1, inRead2, inMash):
         Exits the program if file doesn't exist
     """
     if inMash and not os.path.isfile(inMash):
-        logging.critical(" Mash database - %s - doesn't exist. Exiting." % inMash)
+        logging.critical("Mash database - %s - doesn't exist. Exiting." % inMash)
         print("Your mash database - %s - does not exist. Exiting." % inMash)
         #if not Inputs.verbose:
         #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
         sys.exit(1)
     if inRead1 and not os.path.isfile(inRead1):
-        logging.critical(" Read file 1: %s doesn't exist. Exiting." % inRead1)
+        logging.critical("Read file 1: %s doesn't exist. Exiting." % inRead1)
         print("Your read 1 file - %s - does not exist. Exiting." % inRead2)
         #if not Inputs.verbose:
         #    print(f"Read file 1: '{Inputs.read1}' doesn't exist. Exiting")
         sys.exit(1)
     if inRead2 and not os.path.isfile(inRead2):
-        logging.critical(" Read file 2: %s doesn't exist. Exiting." % inRead2)
+        logging.critical("Read file 2: %s doesn't exist. Exiting." % inRead2)
         print("Your read 2 file - %s - does not exist. Exiting." % inRead2)
         #if not Inputs.verbose:
         #    print(f"Read file 2: '{Inputs.read2}' doesn't exist. Exiting")
         sys.exit(1)
     if inRead1 == inRead2:
-        logging.critical(" Read1 - %s" % inRead1)
-        logging.critical(" Read2 - %s" % inRead2)
-        logging.critical(" Looks like you entered the same read file twice. Exiting.")
+        logging.critical("Read1 - %s" % inRead1)
+        logging.critical("Read2 - %s" % inRead2)
+        logging.critical("Looks like you entered the same read file twice. Exiting.")
         print("It appears the read names not unique, please enter Read1 (R1)\
  and Read2 (R2). Exiting")
         sys.exit(1)
@@ -192,16 +192,41 @@ def check_program(program_name):
     None
         Exits the program if a dependency doesn't exist
     """
-    logging.info(" Checking for program %s..." % program_name)
+    logging.info("Checking for program %s..." % program_name)
     path = shutil.which(program_name)                                           ## assumes that programs are lower case
     if path is None:
-            logging.critical(" Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
+            logging.critical("Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
             print("Looks like the program Mash is not available. Exiting.")
             #if not Inputs.verbose:
             #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
             sys.exit(1)
     else:
-        logging.info(" Great, the program %s is loaded..." % program_name)
+        logging.info("Great, the program %s is loaded..." % program_name)
+
+def cat_files(inResults, inRead1, inRead2):
+
+    ## change into the results folder
+    os.chdir(inResults)
+
+    if inRead1 and inRead2 != None:
+        with open(inRead1) as readFile:
+            read1 = readFile.read()
+        with open(inRead2) as readFile:
+            read2 = readFile.read()
+            read1 += read2
+        with open('myCatFile', 'w') as readFile:
+            readFile.write(read1)
+            readFile.close()
+        logging.info("Great, I was able to concatenate the files...")
+    else:
+        logging.critical("Hmm, I was unable to concatnate the files. Are the permissions correct? Exiting.")
+        print("Looks like I could not concatenate the files. Exiting.")
+        sys.exit(1)
+
+def run_cmd():
+    f = open('myCatFile', 'r')
+    print(f.read())
+
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -223,10 +248,15 @@ make_output_w_log(log, inResults)
 
 get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults)
 
-logging.info(" Checking if all the required input files exist...")
+logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
-logging.info(" Input files are present...")
+logging.info("Input files are present...")
 
-logging.info(" Checking if all the prerequisite programs are installed...")
+logging.info("Checking if all the prerequisite programs are installed...")
 check_program(req_programs)
-logging.info(" All prerequisite programs are accessible...")
+logging.info("All prerequisite programs are accessible...")
+
+logging.info("First concatenating the fastq files...")
+cat_files(inResults, inRead1, inRead2)
+
+run_cmd()
