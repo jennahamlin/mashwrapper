@@ -92,7 +92,7 @@ def argparser():
     optional.add_argument("--max_dist", "-m", default=0.05,
                         help="User specified mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
-    optional.add_argument("--min_kmer", "-k", default=2,
+    optional.add_argument("--min_kmer", "-k",
                         help="Minimum copies of kmer count to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     optional.add_argument("--num_threads", "-t",
@@ -244,13 +244,13 @@ def cat_files(inResults, inRead1, inRead2):
             readFile.write(read1)
             readFile.close()
         logging.info("Great, I was able to concatenate the files...")
-    else:
+    else:                                                                       ## this needs to be better message
         logging.critical("Hmm, I was unable to concatnate the files. Are the\
  permissions correct? Exiting.")
         print("Looks like I could not concatenate the files. Exiting.")
         sys.exit(1)
 
-def minKmer(calculatedKmer, min_kmer=None):
+def minKmer(calculatedKmer, inKmer):
     """
     Determine the value of the kmers (-m flag); if less than 2, set as 2
 
@@ -267,48 +267,16 @@ def minKmer(calculatedKmer, min_kmer=None):
         integer value used for min_kmer (-m flag) with paired-end reads
     """
 
-    if args.min_kmer:
-        print("Okay, user specified this value for minimum kmer: ", args.min_kmer)
-        return min_kmer
-    elif (calculatedKmer < 2):
-        print("The calucated kmer is less than 2, so will use 2")
-        calculatedKmer = 2
-        return calculatedKmer
-    else:
-        print("This is the calcuated kmer: ", calculatedKmer)
-        return calculatedKmer
-
-
-
-def minKmer(calculatedKmer, inKmer = None):
-    """
-    Determine the value of the kmers (-m flag); if less than 2, set as 2
-
-    Parameters
-    ----------
-    calculatedKmer : int
-        Value that is calculated based on genomeCoverage/3
-    min_kmer : int, optional
-        Input kmer value specified by user; to be used instead of calucated
-
-    Returns
-    ----------
-    int
-        integer value used for min_kmer (-m flag) with paired-end reads
-    """
-
-    if inKmer:
-        print("Okay, user specified this value for minimum kmer: ", inKmer)
+    if inKmer != None:
+        print("Line 272 - Okay, user specified this value for minimum kmer: ", inKmer)
         return inKmer
     elif (calculatedKmer < 2):
-        print("The calucated kmer is less than 2, so will use 2")
+        print("Line 275 -  The calucated kmer is less than 2, so will use 2")
         calculatedKmer = 2
         return calculatedKmer
     else:
-        print("Line 308 - This is the calcuated kmer: ", calculatedKmer)
+        print("Line 279 - This is the calcuated kmer: ", calculatedKmer)
         return calculatedKmer
-
-
 
 def det_kmer():
     f = open('myCatFile', 'r')
@@ -329,11 +297,11 @@ def det_kmer():
 
     minKmers = int(float(gCoverage))/3
     minKmers = int(float(minKmers))
-    print("Line 332 - This is the calculated kmer: ", minKmers)
+    #print("Line 303 - This is the calculated kmer: ", minKmers)
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, inKmer) # returned as an integer
-    print("This is the output from minKmer function: ", mFlag)
+    mFlag = minKmer(minKmers, inKmer ) # returned as an integer
+    print("Line 307 - This is the output from minKmer function: ", mFlag)
 
 
 
