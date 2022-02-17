@@ -95,7 +95,7 @@ def argparser():
     optional.add_argument("--min_kmer", "-k", default=2,
                         help="Minimum copies of kmer count to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--num_threads", "-t", default=2,
+    optional.add_argument("--num_threads", "-t",
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     optional.add_argument("--out_folder", "-o", default="out",
@@ -120,21 +120,36 @@ def make_output_w_log(log, inResults):
     None
         Exits the program if unable to make output directory
     """
-    if os.path.isdir(inResults):                                               ## false if no output folder of same name
+    if os.path.isdir(inResults):                                                ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
  directory. Exiting." % inResults)
         sys.exit(1)
     else:
         os.mkdir(inResults)
         logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
-                             format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+                             format="%(asctime)s - %(message)s", \
+                             datefmt="%m/%d/%Y %I:%M:%S %p")
         logging.info("Starting the tool...")
         logging.info("New output directory created - %s... " % inResults)
-        logging.info("New log file created within output directory - %s... " % log)
+        logging.info("New log file created in output directory - %s... " % log)
 
-#, inMash, inMaxDist, inKmer, inThreads, inResults
-def get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults):
-    logging.info("This is what the parameters are set to... \n \n \
+def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
+    """
+    XXXX
+
+    Parameters
+    ----------
+
+    XX : XX
+        XXX
+
+    Returns
+    -------
+    None
+        XXX
+    """
+
+    logging.info("The input parameters... \n \n \
  * Read1: %s \n \
  * Read2: %s \n \
  * Mash Databse: %s \n \
@@ -142,11 +157,19 @@ def get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults
  * Minimum Kmer Count: %s \n \
  * Number of Threads: %s \n \
  * Result Folder: %s \n "  % \
- (inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, os.path.abspath(inResults)))
+ (inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads,\
+  os.path.abspath(inResults)))
 
 def check_files(inRead1, inRead2, inMash):
     """
-    Checks if all the input files exists; exits if file not found or if file is a directory
+    Checks if all the input files exists; exits if file not found or if file is
+    a directory
+
+    Parameters
+    ----------
+
+    XX : XX
+        XXX
 
     Returns
     -------
@@ -154,7 +177,7 @@ def check_files(inRead1, inRead2, inMash):
         Exits the program if file doesn't exist
     """
     if inMash and not os.path.isfile(inMash):
-        logging.critical("Mash database - %s - doesn't exist. Exiting." % inMash)
+        logging.critical("The database - %s - doesn't exist. Exiting." % inMash)
         print("Your mash database - %s - does not exist. Exiting." % inMash)
         #if not Inputs.verbose:
         #    print(f"Assembly file: '{Inputs.assembly}' doesn't exist. Exiting")
@@ -174,9 +197,10 @@ def check_files(inRead1, inRead2, inMash):
     if inRead1 == inRead2:
         logging.critical("Read1 - %s" % inRead1)
         logging.critical("Read2 - %s" % inRead2)
-        logging.critical("Looks like you entered the same read file twice. Exiting.")
-        print("It appears the read names not unique, please enter Read1 (R1)\
- and Read2 (R2). Exiting")
+        logging.critical("Looks like you entered the same read file twice. \
+ Exiting.")
+        print("It appears the read names are not unique, please enter Read1 \
+(R1) and Read2 (R2). Exiting")
         sys.exit(1)
 
 def check_program(program_name):
@@ -196,7 +220,8 @@ def check_program(program_name):
     logging.info("Checking for program %s..." % program_name)
     path = shutil.which(program_name)                                           ## assumes that programs are lower case
     if path is None:
-            logging.critical("Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
+            logging.critical("Program %s not found! Cannot continue; dependency\
+ not fulfilled. Exiting." % program_name)
             print("Looks like the program Mash is not available. Exiting.")
             #if not Inputs.verbose:
             #    print(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
@@ -220,18 +245,96 @@ def cat_files(inResults, inRead1, inRead2):
             readFile.close()
         logging.info("Great, I was able to concatenate the files...")
     else:
-        logging.critical("Hmm, I was unable to concatnate the files. Are the permissions correct? Exiting.")
+        logging.critical("Hmm, I was unable to concatnate the files. Are the\
+ permissions correct? Exiting.")
         print("Looks like I could not concatenate the files. Exiting.")
         sys.exit(1)
 
-def run_cmd():
+def minKmer(calculatedKmer, min_kmer=None):
+    """
+    Determine the value of the kmers (-m flag); if less than 2, set as 2
+
+    Parameters
+    ----------
+    calculatedKmer : int
+        Value that is calculated based on genomeCoverage/3
+    min_kmer : int, optional
+        Input kmer value specified by user; to be used instead of calucated
+
+    Returns
+    ----------
+    int
+        integer value used for min_kmer (-m flag) with paired-end reads
+    """
+
+    if args.min_kmer:
+        print("Okay, user specified this value for minimum kmer: ", args.min_kmer)
+        return min_kmer
+    elif (calculatedKmer < 2):
+        print("The calucated kmer is less than 2, so will use 2")
+        calculatedKmer = 2
+        return calculatedKmer
+    else:
+        print("This is the calcuated kmer: ", calculatedKmer)
+        return calculatedKmer
+
+
+
+def minKmer(calculatedKmer, inKmer = None):
+    """
+    Determine the value of the kmers (-m flag); if less than 2, set as 2
+
+    Parameters
+    ----------
+    calculatedKmer : int
+        Value that is calculated based on genomeCoverage/3
+    min_kmer : int, optional
+        Input kmer value specified by user; to be used instead of calucated
+
+    Returns
+    ----------
+    int
+        integer value used for min_kmer (-m flag) with paired-end reads
+    """
+
+    if inKmer:
+        print("Okay, user specified this value for minimum kmer: ", inKmer)
+        return inKmer
+    elif (calculatedKmer < 2):
+        print("The calucated kmer is less than 2, so will use 2")
+        calculatedKmer = 2
+        return calculatedKmer
+    else:
+        print("Line 308 - This is the calcuated kmer: ", calculatedKmer)
+        return calculatedKmer
+
+
+
+def det_kmer():
     f = open('myCatFile', 'r')
     fastqCmd = ['mash', 'dist', '-r', inMash, 'myCatFile']
 
     outputFastq = subprocess.run(fastqCmd, capture_output=True,
     check=True, text=True)
-    print(outputFastq)
+    #print(outputFastq)
     #print(f.read())
+
+    ## get genome size and coverage; will provide as ouput for user
+    gSize = outputFastq.stderr.splitlines()[0]
+    gSize = gSize[23:]
+    print("Genome Size: ", gSize)
+    gCoverage = outputFastq.stderr.splitlines()[1]
+    gCoverage = gCoverage[23:]
+    print("Genome coverage: ", gCoverage)
+
+    minKmers = int(float(gCoverage))/3
+    minKmers = int(float(minKmers))
+    print("Line 332 - This is the calculated kmer: ", minKmers)
+
+    ## this is used the calucate the minimum kmer copies to use (-m flag)
+    mFlag = minKmer(minKmers, inKmer) # returned as an integer
+    print("This is the output from minKmer function: ", mFlag)
+
 
 
 if __name__ == '__main__':
@@ -241,7 +344,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 inMash = args.database
-inMaxDist = args.max_dist
+inMaxDis = args.max_dist
 inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
@@ -252,7 +355,7 @@ req_programs="mash"
 
 make_output_w_log(log, inResults)
 
-get_inputs(inRead1, inRead2, inMash, inMaxDist, inKmer, inThreads, inResults)
+get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults)
 
 logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
@@ -265,4 +368,4 @@ logging.info("All prerequisite programs are accessible...")
 logging.info("First concatenating the fastq files...")
 cat_files(inResults, inRead1, inRead2)
 
-run_cmd()
+det_kmer()
