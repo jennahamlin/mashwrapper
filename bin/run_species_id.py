@@ -4,6 +4,8 @@ import argparse, sys, os
 import logging
 import shutil
 import subprocess
+import pandas as pd
+from io import StringIO
 
 #############################
 ## Argument Error Messages ##
@@ -281,13 +283,14 @@ def minKmer(calculatedKmer, inKmer):
     """
 
     if inKmer != None:
-        logging.info("Okay, user specified a value for minimum kmer: %s " % inKmer)
+        logging.info("User specified a value for minimum kmer: %s " % inKmer)
         return inKmer
     elif (calculatedKmer < 2):
         logging.info("The calucated kmer is less than 2, so will use 2")
         calculatedKmer = 2
         return calculatedKmer
     else:
+        logging.info("Min. kmer = genome coverage divided by 3..." )
         logging.info("This is the calcuated kmer: %s " % calculatedKmer)
         return calculatedKmer
 
@@ -307,25 +310,129 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd = ['mash', 'dist', '-r', inMash, 'myCatFile']
+    fastqCmd1 = ['mash', 'dist', '-r', inMash, 'myCatFile']
 
-    outputFastq = subprocess.run(fastqCmd, capture_output=True,
+    outputFastq1 = subprocess.run(fastqCmd1, capture_output=True,
     check=True, text=True)
 
     ## get genome size and coverage; will provide as ouput for user
-    gSize = outputFastq.stderr.splitlines()[0]
+    gSize = outputFastq1.stderr.splitlines()[0]
     gSize = gSize[23:]
     logging.info("Genome Size: %s " % gSize)
-    gCoverage = outputFastq.stderr.splitlines()[1]
+    gCoverage = outputFastq1.stderr.splitlines()[1]
     gCoverage = gCoverage[23:]
     logging.info("Genome coverage: %s "% gCoverage)
 
     minKmers = int(float(gCoverage))/3
     minKmers = int(float(minKmers))
-    logging.info("Min. kmer is genome coverage divided by 3 = %s " % minKmers)
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, inKmer ) # returned as an integer
+    mFlag = minKmer(minKmers, inKmer) # returned as an integer
+
+    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile']
+
+    print("This is the fastq command: ", fastqCmd2)
+    cmdRun = subprocess.run(fastqCmd2, capture_output=True, check=True, text=True)
+    os.remove('myCatFile')
+
+    return cmdRun, gSize, gCoverage
+
+def parseResults(cmdRun, gSize, gCoverage):
+    """
+    run initial command and parse the results from mash
+
+    Parameters
+    ----------
+    cmd : list
+        Initial command to run for either fasta or fastq
+    genomeSize : int, optional
+        Estimated genome size from testing pair-end fastq files
+    genomeCoverage : int, optional
+        Estimated genome coverage from testing pair-end fastq files
+
+    Returns
+    ----------
+    bestGenus
+        The most likely genus of the isolate tested
+    bestSpecies
+        The most likely species of the isolate tested
+    dfTop
+        The top five results from sorting Mash output
+    genomeSize
+        Estimated genome size if fastq files were input
+    genomeCoverage
+        Estimated coverage of genome if fastq files were input; assumes that
+        it is calculated like so: Coverage = N x L/G;
+        N = number of reads, L = average read legnth, G = genome size
+    """
+
+
+    df = pd.read_csv(StringIO(cmdRun.stdout), sep='\t', #convert with StringIO and added headers (for development)
+    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
+    index_col=False)
+    print("Line 371")
+    print(df)
+
+## maybe could use function whichFile?
+#     dfRef = df['Ref ID'].str.split('/', expand=True) #split the full path
+#     dfRef = dfRef.iloc[: , -1] #independent of full path, get final column
+#     dfRef = dfRef.str[:-12] #remove _cleaned.fna; assumes this is there; NOTE should probably exclude this in generating the mash sketch
+#     tmpDF = pd.DataFrame(columns=['Genus', 'Species', 'GeneBank Identifier', '% Seq Sim'])
+#     tmpDF[["Genus", "Species", "GeneBank Identifier"]] = dfRef.str.split("_",
+#     expand=True) #expand into 3 columns
+#     df = df.join(tmpDF)
+#     print("Line 302")
+#     print(df)
+#     print(type(df))
+#     print(type(df['P-value']))
+#
+# ## split the kmers for sorting because xx/xxxx
+#     df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)
+#     df['KmersCount'] = df.KmersCount.astype(int)
+#
+# ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
+#     df['% Seq Sim'] =  (1 - df['Mash Dist'])*100
+#
+# ## now sort and get top species; test for a tie in kmerscount value
+#     dfSorted = df.sort_values('KmersCount', ascending=False)
+#     dfSortOut = isTie(dfSorted)
+#     bestGenus = dfSortOut[0]
+#     bestSpecies = dfSortOut[1]
+#
+# ## use column (axis = 1), to create minimal dataframe
+#     dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
+#     'sketchSize' ], axis=1)
+#
+# ## noResult function - confirm mash distance is < than user specified
+# ## even if mash distance !< user specified, return the top five hits
+#     noMash = noResult(dfSortedDropped, inMaxDist, bestGenus, bestSpecies)
+#     bestGenus = noMash[0]
+#     bestSpecies = noMash[1]
+#
+# ## change order
+#     dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
+#     'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
+#     dfTop = dfSortedDropped[:5]
+#     print("Line 333")
+#     print(dfTop)
+#     print(type(dfTop))
+#     print(type(dfTop['P-value']))
+#
+# ##TO DO - scienfitic notation for P-value
+#
+#     dfTop.reset_index(drop=True, inplace=True) #make index start at 0
+#     return bestGenus, bestSpecies, dfTop, genomeSize, genomeCoverage
+
+# def run_tool(mFlag):
+#     fastqCmd2 = ['mash', 'dist', '-r', '-m',  mFlag, inMash, 'myCatFile']
+#
+#     print("This is the fastq command: ", fastqCmd2)
+#
+#     #fastqOut = generateResults(fastqCmd2, gSize, gCoverage)
+#
+#     os.remove('myCatFile')
+#
+#     #return fastqOut
 
 
 
@@ -361,5 +468,8 @@ logging.info("First concatenating the fastq files...")
 cat_files(inResults, inRead1, inRead2)
 
 logging.info("Determining minimum kmer to use unless specified as input...")
-cal_kmer()
-logging.info("Completed the calculation. ")
+cmdRun, gSize, gCoverage = cal_kmer()
+logging.info("Minimum kmer identified...")
+
+logging.info("Line 381")
+parseResults(cmdRun, gSize, gCoverage)
