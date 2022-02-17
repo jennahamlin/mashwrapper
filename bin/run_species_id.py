@@ -281,17 +281,17 @@ def minKmer(calculatedKmer, inKmer):
     """
 
     if inKmer != None:
-        print("Line 272 - Okay, user specified this value for minimum kmer: ", inKmer)
+        logging.info("Okay, user specified a value for minimum kmer: %s " % inKmer)
         return inKmer
     elif (calculatedKmer < 2):
-        print("Line 275 -  The calucated kmer is less than 2, so will use 2")
+        logging.info("The calucated kmer is less than 2, so will use 2")
         calculatedKmer = 2
         return calculatedKmer
     else:
-        print("Line 279 - This is the calcuated kmer: ", calculatedKmer)
+        logging.info("This is the calcuated kmer: %s " % calculatedKmer)
         return calculatedKmer
 
-def det_kmer():
+def cal_kmer():
     """
     XXXX
 
@@ -311,24 +311,21 @@ def det_kmer():
 
     outputFastq = subprocess.run(fastqCmd, capture_output=True,
     check=True, text=True)
-    #print(outputFastq)
-    #print(f.read())
 
     ## get genome size and coverage; will provide as ouput for user
     gSize = outputFastq.stderr.splitlines()[0]
     gSize = gSize[23:]
-    print("Genome Size: ", gSize)
+    logging.info("Genome Size: %s " % gSize)
     gCoverage = outputFastq.stderr.splitlines()[1]
     gCoverage = gCoverage[23:]
-    print("Genome coverage: ", gCoverage)
+    logging.info("Genome coverage: %s "% gCoverage)
 
     minKmers = int(float(gCoverage))/3
     minKmers = int(float(minKmers))
-    #print("Line 303 - This is the calculated kmer: ", minKmers)
+    logging.info("Min. kmer is genome coverage divided by 3 = %s " % minKmers)
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
     mFlag = minKmer(minKmers, inKmer ) # returned as an integer
-    print("Line 307 - This is the output from minKmer function: ", mFlag)
 
 
 
@@ -363,6 +360,6 @@ logging.info("All prerequisite programs are accessible...")
 logging.info("First concatenating the fastq files...")
 cat_files(inResults, inRead1, inRead2)
 
-logging.info("OKay, now determining what minimum kmer to use unless specified\
-as input")
-det_kmer()
+logging.info("Determining minimum kmer to use unless specified as input...")
+cal_kmer()
+logging.info("Completed the calculation. ")
