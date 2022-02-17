@@ -109,7 +109,6 @@ def make_output_w_log(log, inResults):
 
     Parameters
     ----------
-
     log : str
         Name of the log file
     inResults : str
@@ -120,6 +119,7 @@ def make_output_w_log(log, inResults):
     None
         Exits the program if unable to make output directory
     """
+
     if os.path.isdir(inResults):                                                ## false if no output folder of same name
         print("Output directory - %s - exists. Please remove or rename the\
  directory. Exiting." % inResults)
@@ -139,7 +139,6 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
 
     Parameters
     ----------
-
     XX : XX
         XXX
 
@@ -167,7 +166,6 @@ def check_files(inRead1, inRead2, inMash):
 
     Parameters
     ----------
-
     XX : XX
         XXX
 
@@ -176,6 +174,7 @@ def check_files(inRead1, inRead2, inMash):
     None
         Exits the program if file doesn't exist
     """
+
     if inMash and not os.path.isfile(inMash):
         logging.critical("The database - %s - doesn't exist. Exiting." % inMash)
         print("Your mash database - %s - does not exist. Exiting." % inMash)
@@ -217,6 +216,7 @@ def check_program(program_name):
     None
         Exits the program if a dependency doesn't exist
     """
+
     logging.info("Checking for program %s..." % program_name)
     path = shutil.which(program_name)                                           ## assumes that programs are lower case
     if path is None:
@@ -230,6 +230,19 @@ def check_program(program_name):
         logging.info("Great, the program %s is loaded..." % program_name)
 
 def cat_files(inResults, inRead1, inRead2):
+    """
+    XXXX
+
+    Parameters
+    ----------
+    XX : XX
+        XXX
+
+    Returns
+    -------
+    None
+        XXX
+    """
 
     ## change into the results folder
     os.chdir(inResults)
@@ -279,6 +292,20 @@ def minKmer(calculatedKmer, inKmer):
         return calculatedKmer
 
 def det_kmer():
+    """
+    XXXX
+
+    Parameters
+    ----------
+    XX : XX
+        XXX
+
+    Returns
+    -------
+    None
+        XXX
+    """
+
     f = open('myCatFile', 'r')
     fastqCmd = ['mash', 'dist', '-r', inMash, 'myCatFile']
 
@@ -336,4 +363,6 @@ logging.info("All prerequisite programs are accessible...")
 logging.info("First concatenating the fastq files...")
 cat_files(inResults, inRead1, inRead2)
 
+logging.info("OKay, now determining what minimum kmer to use unless specified\
+as input")
 det_kmer()
