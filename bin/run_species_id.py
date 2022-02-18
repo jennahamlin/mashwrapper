@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import pandas as pd
 from io import StringIO
+from datetime import datetime
+from tabulate import tabulate
 
 #############################
 ## Argument Error Messages ##
@@ -68,7 +70,7 @@ def argparser():
     """
     Returns an argument parser for this script
     """
-    description = """A script to parse the output from Mash and sorts the \
+    description = """ A script to parse the output from Mash and sorts the \
     output to give you the most similar species/isolate determined using\
     various thresholds.
     """
@@ -127,12 +129,13 @@ def make_output_w_log(log, inResults):
         sys.exit(1)
     else:
         os.mkdir(inResults)
-        logging.basicConfig(filename=log, filemode="w", level=logging.DEBUG,
+        logging.basicConfig(filename=log, filemode="a", level=logging.DEBUG,
                              format="%(asctime)s - %(message)s", \
                              datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info("Starting the tool...")
         logging.info("New output directory created - %s... " % inResults)
         logging.info("New log file created in output directory - %s... " % log)
+        logging.info("Starting the tool...")
+
 
 def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
     """
@@ -179,9 +182,12 @@ def check_files(inRead1, inRead2, inMash):
 
     Parameters
     ----------
-    XX : XX
+    inRead1 : XX
         XXX
-
+    inRead2 : XX
+        XXX
+    inMash : XX
+        XXX
     Returns
     -------
     None
@@ -235,7 +241,11 @@ def cat_files(inResults, inRead1, inRead2):
 
     Parameters
     ----------
-    XX : XX
+    inResults : XX
+        XXX
+    inRead1 : XX
+        XXX
+    inRead2 : XX
         XXX
 
     Returns
@@ -291,10 +301,24 @@ def minKmer(calculatedKmer, inKmer):
         return calculatedKmer
 
 def run_cmd(command):
+    """
+    XXXX
+
+    Parameters
+    ----------
+    XX : XX
+        XXX
+
+    Returns
+    -------
+    XXX : XXX
+        XXX
+    """
+
     try:
         result = subprocess.run(command, capture_output=True,\
         check=True, text=True)
-        logging.info("Running this command... \n %s " % command)
+        logging.info("This is the command... \n %s " % command)
     except subprocess.CalledProcessError:
         logging.critical("CRITICAL ERROR. The following command had an improper\
  error: \n %s ." % command)
@@ -314,7 +338,6 @@ def cal_kmer():
     -------
     mFlag : tuple, position 0
         XXX
-
     """
 
     f = open('myCatFile', 'r')
@@ -361,6 +384,7 @@ def isTie(df):
 
     """
     dfSort = df.sort_values('KmersCount', ascending=False)
+    logging.info("Checking if matching kmers count is tied for top 2 results...")
 
 ## assumes based on position the first and second value are always
 ## column 11; row 1 and 2
@@ -376,10 +400,38 @@ kmers, indicating a tie... ")
         bestGenus = bestGenus.str.cat(sep='\n')
         bestSpecies = best['Species']
         bestSpecies = bestSpecies.str.cat(sep='\n')
-        logging.info("Okay, reporting the top species...")
+        logging.info("There was not a tie of kmers for the top two species...")
         return bestGenus, bestSpecies
 
-def parseResults(cmd):
+def noResult(inFile, inMaxDis, bestG, bestS):
+    """
+    Determine if top hit mash distances are >= user specified mash distance
+
+    Parameters
+    ----------
+    inFile : pandas core frame data frame
+        Parsed results from running mash
+    inDist : int
+        User specified maximum mash distance as a cut-off
+
+    Returns
+    ----------
+        Message to log file and replacement of best species with message
+    """
+    inMaxDis = float(inMaxDis)
+    logging.info("Confirming that best match is less than user specfied distance...")
+
+    if (inFile['Mash Dist'].values[0] < inMaxDis):
+        logging.info("Okay, a best species match was found with mash distance \
+less than %s..." % inMaxDis)
+    else:
+        bestG = "No matches found with mash distances < %s..." % inMaxDis
+        bestS = " "
+        logging.info("No matches found with mash distances < %s..." % inMaxDis)
+    return bestG, bestS
+
+
+def parseResults(cmd, inMaxDis):
     """
     run initial command and parse the results from mash
 
@@ -387,6 +439,8 @@ def parseResults(cmd):
     ----------
     cmd : list
         Initial command to run for either fasta or fastq
+    inMaxDis : XXX
+        XXX
 
     Returns
     ----------
@@ -422,28 +476,60 @@ def parseResults(cmd):
     ## now sort and get top species; test for a tie in kmerscount value
     dfSorted = df.sort_values('KmersCount', ascending=False)
     dfSortOut = isTie(dfSorted)
-    bestGenus = dfSortOut[0]
-    bestSpecies = dfSortOut[1]
+    bestGenusSort = dfSortOut[0]
+    bestSpeciesSort = dfSortOut[1]
 
     ## use column (axis = 1), to create minimal dataframe
     dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
     'sketchSize' ], axis=1)
 
-    # ## noResult function - confirm mash distance is < than user specified
-    # ## even if mash distance !< user specified, return the top five hits
-    # noMash = noResult(dfSortedDropped, inMaxDist, bestGenus, bestSpecies)
-    # bestGenus = noMash[0]
-    # bestSpecies = noMash[1]
-    #
-    # ## change order
-    # dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
-    # 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
-    # dfTop = dfSortedDropped[:5]
-    #
-    # ##TO DO - scienfitic notation for P-value
-    #
-    # dfTop.reset_index(drop=True, inplace=True) #make index start at 0
-    # return bestGenus, bestSpecies, dfTop, genomeSize, genomeCoverage
+    ## noResult function - confirm mash distance is < than user specified
+    ## even if mash distance !< user specified, return the top five hits
+    noMash = noResult(dfSortedDropped, inMaxDis, bestGenusSort, bestSpeciesSort)
+    bestGenus = noMash[0]
+    bestSpecies = noMash[1]
+
+    # change order
+    dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
+    'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
+    dfTop = dfSortedDropped[:5]
+
+##TO DO - scienfitic notation for P-value
+
+    dfTop.reset_index(drop=True, inplace=True) #make index start at 0
+    return bestGenus, bestSpecies, dfTop
+
+def makeTable(dateTime, inMaxDist, results, mFlag):
+    """
+    Parse results into text output and include relavant variables
+
+    Parameters
+    ----------
+    dataTime : str
+        get current date and time for when analysis is run
+    maxDist : float, optional
+        optional input to specify the value of maximum mash distance
+    results : tuple
+        output from running and parsing mash commands
+
+    Returns
+    ----------
+    txt file
+        text file with each isolates results appended that were run through
+
+    """
+    with open(f"Results_{dateString}.txt",'a+') as f:
+        f.writelines("\n" + "\n" + "Legionella Species ID Tool using Mash" + "\n")
+        f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
+        #f.write("Input query file(s):" + filesTested + "\n")
+        f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
+        f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
+        f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
+        f.write("Minimum kmer copy number to be included in the sketch:"  + "\n" + "\n")
+        f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
+        f.write("Top 5 hits:" + "\n")
+        f.writelines(u'\u2500' * 100 + "\n")
+        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center"))
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -460,6 +546,10 @@ inRead2 = args.read2
 inResults= args.out_folder
 log = os.path.join(inResults, "run.log")
 req_programs="mash"
+
+now = datetime.now()
+dtString = now.strftime("%B %d, %Y %H:%M:%S")
+dateString = now.strftime("%Y-%m-%d")
 
 make_output_w_log(log, inResults)
 
@@ -486,4 +576,13 @@ outputFastq2 = get_results(mFlag[0])
 logging.info("Completed running mash dist command...")
 
 logging.info("Beginning to parse the output results from mash dist...")
-parseResults(outputFastq2)
+results = parseResults(outputFastq2, inMaxDis)
+logging.info("Okay, completed parsing of the results...")
+
+logging.info("Generating table of results as a text file...")
+makeTable(dtString, inMaxDis, results, mFlag)
+logging.info("Completed analysis for this isolate...")
+
+## TO DO: need to be able to loop through all files in folder and not
+## remake directory or exit if directory is already there as it should be after
+## analyzing first set.
