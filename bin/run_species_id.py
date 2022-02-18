@@ -190,23 +190,18 @@ def check_files(inRead1, inRead2, inMash):
 
     if inMash and not os.path.isfile(inMash):
         logging.critical("The database - %s - doesn't exist. Exiting." % inMash)
-        #print("Your mash database - %s - does not exist. Exiting." % inMash)
         sys.exit(1)
     if inRead1 and not os.path.isfile(inRead1):
         logging.critical("Read file 1: %s doesn't exist. Exiting." % inRead1)
-        #print("Your read 1 file - %s - does not exist. Exiting." % inRead2)
         sys.exit(1)
     if inRead2 and not os.path.isfile(inRead2):
         logging.critical("Read file 2: %s doesn't exist. Exiting." % inRead2)
-        #print("Your read 2 file - %s - does not exist. Exiting." % inRead2)
         sys.exit(1)
     if inRead1 == inRead2:
         logging.critical("Read1 - %s" % inRead1)
         logging.critical("Read2 - %s" % inRead2)
         logging.critical("Looks like you entered the same read file twice. \
  Exiting.")
-#        print("It appears the read names are not unique, please enter Read1 \
-#(R1) and Read2 (R2). Exiting")
         sys.exit(1)
 ##TO DO:  - do i want to check if the beginning of the file name is a match?
 
@@ -230,7 +225,6 @@ def check_program(program_name):
     if path is None:
             logging.critical("Program %s not found! Cannot continue; dependency\
  not fulfilled. Exiting." % program_name)
-#            print("Looks like the program Mash is not available. Exiting.")
             sys.exit(1)
     else:
         logging.info("Great, the program %s is loaded..." % program_name)
@@ -262,11 +256,9 @@ def cat_files(inResults, inRead1, inRead2):
         with open('myCatFile', 'w') as readFile:
             readFile.write(read1)
             readFile.close()
-        logging.info("Great, I was able to concatenate the files...")
     else:                                                                       ## this needs to be better message
         logging.critical("Hmm, I was unable to concatenate the files. Are the\
  permissions correct? Exiting.")
-#        print("Looks like I could not concatenate the files. Exiting.")
         sys.exit(1)
 
 def minKmer(calculatedKmer, inKmer):
@@ -320,8 +312,9 @@ def cal_kmer():
 
     Returns
     -------
-    None
+    mFlag : tuple, position 0
         XXX
+
     """
 
     f = open('myCatFile', 'r')
@@ -342,14 +335,115 @@ def cal_kmer():
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
     mFlag = minKmer(minKmers, inKmer) # returned as an integer
-    return mFlag
+    return mFlag, gSize, gCoverage
 
 def get_results(mFlag):
-
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile']
     outputFastq2 = run_cmd(fastqCmd2)
     os.remove('myCatFile')
+    return outputFastq2
 
+def isTie(df):
+    """
+    Determine if the kmers count value is a tie with the second top isolate; if
+    so then indicate a tie was found in the results
+
+    Parameters
+    ----------
+    df : pandas data frame
+
+    Returns
+    ----------
+    str
+        string of best genus either genus or a sentence
+    str
+        string of best species either species or a blank string
+
+    """
+    dfSort = df.sort_values('KmersCount', ascending=False)
+
+## assumes based on position the first and second value are always
+## column 11; row 1 and 2
+    if dfSort.iloc[0:1, 10:11].equals(dfSort.iloc[1:2, 10:11]):
+        bestGenus = "This was a tie, see the top 5 results below"
+        bestSpecies = " "
+        logging.info("The top two isolates have the same number of matching\
+kmers, indicating a tie... ")
+        return bestGenus, bestSpecies
+    else:
+        best = dfSort.head(1)
+        bestGenus = best['Genus']
+        bestGenus = bestGenus.str.cat(sep='\n')
+        bestSpecies = best['Species']
+        bestSpecies = bestSpecies.str.cat(sep='\n')
+        logging.info("Okay, reporting the top species...")
+        return bestGenus, bestSpecies
+
+def parseResults(cmd):
+    """
+    run initial command and parse the results from mash
+
+    Parameters
+    ----------
+    cmd : list
+        Initial command to run for either fasta or fastq
+
+    Returns
+    ----------
+    bestGenus
+        The most likely genus of the isolate tested
+    bestSpecies
+        The most likely species of the isolate tested
+    dfTop
+        The top five results from sorting Mash output
+    """
+
+    ## convert with StringIO and added headers (for development)
+    df = pd.read_csv(StringIO(cmd.stdout), sep='\t',
+    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
+    index_col=False)
+
+    ## maybe could use function whichFile?
+    dfRef = df['Ref ID'].str.split('/', expand=True) #split the full path
+    dfRef = dfRef.iloc[: , -1] #independent of full path, get final column
+    dfRef = dfRef.str[:-12] #remove _cleaned.fna; assumes this is there; NOTE should probably exclude this in generating the mash sketch
+    tmpDF = pd.DataFrame(columns=['Genus', 'Species', 'GeneBank Identifier', '% Seq Sim'])
+    tmpDF[["Genus", "Species", "GeneBank Identifier"]] = dfRef.str.split("_",
+    expand=True) #expand into 3 columns
+    df = df.join(tmpDF)
+
+    ## split the kmers for sorting because xx/xxxx
+    df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)
+    df['KmersCount'] = df.KmersCount.astype(int)
+
+    ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
+    df['% Seq Sim'] =  (1 - df['Mash Dist'])*100
+
+    ## now sort and get top species; test for a tie in kmerscount value
+    dfSorted = df.sort_values('KmersCount', ascending=False)
+    dfSortOut = isTie(dfSorted)
+    bestGenus = dfSortOut[0]
+    bestSpecies = dfSortOut[1]
+
+    ## use column (axis = 1), to create minimal dataframe
+    dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
+    'sketchSize' ], axis=1)
+
+    # ## noResult function - confirm mash distance is < than user specified
+    # ## even if mash distance !< user specified, return the top five hits
+    # noMash = noResult(dfSortedDropped, inMaxDist, bestGenus, bestSpecies)
+    # bestGenus = noMash[0]
+    # bestSpecies = noMash[1]
+    #
+    # ## change order
+    # dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
+    # 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
+    # dfTop = dfSortedDropped[:5]
+    #
+    # ##TO DO - scienfitic notation for P-value
+    #
+    # dfTop.reset_index(drop=True, inplace=True) #make index start at 0
+    # return bestGenus, bestSpecies, dfTop, genomeSize, genomeCoverage
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -381,10 +475,15 @@ logging.info("All prerequisite programs are accessible...")
 
 logging.info("First concatenating the fastq files...")
 cat_files(inResults, inRead1, inRead2)
+logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Determining minimum kmer to use unless specified as input...")
 mFlag = cal_kmer()
 logging.info("Minimum kmer identified...")
 
 logging.info("Running Mash Dist command with kmer...")
-get_results(mFlag)
+outputFastq2 = get_results(mFlag[0])
+logging.info("Completed running mash dist command...")
+
+logging.info("Beginning to parse the output results from mash dist...")
+parseResults(outputFastq2)
