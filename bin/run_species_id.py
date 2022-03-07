@@ -70,9 +70,8 @@ def argparser():
     """
     Returns an argument parser for this script
     """
-    description = """ A script to parse the output from Mash and sorts the \
-    output to give you the most similar species/isolate determined using\
-    various thresholds.
+    description = """ A script to parse the output from Mash into a table \
+    listing the top five matches from the user specified pre-built Mash Database.
     """
 
     ## use class to parse the arguments with formatted error message
@@ -492,7 +491,7 @@ def parseResults(cmd, inMaxDis):
     # change order
     dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
     'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
-    dfTop = dfSortedDropped[:5]
+    dfTop = dfSortedDropped[:200]
 
 ##TO DO - scienfitic notation for P-value
 
@@ -583,6 +582,6 @@ logging.info("Generating table of results as a text file...")
 makeTable(dtString, inMaxDis, results, mFlag)
 logging.info("Completed analysis for this isolate...")
 
-## TO DO: need to be able to loop through all files in folder and not
-## remake directory or exit if directory is already there as it should be after
-## analyzing first set.
+## TO DO: Move the function to make folder and run log outside of this script
+## that should allow things to be appended and not re-wrritten
+## TO DO: Check for .gz files, if found then gunzip them before cat_files function
