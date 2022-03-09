@@ -48,7 +48,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 // MODULE: Installed directly from nf-core/modules
 //
 include { MASH_DIST                   } from '../modules/nf-core/modules/mash/dist/main'
-include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
+//include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
 //include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
@@ -71,14 +71,14 @@ workflow MASHWRAPPER {
     //
     INPUT_CHECK (
         ch_input
-    ).set { ch_fastq}
+    )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
     // MODULE: Run Species_Id
     //
     SPECIES_ID (
-        ch_database
+        ch_database, INPUT_CHECK.out.reads
 
     )
 
@@ -86,10 +86,10 @@ workflow MASHWRAPPER {
     //
     // MODULE: Run FastQC
     //
-    FASTQC (
-        INPUT_CHECK.out.reads
-    )
-    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
+    //FASTQC (
+    //    INPUT_CHECK.out.reads
+    // )
+    // ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

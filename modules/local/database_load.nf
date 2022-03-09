@@ -7,10 +7,9 @@ path database
 
 output:
 file "${database}.msh"
-file "out.txt"
 
 
 """
-echo $database > output
+echo $database
 """
 }

@@ -100,7 +100,7 @@ def argparser():
     optional.add_argument("--num_threads", "-t",
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--out_folder", "-o", default="out",
+    optional.add_argument("--out_folder", "-o", default="resultsLog",
                         help="Output folder name (default: %(default)s)",
                          required=False)
     return parser
@@ -254,7 +254,12 @@ def cat_files(inResults, inRead1, inRead2):
     """
 
     ## change into the results folder
-    os.chdir(inResults)
+    print("Line 257 - path: ", os.getcwd())
+    #os.chdir(inResults)
+    print("Line 259 - New path: ", os.getcwd())
+    #print(os.getcwd(inRead1))
+    #gunzip inRead1
+    #gunzip inRead2
 
     if inRead1 and inRead2 != None:
         with open(inRead1) as readFile:

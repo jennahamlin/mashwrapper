@@ -1,0 +1,26 @@
+process SPECIES_ID {
+publishDir "${params.outdir}/speciesId",
+      mode: "copy"
+
+input:
+path database
+tuple val(meta), path(reads)
+
+output:
+file "out.txt"
+
+script:
+"""
+def args     = task.ext.args ?: ''
+def prefix   = task.ext.prefix ? "${meta.id}${task.ext.prefix}" : "${meta.id}"
+
+
+#[ ! -f  ${prefix}_R1_001.fastq.gz ] && ln -s ${reads[0]} ${prefix}_R1_001.fastq.gz
+#[ ! -f  ${prefix}_R2_001.fastq.gz ] && ln -s ${reads[1]} ${prefix}_R2_001.fastq.gz
+
+#echo ${prefix}
+#gunzip ${prefix}_R1_001.fastq.gz
+#gunzip ${prefix}_R2_001.fastq.gz
+#run_species_id.py -d ${database} -r1 ${prefix}_R1_001.fastq -r2 ${prefix}_R2_001.fastq  --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}  > out.txt
+"""
+}
