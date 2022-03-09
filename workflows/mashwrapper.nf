@@ -9,9 +9,8 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowMashwrapper.initialise(params, log)
 
-// TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.fasta ]
+def checkPathParamList = [ params.input, params.database ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
@@ -48,10 +47,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 // MODULE: Installed directly from nf-core/modules
 //
 include { MASH_DIST                   } from '../modules/nf-core/modules/mash/dist/main'
-//include { FASTQC                      } from '../modules/nf-core/modules/fastqc/main'
-//include { MULTIQC                     } from '../modules/nf-core/modules/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
-
 
 /*
 ========================================================================================
@@ -79,17 +75,8 @@ workflow MASHWRAPPER {
     //
     SPECIES_ID (
         ch_database, INPUT_CHECK.out.reads
-
     )
 
-
-    //
-    // MODULE: Run FastQC
-    //
-    //FASTQC (
-    //    INPUT_CHECK.out.reads
-    // )
-    // ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')

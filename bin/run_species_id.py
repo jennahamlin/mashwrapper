@@ -475,7 +475,7 @@ def parseResults(cmd, inMaxDis):
     dfTop.reset_index(drop=True, inplace=True) #make index start at 0
     return bestGenus, bestSpecies, dfTop
 
-def makeTable(dateTime, inMaxDist, results, mFlag):
+def makeTable(dateTime, inRead1, inRead2, inMaxDist, results, mFlag):
     """
     Parse results into text output and include relavant variables
 
@@ -497,7 +497,8 @@ def makeTable(dateTime, inMaxDist, results, mFlag):
     with open(f"Results_{dateString}.txt",'a+') as f:
         f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
-        #f.write("Input query file(s):" + filesTested + "\n")
+        f.write("Input query file 1:" + inRead1 + "\n")
+        f.write("Input query file 2:" + inRead2 + "\n")
         f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
@@ -555,5 +556,5 @@ results = parseResults(outputFastq2, inMaxDis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-makeTable(dtString, inMaxDis, results, mFlag)
+makeTable(dtString, inRead1, inRead2, inMaxDis, results, mFlag)
 logging.info("Completed analysis for this isolate...")
