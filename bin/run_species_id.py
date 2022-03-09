@@ -100,12 +100,11 @@ def argparser():
     optional.add_argument("--num_threads", "-t",
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--out_folder", "-o", default="resultsLog",
-                        help="Output folder name (default: %(default)s)",
-                         required=False)
+    # optional.add_argument("--out_folder", "-o", default="resultsLog",
+    #                     help="Output folder name (default: %(default)s)",
+    #                      required=False)
     return parser
-
-def make_output_w_log(log, inResults):
+def make_output_w_log(log):
     """
     Makes the output directory and the log file
 
@@ -113,30 +112,18 @@ def make_output_w_log(log, inResults):
     ----------
     log : str
         Name of the log file
-    inResults : str
-        Name of the output folder where the log file and results are stored
 
     Returns
     -------
     None
         Exits the program if unable to make output directory
     """
+    logging.basicConfig(filename=log, filemode="a", level=logging.DEBUG,
+    format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+    logging.info("New log file created in output directory - %s... " % log)
+    logging.info("Starting the tool...")
 
-    if os.path.isdir(inResults):                                                ## false if no output folder of same name
-        print("Output directory - %s - exists. Please remove or rename the\
- directory. Exiting." % inResults)
-        sys.exit(1)
-    else:
-        os.mkdir(inResults)
-        logging.basicConfig(filename=log, filemode="a", level=logging.DEBUG,
-                             format="%(asctime)s - %(message)s", \
-                             datefmt="%m/%d/%Y %I:%M:%S %p")
-        logging.info("New output directory created - %s... " % inResults)
-        logging.info("New log file created in output directory - %s... " % log)
-        logging.info("Starting the tool...")
-
-
-def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
+def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads):
     """
     Prints the command line input to the log file
 
@@ -154,8 +141,7 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
         XXX
     inThreads : str
         XXX
-    inResults : str
-        XXX
+
 
     Returns
     -------
@@ -169,10 +155,8 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults):
  * Mash Databse: %s \n \
  * Maximum Distance: %s \n \
  * Minimum Kmer Count: %s \n \
- * Number of Threads: %s \n \
- * Result Folder: %s \n "  % \
- (inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads,\
-  os.path.abspath(inResults)))
+ * Number of Threads: %s \n " %
+ (inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads))
 
 def check_files(inRead1, inRead2, inMash):
     """
@@ -234,14 +218,12 @@ def check_program(program_name):
     else:
         logging.info("Great, the program %s is loaded..." % program_name)
 
-def cat_files(inResults, inRead1, inRead2):
+def cat_files(inRead1, inRead2):
     """
     XXXX
 
     Parameters
     ----------
-    inResults : XX
-        XXX
     inRead1 : XX
         XXX
     inRead2 : XX
@@ -252,14 +234,6 @@ def cat_files(inResults, inRead1, inRead2):
     None
         XXX
     """
-
-    ## change into the results folder
-    print("Line 257 - path: ", os.getcwd())
-    #os.chdir(inResults)
-    print("Line 259 - New path: ", os.getcwd())
-    #print(os.getcwd(inRead1))
-    #gunzip inRead1
-    #gunzip inRead2
 
     if inRead1 and inRead2 != None:
         with open(inRead1) as readFile:
@@ -496,7 +470,7 @@ def parseResults(cmd, inMaxDis):
     # change order
     dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
     'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
-    dfTop = dfSortedDropped[:200]
+    dfTop = dfSortedDropped[:5]
 
 ##TO DO - scienfitic notation for P-value
 
@@ -523,7 +497,7 @@ def makeTable(dateTime, inMaxDist, results, mFlag):
 
     """
     with open(f"Results_{dateString}.txt",'a+') as f:
-        f.writelines("\n" + "\n" + "Legionella Species ID Tool using Mash" + "\n")
+        f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
         #f.write("Input query file(s):" + filesTested + "\n")
         f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
@@ -547,17 +521,16 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
-inResults= args.out_folder
-log = os.path.join(inResults, "run.log")
+log = "run.log"
 req_programs="mash"
 
 now = datetime.now()
 dtString = now.strftime("%B %d, %Y %H:%M:%S")
 dateString = now.strftime("%Y-%m-%d")
 
-make_output_w_log(log, inResults)
+make_output_w_log(log)
 
-get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads, inResults)
+get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads)
 
 logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
@@ -568,7 +541,7 @@ check_program(req_programs)
 logging.info("All prerequisite programs are accessible...")
 
 logging.info("First concatenating the fastq files...")
-cat_files(inResults, inRead1, inRead2)
+cat_files(inRead1, inRead2)
 logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Determining minimum kmer to use unless specified as input...")
