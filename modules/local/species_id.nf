@@ -6,6 +6,10 @@ input:
 path database
 tuple val(meta), path(reads)
 
+output:
+file "*.txt"
+file "run.log"
+
 script:
 """
 gunzip -cf "${reads[0]}" > read1.fastq

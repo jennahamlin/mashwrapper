@@ -100,11 +100,9 @@ def argparser():
     optional.add_argument("--num_threads", "-t",
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    # optional.add_argument("--out_folder", "-o", default="resultsLog",
-    #                     help="Output folder name (default: %(default)s)",
-    #                      required=False)
     return parser
-def make_output_w_log(log):
+
+def make_output_log(log):
     """
     Makes the output directory and the log file
 
@@ -528,7 +526,7 @@ now = datetime.now()
 dtString = now.strftime("%B %d, %Y %H:%M:%S")
 dateString = now.strftime("%Y-%m-%d")
 
-make_output_w_log(log)
+make_output_log(log)
 
 get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads)
 
@@ -559,7 +557,3 @@ logging.info("Okay, completed parsing of the results...")
 logging.info("Generating table of results as a text file...")
 makeTable(dtString, inMaxDis, results, mFlag)
 logging.info("Completed analysis for this isolate...")
-
-## TO DO: Move the function to make folder and run log outside of this script
-## that should allow things to be appended and not re-wrritten
-## TO DO: Check for .gz files, if found then gunzip them before cat_files function
