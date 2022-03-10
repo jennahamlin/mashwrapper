@@ -65,6 +65,7 @@ workflow MASHWRAPPER {
     ch_results = Channel.empty()
     //ch_log = Channel.empty()
 
+
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
@@ -72,6 +73,7 @@ workflow MASHWRAPPER {
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
+
 
     //
     // MODULE: Run Species_Id
@@ -89,7 +91,7 @@ workflow MASHWRAPPER {
     //
     COLLATED_RESULTS (
         ch_results.unique().collectFile(name: 'collated_results.txt')
-        //ch_log.unique().collectFile(name: 'collated_log.txt')
+        //ch_log.unique().collectFile(name: 'collated.log')
     )
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (

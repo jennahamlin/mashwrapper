@@ -475,7 +475,7 @@ def parseResults(cmd, inMaxDis):
     dfTop.reset_index(drop=True, inplace=True) #make index start at 0
     return bestGenus, bestSpecies, dfTop
 
-def makeTable(dateTime, inRead1, inRead2, inMaxDist, results, mFlag):
+def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
     """
     Parse results into text output and include relavant variables
 
@@ -494,7 +494,10 @@ def makeTable(dateTime, inRead1, inRead2, inMaxDist, results, mFlag):
         text file with each isolates results appended that were run through
 
     """
-    with open(f"Results_{dateString}.txt",'a+') as f:
+    #name=inRead1.split("_R1_001.fastq.gz")[0]
+    #name=name
+
+    with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
         f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
         f.write("Input query file 1: " + inRead1 + "\n")
@@ -521,7 +524,11 @@ inKmer = args.min_kmer
 inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
-log = "run.log"
+
+name=inRead1.split("_R1_001.fastq")[0]
+name=name
+
+log = name + "_run"  + ".log"
 req_programs="mash"
 
 now = datetime.now()
@@ -557,5 +564,5 @@ results = parseResults(outputFastq2, inMaxDis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-makeTable(dtString, inRead1, inRead2, inMaxDis, results, mFlag)
+makeTable(dtString, name, inRead1, inRead2, inMaxDis, results, mFlag)
 logging.info("Completed analysis for this isolate...")

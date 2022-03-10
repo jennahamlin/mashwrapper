@@ -13,7 +13,7 @@ process SPECIES_ID {
 
       output:
       path("*.txt")  , emit: txt
-      path("run.log") , emit: log
+      path("*.log") , emit: log
 
       script:
       """
