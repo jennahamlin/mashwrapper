@@ -46,8 +46,8 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-//include { MASH_DIST                   } from '../modules/nf-core/modules/mash/dist/main'
-//include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { MASH_DIST                   } from '../modules/nf-core/modules/mash/dist/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
 ========================================================================================
@@ -76,11 +76,12 @@ workflow MASHWRAPPER {
     SPECIES_ID (
         ch_database, INPUT_CHECK.out.reads
     )
-/*
+
+
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
-*/
+
     //
     // MODULE: MultiQC
     //
