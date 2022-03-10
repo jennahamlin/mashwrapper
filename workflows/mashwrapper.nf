@@ -33,6 +33,7 @@ if (params.database) { ch_database = file(params.database) } else { exit 1, 'No 
 
 // Local: Modules
 include { SPECIES_ID } from '../modules/local/species_id'
+include { COLLATED_RESULTS } from '../modules/local/collated_results'
 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
@@ -61,6 +62,8 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 workflow MASHWRAPPER {
 
     ch_versions = Channel.empty()
+    ch_results = Channel.empty()
+    //ch_log = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -75,6 +78,18 @@ workflow MASHWRAPPER {
     //
     SPECIES_ID (
         ch_database, INPUT_CHECK.out.reads
+    )
+
+    ch_results = ch_results.mix(SPECIES_ID.out.txt)
+    //ch_log = ch_log.mix(SPECIES_ID.out.log)
+
+
+    //
+    // MODULE: Collate results and log into one file to send to output
+    //
+    COLLATED_RESULTS (
+        ch_results.unique().collectFile(name: 'collated_results.txt')
+        //ch_log.unique().collectFile(name: 'collated_log.txt')
     )
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (

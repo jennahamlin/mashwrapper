@@ -3,13 +3,32 @@ process COLLATED_RESULTS {
 
       input:
       path(txt)
-      path(log)
+      //path(log)
 
       output:
-      path("*.txt")  , emit: results
-      path("run.log") , emit: log
+      path("collated_results.txt")  , emit: txt
+      //path("log.txt") , emit: log
 
       script:
-      def args = task.ext.args ?: ''
-
+      """
+      """
 }
+
+//makes folder but the file is empty
+//process COLLATED_RESULTS {
+  //    label 'process_low'
+//
+  //    input:
+    //  path(txt)
+      //path(log)
+//
+  //    output:
+    //  path("collated_results.txt")  , emit: txt
+      //path("log.txt") , emit: log
+//
+  //    script:
+    //  """
+      //< $txt cat > collated_results.txt
+    //  """
+//
+//}

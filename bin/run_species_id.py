@@ -506,7 +506,8 @@ def makeTable(dateTime, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
-        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center"))
+        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center")+ "\n")
+
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
