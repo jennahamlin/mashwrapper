@@ -12,9 +12,14 @@ file "run.log"
 
 script:
 """
-gunzip -cf "${reads[0]}" > read1.fastq
-gunzip -cf "${reads[1]}" > read2.fastq
+## converts .fastq.gz file to .fastq
+gunzip -f "${reads[0]}"
+gunzip -f "${reads[1]}"
 
-run_species_id.py -d ${database} -r1 read1.fastq -r2 read2.fastq --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}
+## stores in variable so we can strip off .gz in the command below
+readsIn0="${reads[0]}"
+readsIn1="${reads[1]}"
+
+run_species_id.py -d ${database} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}
 """
 }

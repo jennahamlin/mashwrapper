@@ -497,8 +497,8 @@ def makeTable(dateTime, inRead1, inRead2, inMaxDist, results, mFlag):
     with open(f"Results_{dateString}.txt",'a+') as f:
         f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
-        f.write("Input query file 1:" + inRead1 + "\n")
-        f.write("Input query file 2:" + inRead2 + "\n")
+        f.write("Input query file 1: " + inRead1 + "\n")
+        f.write("Input query file 2: " + inRead2 + "\n")
         f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
