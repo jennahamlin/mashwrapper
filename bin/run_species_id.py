@@ -255,7 +255,7 @@ def minKmer(calculatedKmer, inKmer):
     ----------
     calculatedKmer : int
         Value that is calculated based on genomeCoverage/3
-    min_kmer : int, optional
+    inKmer : int, optional, default is 2
         Input kmer value specified by user; to be used instead of calucated
 
     Returns
@@ -263,18 +263,30 @@ def minKmer(calculatedKmer, inKmer):
     int
         integer value used for min_kmer (-m flag) with paired-end reads
     """
-
-    if inKmer != None:
-        logging.info("User specified a value for minimum kmer: %s " % inKmer)
-        return inKmer
-    elif (calculatedKmer < 2):
-        logging.info("The calucated kmer is less than 2, so will use 2")
+    if int(inKmer) == 2:
+        logging.info("This is the default input value, lets confirm this...")
+        logging.info("Min. kmer = genome coverage divided by 3..." )
+        return calculatedKmer
+    elif (calculatedKmer < 2 or int(inKmer) < 2):
+        logging.info("Min. kmer = genome coverage divided by 3..." )
+        logging.info("The calucated kmer is less than 2, so will use 2...")
         calculatedKmer = 2
         return calculatedKmer
-    else:
-        logging.info("Min. kmer = genome coverage divided by 3..." )
-        logging.info("This is the calcuated kmer: %s " % calculatedKmer)
-        return calculatedKmer
+    elif (int(inKmer) > 2):
+        logging.info("User specified a value for minimum kmer: %s ..." % inKmer)
+        return int(inKmer)
+
+    # if inKmer != None:
+    #     logging.info("User specified a value for minimum kmer: %s " % inKmer)
+    #     return inKmer
+    # elif (calculatedKmer < 2):
+    #     logging.info("The calucated kmer is less than 2, so will use 2")
+    #     calculatedKmer = 2
+    #     return calculatedKmer
+    # else:
+    #     logging.info("Min. kmer = genome coverage divided by 3..." )
+    #     logging.info("This is the calcuated kmer: %s " % calculatedKmer)
+    #     return calculatedKmer
 
 def run_cmd(command):
     """
@@ -494,8 +506,6 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         text file with each isolates results appended that were run through
 
     """
-    #name=inRead1.split("_R1_001.fastq.gz")[0]
-    #name=name
 
     with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
         f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
@@ -505,7 +515,7 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
-        f.write("Minimum kmer copy number to be included in the sketch:"  + "\n" + "\n")
+        f.write("Minimum kmer copy number to be included in the sketch: " + str(mFlag[0]) + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
@@ -553,7 +563,7 @@ logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Determining minimum kmer to use unless specified as input...")
 mFlag = cal_kmer()
-logging.info("Minimum kmer identified...")
+logging.info("Minimum kmer identified ...")
 
 logging.info("Running Mash Dist command with kmer...")
 outputFastq2 = get_results(mFlag[0])
