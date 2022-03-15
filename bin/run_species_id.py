@@ -206,15 +206,31 @@ def check_program(program_name):
     None
         Exits the program if a dependency doesn't exist
     """
-
+ ## assumes that program name is lower case
     logging.info("Checking for program %s..." % program_name)
-    path = shutil.which(program_name)                                           ## assumes that program name is lower case
-    if path is None:
-            logging.critical("Program %s not found! Cannot continue; dependency\
- not fulfilled. Exiting." % program_name)
+    path = shutil.which(program_name)
+    ver = sys.version_info[0:3]
+    ver  = ''.join(str(ver))
+    if path != None:
+        if program_name == 'python' and sys.version_info >= (3,7):
+            logging.info("Great the program %s is loaded ..." % program_name)
+            logging.info("The version of python is: %s..." % ver)
+        elif program_name != 'python':
+            logging.info("Great the program %s is loaded..." % program_name)
+        else:
+            logging.info("You do not have an appropriate version of python. \
+ Requires Python version >= 3.7. Exiting.")
             sys.exit(1)
     else:
-        logging.info("Great, the program %s is loaded..." % program_name)
+        logging.critical("Program %s not found! Cannot continue; dependency\
+ not fulfilled. Exiting." % program_name)
+        sys.exit(1)
+ #    if path is None:
+ #            logging.critical("Program %s not found! Cannot continue; dependency\
+ # not fulfilled. Exiting." % program_name)
+ #            sys.exit(1)
+ #    else:
+ #        logging.info("Great, the program %s is loaded..." % program_name)
 
 def cat_files(inRead1, inRead2):
     """
@@ -527,7 +543,7 @@ name=name
 
 log = name + "_run"  + ".log"
 #req_programs=["mash", "Python/3.7"]
-req_programs='mash'
+req_programs=['mash', 'python']
 
 now = datetime.now()
 dtString = now.strftime("%B %d, %Y %H:%M:%S")
@@ -542,9 +558,9 @@ check_files(inRead1, inRead2, inMash)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
-check_program(req_program)
-#for program in req_programs:
-#    check_program(program)
+#check_program(req_program)
+for program in req_programs:
+    check_program(program)
 logging.info("All prerequisite programs are accessible...")
 
 logging.info("First concatenating the fastq files...")
