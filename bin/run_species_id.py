@@ -224,13 +224,15 @@ def check_program(program_name):
     path = shutil.which(program_name)
     ver = sys.version_info[0:3]
     ver  = ''.join(str(ver))
+    ver = ver.replace(",", ".")
+    ver = ver.replace('(','').replace(')','')
 
     if path != None:
         if program_name == 'python' and sys.version_info >= (3,7):
-            logging.info("Great the program %s is loaded ..." % program_name)
+            logging.info("Great, the program %s is loaded ..." % program_name)
             logging.info("The version of python is: %s..." % ver)
         elif program_name != 'python':
-            logging.info("Great the program %s is loaded..." % program_name)
+            logging.info("Great, the program %s is loaded..." % program_name)
         else:
             logging.info("You do not have an appropriate version of python. \
  Requires Python version >= 3.7. Exiting.")
@@ -287,7 +289,7 @@ def minKmer(calculatedKmer, inKmer):
         integer value used for min_kmer (-m flag) with paired-end reads
     """
     if int(inKmer) == 2:
-        logging.info("Confirming kmer value is different than default (2)...")
+        logging.info("Should kmer value be different than default (2)...")
         logging.info("Min. kmer = genome coverage divided by 3..." )
         return calculatedKmer
     elif (calculatedKmer < 2 or int(inKmer) < 2):
@@ -522,9 +524,9 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
         f.write("Input query file 1: " + inRead1 + "\n")
         f.write("Input query file 2: " + inRead2 + "\n")
-        f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
+        f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
         f.write("Minimum kmer copy number to be included in the sketch: " + str(mFlag[0]) + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
@@ -567,15 +569,16 @@ for program in req_programs:
     check_program(program)
 logging.info("All prerequisite programs are accessible...")
 
-logging.info("First concatenating the fastq files...")
+logging.info("Begin concatenation of the fastq files...")
 cat_files(inRead1, inRead2)
 logging.info("Great, I was able to concatenate the files...")
 
-logging.info("Determining minimum kmer to use unless specified as input...")
+logging.info("Calculating estimated genome size and coverage...")
 mFlag = cal_kmer()
-logging.info("Minimum kmer identified ...")
+logging.info("Minimum copies of each kmer required to pass noise filter \
+identified ...")
 
-logging.info("Running Mash Dist command with kmer (-m)...")
+logging.info("Running Mash Dist command with -m flag...")
 outputFastq2 = get_results(mFlag[0])
 logging.info("Completed running mash dist command...")
 
@@ -585,4 +588,4 @@ logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
 makeTable(dtString, name, inRead1, inRead2, inMaxDis, results, mFlag)
-logging.info("Completed analysis for this isolate...")
+logging.info("Completed analysis for the sample: %s..." % name )
