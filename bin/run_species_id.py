@@ -94,10 +94,10 @@ def argparser():
     optional.add_argument("--max_dist", "-m", default=0.05,
                         help="User specified mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
-    optional.add_argument("--min_kmer", "-k",
-                        help="Minimum copies of kmer count (default: None)",
+    optional.add_argument("--min_kmer", "-k", default=2,
+                        help="Minimum copies of kmer count (default: 2)", #should this be 2 or none, which works with nextflow
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--num_threads", "-t",
+    optional.add_argument("--num_threads", "-t", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
@@ -121,6 +121,20 @@ def make_output_log(log):
     logging.info("New log file created in output directory - %s... " % log)
     logging.info("Starting the tool...")
 
+def fastq_name(inRead1):
+    if inRead1.endswith("_1.fastq"):
+        name = inRead1.split("_1.fastq")[0]
+        return(name)
+        logging.info("Ouput files will have %s name appended to them..." % name)
+    elif inRead1.endswith("_R1_001.fastq"):
+        name = inRead1.split("_R1_001.fastq")[0]
+        return(name)
+        logging.info("Ouput files will have %s name appended to them..." % name)
+    else:
+        logging.critical("Please check your file endings, assumes either \
+_1.fastq(.gz) or _R1_001.fastq(.gz)")
+        sys.exit(1)
+
 def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads):
     """
     Prints the command line input to the log file
@@ -139,7 +153,6 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads):
         XXX
     inThreads : str
         XXX
-
 
     Returns
     -------
@@ -211,6 +224,7 @@ def check_program(program_name):
     path = shutil.which(program_name)
     ver = sys.version_info[0:3]
     ver  = ''.join(str(ver))
+
     if path != None:
         if program_name == 'python' and sys.version_info >= (3,7):
             logging.info("Great the program %s is loaded ..." % program_name)
@@ -225,12 +239,6 @@ def check_program(program_name):
         logging.critical("Program %s not found! Cannot continue; dependency\
  not fulfilled. Exiting." % program_name)
         sys.exit(1)
- #    if path is None:
- #            logging.critical("Program %s not found! Cannot continue; dependency\
- # not fulfilled. Exiting." % program_name)
- #            sys.exit(1)
- #    else:
- #        logging.info("Great, the program %s is loaded..." % program_name)
 
 def cat_files(inRead1, inRead2):
     """
@@ -279,7 +287,7 @@ def minKmer(calculatedKmer, inKmer):
         integer value used for min_kmer (-m flag) with paired-end reads
     """
     if int(inKmer) == 2:
-        logging.info("This is the default input value, lets confirm this...")
+        logging.info("Confirming kmer value is different than default (2)...")
         logging.info("Min. kmer = genome coverage divided by 3..." )
         return calculatedKmer
     elif (calculatedKmer < 2 or int(inKmer) < 2):
@@ -421,7 +429,6 @@ less than %s..." % inMaxDis)
         logging.info("No matches found with mash distances < %s..." % inMaxDis)
     return bestG, bestS
 
-
 def parseResults(cmd, inMaxDis):
     """
     run initial command and parse the results from mash
@@ -524,7 +531,6 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines(u'\u2500' * 100 + "\n")
         f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center")+ "\n")
 
-
 if __name__ == '__main__':
     ## parser is created from the function argparser
     ## parse the arguments
@@ -538,11 +544,10 @@ inThreads = args.num_threads
 inRead1 = args.read1
 inRead2 = args.read2
 
-name=inRead1.split("_R1_001.fastq")[0]
-name=name
-
+#unique name for log file based on read name
+name = fastq_name(inRead1)
 log = name + "_run"  + ".log"
-#req_programs=["mash", "Python/3.7"]
+
 req_programs=['mash', 'python']
 
 now = datetime.now()
@@ -558,7 +563,6 @@ check_files(inRead1, inRead2, inMash)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
-#check_program(req_program)
 for program in req_programs:
     check_program(program)
 logging.info("All prerequisite programs are accessible...")
@@ -571,7 +575,7 @@ logging.info("Determining minimum kmer to use unless specified as input...")
 mFlag = cal_kmer()
 logging.info("Minimum kmer identified ...")
 
-logging.info("Running Mash Dist command with kmer...")
+logging.info("Running Mash Dist command with kmer (-m)...")
 outputFastq2 = get_results(mFlag[0])
 logging.info("Completed running mash dist command...")
 
