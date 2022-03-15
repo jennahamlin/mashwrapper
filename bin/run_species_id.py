@@ -190,7 +190,7 @@ def check_files(inRead1, inRead2, inMash):
         logging.critical("Looks like you entered the same read file twice. \
  Exiting.")
         sys.exit(1)
-##TO DO:  - do i want to check if the beginning of the file name is a match?
+##TO DO:  - do i want to check if the beginning of the file name is a match between the two files?
 
 def check_program(program_name):
     """
@@ -208,7 +208,7 @@ def check_program(program_name):
     """
 
     logging.info("Checking for program %s..." % program_name)
-    path = shutil.which(program_name)                                           ## assumes that programs are lower case
+    path = shutil.which(program_name)                                           ## assumes that program name is lower case
     if path is None:
             logging.critical("Program %s not found! Cannot continue; dependency\
  not fulfilled. Exiting." % program_name)
@@ -232,8 +232,11 @@ def cat_files(inRead1, inRead2):
     None
         XXX
     """
-
-    if inRead1 and inRead2 != None:
+    if inRead1 and inRead2 != None and inRead1.endswith('.gz'):
+        logging.critical("The files are still gzipped. Exiting")
+        sys.exit(1)
+    else:
+        logging.info("The files have been gunzipped ...")
         with open(inRead1) as readFile:
             read1 = readFile.read()
         with open(inRead2) as readFile:
@@ -242,10 +245,6 @@ def cat_files(inRead1, inRead2):
         with open('myCatFile', 'w') as readFile:
             readFile.write(read1)
             readFile.close()
-    else:                                                                       ## this needs to be better message
-        logging.critical("Hmm, I was unable to concatenate the files. Are the\
- permissions correct? Exiting.")
-        sys.exit(1)
 
 def minKmer(calculatedKmer, inKmer):
     """
@@ -275,18 +274,6 @@ def minKmer(calculatedKmer, inKmer):
     elif (int(inKmer) > 2):
         logging.info("User specified a value for minimum kmer: %s ..." % inKmer)
         return int(inKmer)
-
-    # if inKmer != None:
-    #     logging.info("User specified a value for minimum kmer: %s " % inKmer)
-    #     return inKmer
-    # elif (calculatedKmer < 2):
-    #     logging.info("The calucated kmer is less than 2, so will use 2")
-    #     calculatedKmer = 2
-    #     return calculatedKmer
-    # else:
-    #     logging.info("Min. kmer = genome coverage divided by 3..." )
-    #     logging.info("This is the calcuated kmer: %s " % calculatedKmer)
-    #     return calculatedKmer
 
 def run_cmd(command):
     """
@@ -539,7 +526,8 @@ name=inRead1.split("_R1_001.fastq")[0]
 name=name
 
 log = name + "_run"  + ".log"
-req_programs="mash"
+#req_programs=["mash", "Python/3.7"]
+req_programs='mash'
 
 now = datetime.now()
 dtString = now.strftime("%B %d, %Y %H:%M:%S")
@@ -554,7 +542,9 @@ check_files(inRead1, inRead2, inMash)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
-check_program(req_programs)
+check_program(req_program)
+#for program in req_programs:
+#    check_program(program)
 logging.info("All prerequisite programs are accessible...")
 
 logging.info("First concatenating the fastq files...")
