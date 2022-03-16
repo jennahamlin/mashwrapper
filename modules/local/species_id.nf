@@ -2,7 +2,7 @@ process SPECIES_ID {
       tag "$meta.id"
       label 'process_low'
 
-      container = 'docker://jennahamlin/mashwrapper:v2'
+      container = "file://mashpython_v4.sif"
     
       input:
       path database

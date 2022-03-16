@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.7
 
 import argparse, sys, os
 import logging
@@ -95,7 +95,7 @@ def argparser():
                         help="User specified mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
     optional.add_argument("--min_kmer", "-k", default=2,
-                        help="Minimum copies of kmer count (default: 2)", #should this be 2 or none, which works with nextflow
+                        help="Minimum copies of kmer count (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     optional.add_argument("--num_threads", "-t", default=2,
                         help="Number of computing threads to use (default: 2)",
@@ -219,7 +219,7 @@ def check_program(program_name):
     None
         Exits the program if a dependency doesn't exist
     """
- ## assumes that program name is lower case
+    ##assumes that program name is lower case
     logging.info("Checking for program %s..." % program_name)
     path = shutil.which(program_name)
     ver = sys.version_info[0:3]
@@ -387,8 +387,8 @@ def isTie(df):
     dfSort = df.sort_values('KmersCount', ascending=False)
     logging.info("Checking if matching kmers count is tied for top 2 results...")
 
-## assumes based on position the first and second value are always
-## column 11; row 1 and 2
+    ## assumes based on position the first and second value are always
+    ## column 11; row 1 and 2
     if dfSort.iloc[0:1, 10:11].equals(dfSort.iloc[1:2, 10:11]):
         bestGenus = "This was a tie, see the top 5 results below"
         bestSpecies = " "
@@ -534,6 +534,7 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center")+ "\n")
 
 if __name__ == '__main__':
+    
     ## parser is created from the function argparser
     ## parse the arguments
     parser = argparser()
@@ -588,4 +589,4 @@ logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
 makeTable(dtString, name, inRead1, inRead2, inMaxDis, results, mFlag)
-logging.info("Completed analysis for the sample: %s..." % name )
+logging.info("Completed analysis for the sample: %s." % name )
