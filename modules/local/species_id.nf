@@ -2,7 +2,7 @@ process SPECIES_ID {
       tag "$meta.id"
       label 'process_low'
 
-      container = "file://mashpython_v4.sif"
+      container = "file://mashpython_v1.sif"
     
       input:
       path database
