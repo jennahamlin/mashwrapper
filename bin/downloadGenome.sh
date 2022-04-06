@@ -1,0 +1,1 @@
+/scicomp/home-pure/ptx4/myGithub/Legionella_DBD/05_Scripts/downloadGenome.sh
