@@ -34,6 +34,7 @@ if (params.database) { ch_database = file(params.database) } else { exit 1, 'No 
 // Local: Modules
 include { SPECIES_ID } from '../modules/local/species_id'
 include { COLLATED_RESULTS } from '../modules/local/collated_results'
+include { DOWNLOAD_GENOMES } from '../modules/local/download_genomes'
 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
@@ -74,6 +75,12 @@ workflow MASHWRAPPER {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    //
+    // MODULE: Run Download_GEnomes
+    //
+    DOWNLOAD_GENOMES(
+        species = channel.of('vibrio natriegens')
+      )
 
     //
     // MODULE: Run Species_Id
