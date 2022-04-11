@@ -61,6 +61,7 @@ workflow MASHWRAPPER {
     ch_versions = Channel.empty()
     ch_results = Channel.empty()
     ch_log = Channel.empty()
+    ch_download = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -76,7 +77,7 @@ workflow MASHWRAPPER {
     DOWNLOAD_GENOMES(
         ch_organism
     )
-
+    ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
     //
     // MODULE: Run Species_Id
     //
@@ -90,7 +91,8 @@ workflow MASHWRAPPER {
     // MODULE: Collate results and log into one file to send to output
     //
     COMBINED_OUTPUT (
-        ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated.log')
+        ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
+
     )
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (
