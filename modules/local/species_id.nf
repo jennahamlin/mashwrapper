@@ -3,14 +3,14 @@ process SPECIES_ID {
       label 'process_low'
 
       container = "file://mashpython_v1.sif"
-    
+
       input:
       path database
       tuple val(meta), path(reads)
 
       output:
-      path("*.txt")  , emit: txt
-      path("*.log") , emit: log
+      path("*.txt"), emit: txt
+      path("*.log"), emit: log
 
       script:
       """

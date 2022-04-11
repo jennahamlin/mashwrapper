@@ -10,30 +10,27 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 WorkflowMashwrapper.initialise(params, log)
 
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.database ]
+def checkPathParamList = [ params.input, params.organism, params.database ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
+if (params.organism) {ch_organism = Channel.fromPath(params.organism)
+                                           .splitText()
+                                           .map { it.replaceFirst(/\n/,'') }} else { exit 1, 'No input file of organisms to download provided!'}
 if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
-========================================================================================
-    CONFIG FILES
-========================================================================================
-*/
 
-//ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
-//ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-/*
 ========================================================================================
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ========================================================================================
 */
 
 // Local: Modules
+include { DOWNLOAD_GENOMES } from '../modules/local/download_genomes'
 include { SPECIES_ID } from '../modules/local/species_id'
-include { COLLATED_RESULTS } from '../modules/local/collated_results'
+include { COMBINED_OUTPUT } from '../modules/local/combined_output'
+
 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 include { INPUT_CHECK } from '../subworkflows/local/input_check'
@@ -63,8 +60,7 @@ workflow MASHWRAPPER {
 
     ch_versions = Channel.empty()
     ch_results = Channel.empty()
-    //ch_log = Channel.empty()
-
+    ch_log = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -74,6 +70,12 @@ workflow MASHWRAPPER {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
+    //
+    // MODULE: Run Download_Genomes
+    //
+    DOWNLOAD_GENOMES(
+        ch_organism
+    )
 
     //
     // MODULE: Run Species_Id
@@ -81,17 +83,14 @@ workflow MASHWRAPPER {
     SPECIES_ID (
         ch_database, INPUT_CHECK.out.reads
     )
-
     ch_results = ch_results.mix(SPECIES_ID.out.txt)
-    //ch_log = ch_log.mix(SPECIES_ID.out.log)
-
+    ch_log = ch_log.mix(SPECIES_ID.out.log)
 
     //
     // MODULE: Collate results and log into one file to send to output
     //
-    COLLATED_RESULTS (
-        ch_results.unique().collectFile(name: 'collated_results.txt')
-        //ch_log.unique().collectFile(name: 'collated.log')
+    COMBINED_OUTPUT (
+        ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated.log')
     )
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (
