@@ -28,6 +28,7 @@ if (params.database) { ch_database = file(params.database) } else { exit 1, 'No 
 
 // Local: Modules
 include { DOWNLOAD_GENOMES } from '../modules/local/download_genomes'
+include { MAKE_MASH } from '../modules/local/make_mash'
 include { SPECIES_ID } from '../modules/local/species_id'
 include { COMBINED_OUTPUT } from '../modules/local/combined_output'
 
@@ -62,6 +63,7 @@ workflow MASHWRAPPER {
     ch_results = Channel.empty()
     ch_log = Channel.empty()
     ch_download = Channel.empty()
+    ch_fasta = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -78,6 +80,11 @@ workflow MASHWRAPPER {
         ch_organism
     )
     ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
+    ch_fasta = ch_fasta.mix(DOWNLOAD_GENOMES.out.fasta)
+
+    MAKE_MASH(
+        DOWNLOAD_GENOMES.out.fasta
+    )
     //
     // MODULE: Run Species_Id
     //
