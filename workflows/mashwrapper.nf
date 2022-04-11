@@ -10,22 +10,17 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 WorkflowMashwrapper.initialise(params, log)
 
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.database ]
+def checkPathParamList = [ params.input, params.organism, params.database ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
-if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
+if (params.organism) {ch_organism = Channel.fromPath(params.organism)
+                                           .splitText()
+                                           .map { it.replaceFirst(/\n/,'') }} else { exit 1, 'No input file of organisms to download provided!'}
 if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
-========================================================================================
-    CONFIG FILES
-========================================================================================
-*/
 
-//ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
-//ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-/*
 ========================================================================================
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ========================================================================================
@@ -77,9 +72,9 @@ workflow MASHWRAPPER {
 
     //
     // MODULE: Run Download_GEnomes
-    //
+    //species = channel.of('vibrio natriegens', 'fluoribacter')
     DOWNLOAD_GENOMES(
-        species = channel.of('vibrio natriegens')
+        ch_organism
       )
 
     //

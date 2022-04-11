@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ## Author J. Hamlin
 ## Date 01/05/2022
 ## This script is to download all available *legionella* and

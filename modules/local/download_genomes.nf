@@ -4,7 +4,8 @@ process DOWNLOAD_GENOMES {
       input:
       //is a list of species, need to be in quotes
       //is either true or false but I think should always be false...
-      val species
+      val organism
+
 
       output:
       // is many *fna files that will be used to generate .msh and a database of .msh
@@ -14,6 +15,6 @@ process DOWNLOAD_GENOMES {
       script:
       """
       #how to deal with if multiple -s flags are wanted.... like below
-      ${projectDir}/bin/downloadGenome.sh -c F -s '$species'
+      ${projectDir}/bin/downloadGenome.sh -c F -s "$organism"
       """
 }
