@@ -9,15 +9,15 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowMashwrapper.initialise(params, log)
 
-// Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.organism, params.database ]
+// Check input path parameters to see if they exist  params.organism, params.database
+def checkPathParamList = [ params.input]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 if (params.organism) {ch_organism = Channel.fromPath(params.organism)
                                            .splitText()
-                                           .map { it.replaceFirst(/\n/,'') }} else { exit 1, 'No input file of organisms to download provided!'}
+                                           .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
 //if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
 
@@ -75,47 +75,68 @@ workflow MASHWRAPPER {
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
-    //
-    // MODULE: Run Download_Genomes
-    //
-    DOWNLOAD_GENOMES(
-        ch_organism
-    )
-    ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
-    ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)
+    if(params.get_database) {
+      //
+      // MODULE: Run Download_Genomes
+      //
+      DOWNLOAD_GENOMES( ch_organism )
+      ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
+      ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)
 
-    //
-    //
-    //
-    MAKE_MASH(
-        ch_fna
-    )
-    ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
+      //
+      //
+      //
+      MAKE_MASH( ch_fna )
+      ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
 
-    //
-    //
-    //
-    MAKE_DATABASE(
-        ch_msh
-    )
-    ch_inDatabase = MAKE_DATABASE.out.dmsh
+      //
+      //
+      //
+      MAKE_DATABASE( ch_msh )
+      ch_inDatabase = MAKE_DATABASE.out.dmsh
 
-    //
-    // MODULE: Run Species_Id
-    //
-    SPECIES_ID (
-        ch_inDatabase, INPUT_CHECK.out.reads
-    )
-    ch_results = ch_results.mix(SPECIES_ID.out.txt)
-    ch_log = ch_log.mix(SPECIES_ID.out.log)
+      //
+      // MODULE: Run Species_Id
+      //
+      SPECIES_ID (
+          ch_inDatabase, INPUT_CHECK.out.reads
+      )
+      ch_results = ch_results.mix(SPECIES_ID.out.txt)
+      ch_log = ch_log.mix(SPECIES_ID.out.log)
 
-    //
-    // MODULE: Collate results and log into one file to send to output
-    //
-    COMBINED_OUTPUT (
-        ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
+      //
+      // MODULE: Collate results and log into one file to send to output
+      //
+      COMBINED_OUTPUT (
+          ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
+          )
+    } else {
+      if (params.database) {
+      ch_inDatabase = params.database
+      //
+      // MODULE: Run Species_Id
+      //
+      SPECIES_ID (
+          ch_inDatabase, INPUT_CHECK.out.reads
+      )
+      ch_results = ch_results.mix(SPECIES_ID.out.txt)
+      ch_log = ch_log.mix(SPECIES_ID.out.log)
 
-    )
+      //
+      // MODULE: Collate results and log into one file to send to output
+      //
+      COMBINED_OUTPUT (
+          ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
+          )
+      }
+
+
+
+    }
+
+
+
+
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
