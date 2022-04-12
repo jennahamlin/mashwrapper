@@ -1,15 +1,16 @@
 process MAKE_DATABASE {
-      label 'process_high_memory'
+      label 'process_medium'
 
       input:
       file(msh).collect()
 
       output:
+      path("myMashDatabase.msh"), emit: dmsh
+
 
       script:
       """
-      echo ${msh[0]}
-
-      mash dist $msh
+      echo ${msh}
+      mash sketch $msh -o myMashDatabase.msh
       """
 }

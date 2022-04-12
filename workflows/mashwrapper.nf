@@ -66,6 +66,7 @@ workflow MASHWRAPPER {
     ch_msh = Channel.empty()
     ch_results = Channel.empty()
     ch_log = Channel.empty()
+    //ch_mydatabase = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -88,7 +89,7 @@ workflow MASHWRAPPER {
     //
     //
     MAKE_MASH(
-        DOWNLOAD_GENOMES.out.fna
+        ch_fna
     )
     ch_msh = ch_msh.mix(MAKE_MASH.out.msh)
 
@@ -96,7 +97,7 @@ workflow MASHWRAPPER {
     //
     //
     MAKE_DATABASE(
-        MAKE_MASH.out.msh
+        ch_msh
     )
 
     //

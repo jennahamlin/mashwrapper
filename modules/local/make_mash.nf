@@ -10,8 +10,6 @@ process MAKE_MASH {
 
       script:
       """
-      echo ${fna[0]}
-
       for file in ${fna}
       do
           mash sketch \$file -k 25 -s 100000
