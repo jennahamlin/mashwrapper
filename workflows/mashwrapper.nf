@@ -101,11 +101,14 @@ workflow MASHWRAPPER {
         ch_msh
     )
 
+    ch_inDatabase = MAKE_DATABASE.out.dmsh
+
     //
     // MODULE: Run Species_Id
     //
     SPECIES_ID (
-        ch_database, INPUT_CHECK.out.reads
+        //ch_database,
+        ch_inDatabase, INPUT_CHECK.out.reads
     )
     ch_results = ch_results.mix(SPECIES_ID.out.txt)
     ch_log = ch_log.mix(SPECIES_ID.out.log)

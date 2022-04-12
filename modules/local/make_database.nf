@@ -11,7 +11,6 @@ process MAKE_DATABASE {
 
       script:
       """
-      echo ${msh}
       mash sketch $msh -o myMashDatabase.msh
       """
 }
