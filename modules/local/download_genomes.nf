@@ -5,9 +5,8 @@ process DOWNLOAD_GENOMES {
       val(organism)
 
       output:
-      // is many *fna files that will be used to generate .msh and a database of .msh
-      path("**/allDownload/*.fna"), emit: fasta
-
+      // is many *fna files that will be used to generate .msh files and then mash database
+      path("**/allDownload/*.fna"), emit: fna
       path(".command.log"), emit: dlog
 
       script:

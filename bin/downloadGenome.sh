@@ -317,4 +317,5 @@ running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
 
-echo "Exiting the program"
+echo "Exiting the program."
+echo " "

@@ -2,15 +2,17 @@ process MAKE_MASH {
       label 'process_low'
 
       input:
-      file(fasta).collect()
+      file(fna).collect()
 
       output:
+      //path("*.msh"), emit: msh
+
 
       script:
       """
-      echo ${fasta[0]}
+      echo ${fna[0]}
 
-      for file in ${fasta}
+      for file in ${fna}
       do
           mash sketch \$file -k 25 -s 100000 -p 8
       done
