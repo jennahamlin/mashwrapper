@@ -66,7 +66,6 @@ workflow MASHWRAPPER {
     ch_msh = Channel.empty()
     ch_results = Channel.empty()
     ch_log = Channel.empty()
-    //ch_base = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -92,7 +91,6 @@ workflow MASHWRAPPER {
         ch_fna
     )
     ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
-    ch_msh.view()
 
     //
     //
@@ -100,14 +98,12 @@ workflow MASHWRAPPER {
     MAKE_DATABASE(
         ch_msh
     )
-
     ch_inDatabase = MAKE_DATABASE.out.dmsh
 
     //
     // MODULE: Run Species_Id
     //
     SPECIES_ID (
-        //ch_database,
         ch_inDatabase, INPUT_CHECK.out.reads
     )
     ch_results = ch_results.mix(SPECIES_ID.out.txt)
