@@ -24,6 +24,20 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/mashwrapper/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "organism": {
+                    "type": "string",
+                    "fa_icon": "fas fa-bacteria",
+                    "description": "Path to text file with organisms to download per line. Can be written either as genus species or just species."
+                },
+                "database": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "msh",
+                    "description": "Path to pre-built mash sketch file.",
+                    "help_text": "This parameter is *mandatory*. If you do not have a pre-built mash sketch file, you must generate that file before using the tool.",
+                    "fa_icon": "far fa-file-code"
+                },
                 "outdir": {
                     "type": "string",
                     "description": "Path to the output directory where the results will be saved.",
@@ -45,14 +59,10 @@
             "fa_icon": "fas fa-dna",
             "description": "Database file required for the workflow.",
             "properties": {
-                "database": {
+                "get_database": {
                     "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "pattern": "msh",
-                    "description": "Path to pre-built mash sketch file.",
-                    "help_text": "This parameter is *mandatory*. If you do not have a pre-built mash sketch file, you must generate that file before using the tool.",
-                    "fa_icon": "far fa-file-code"
+                    "fa_icon": "fas fa-database",
+                    "description": "Option to download genomes, generate mash sketches and then a mash database"
                 }
             }
         },

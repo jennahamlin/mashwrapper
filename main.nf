@@ -17,7 +17,7 @@ nextflow.enable.dsl = 2
 ========================================================================================
 */
 
-params.database = WorkflowMain.getGenomeAttribute(params, 'msh')
+//params.database = WorkflowMain.getGenomeAttribute(params, 'msh')
 
 /*
 ========================================================================================

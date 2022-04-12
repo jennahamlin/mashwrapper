@@ -18,7 +18,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads 
 if (params.organism) {ch_organism = Channel.fromPath(params.organism)
                                            .splitText()
                                            .map { it.replaceFirst(/\n/,'') }} else { exit 1, 'No input file of organisms to download provided!'}
-if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
+//if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
 
 ========================================================================================

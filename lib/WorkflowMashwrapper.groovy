@@ -10,10 +10,10 @@ class WorkflowMashwrapper {
     public static void initialise(params, log) {
         genomeExistsError(params, log)
 
-        if (!params.database) {
-            log.error "No pre-built mash sketch file was not specified with e.g. '--database mySketch.msh' or via a detectable config file."
-            System.exit(1)
-        }
+      //  if (!params.database) {
+      //      log.error "No pre-built mash sketch file was not specified with e.g. '--database mySketch.msh' or via a detectable config file."
+      //      System.exit(1)
+      //  }
     }
 
     //
