@@ -29,7 +29,7 @@ if (params.database) { ch_database = file(params.database) } else { exit 1, 'No 
 // Local: Modules
 include { DOWNLOAD_GENOMES } from '../modules/local/download_genomes'
 include { MAKE_MASH } from '../modules/local/make_mash'
-//include { MAKE_DATABASE } from '../modules/local/make_database'
+include { MAKE_DATABASE } from '../modules/local/make_database'
 include { SPECIES_ID } from '../modules/local/species_id'
 include { COMBINED_OUTPUT } from '../modules/local/combined_output'
 
@@ -63,7 +63,7 @@ workflow MASHWRAPPER {
     ch_versions = Channel.empty()
     ch_download = Channel.empty()
     ch_fna = Channel.empty()
-    //ch_msh = Channel.empty()
+    ch_msh = Channel.empty()
     ch_results = Channel.empty()
     ch_log = Channel.empty()
 
@@ -90,14 +90,14 @@ workflow MASHWRAPPER {
     MAKE_MASH(
         DOWNLOAD_GENOMES.out.fna
     )
-    //ch_msh = ch_msh.mix(MAKE_MASH.out.msh)
+    ch_msh = ch_msh.mix(MAKE_MASH.out.msh)
 
     //
     //
     //
-    //MAKE_DATABASE(
-    //    MAKE_MASH.out.msh
-   //)
+    MAKE_DATABASE(
+        MAKE_MASH.out.msh
+    )
 
     //
     // MODULE: Run Species_Id

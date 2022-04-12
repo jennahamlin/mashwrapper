@@ -1,11 +1,11 @@
 process MAKE_MASH {
-      label 'process_low'
+      label 'process_high_memory'
 
       input:
       file(fna).collect()
 
       output:
-      //path("*.msh"), emit: msh
+      path("*.msh"), emit: msh
 
 
       script:
@@ -14,7 +14,7 @@ process MAKE_MASH {
 
       for file in ${fna}
       do
-          mash sketch \$file -k 25 -s 100000 -p 8
+          mash sketch \$file -k 25 -s 100000
       done
       """
 }
