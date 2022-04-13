@@ -17,20 +17,24 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 
 if (params.get_database) {
+
   ch_get_database = Channel.fromPath(params.get_database)
                                          .splitText()
                                          .map { it.replaceFirst(/\n/,'') }
 } else {
 
   if (params.use_database) {
+
   ch_inDatabase = file(params.use_database)
 
     } else {
      exit("""
       ERROR!
-      A major error has occurred!
-        ==> User forgot to either include either --use_database or --get_database flag.
+      You must specify a flag to either: use a database (--use_database) or generate the database (--get_database flag).
 
+          --use_database: User provides path to a pre-built mash database. Assumes sketch size of and XXX
+          --get_database: User provided text file of organisms to download written with on organism per row.
+                          Can either be written as genus species (legionall pneumophila) or genus (legionella)
       """)
   }
 }
