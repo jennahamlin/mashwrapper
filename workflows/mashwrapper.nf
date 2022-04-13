@@ -15,10 +15,12 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
+
+// Check optional parameters
+// params.orgnaism is optional and will assume that the genomes need to get downloaded and the database built
 if (params.organism) {ch_organism = Channel.fromPath(params.organism)
                                            .splitText()
                                            .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
-//if (params.database) { ch_database = file(params.database) } else { exit 1, 'No mash sketch is included!'}
 /*
 
 ========================================================================================
@@ -46,7 +48,6 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-//include { MASH_DIST                   } from '../modules/nf-core/modules/mash/dist/main'
 //include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*

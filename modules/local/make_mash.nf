@@ -1,5 +1,7 @@
 process MAKE_MASH {
-      label 'process_high_memory'
+      label 'process_low'
+
+      container = "file://mashpython_v1.sif"
 
       input:
       file(fna).collect()

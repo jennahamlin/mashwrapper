@@ -1,13 +1,13 @@
 process MAKE_DATABASE {
       label 'process_medium'
 
+      container = "file://mashpython_v1.sif"
+
       input:
-      //file(msh).collect()
       path(msh)
 
       output:
       path("myMashDatabase.msh"), emit: dmsh
-
 
       script:
       """
