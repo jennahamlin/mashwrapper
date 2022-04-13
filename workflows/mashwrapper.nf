@@ -18,10 +18,11 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads 
 
 // Check optional parameters
 // params.organism is optional and will assume that the genomes need to get downloaded and the database built
-if (params.get_database) {ch_get_database = Channel.fromPath(params.get_database)
-                                           .splitText()
-                                           .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
-if (params.use_database) {ch_inDatabase = file (params.use_database)}
+//if (params.get_database) {ch_get_database = Channel.fromPath(params.get_database)
+//                                           .splitText()
+//                                           .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
+//if (params.use_database) {ch_inDatabase = file (params.use_database)}
+
 /*
 
 ========================================================================================
@@ -78,6 +79,9 @@ workflow MASHWRAPPER {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     if (params.get_database) {
+       ch_get_database = Channel.fromPath(params.get_database)
+                                                .splitText()
+                                                .map { it.replaceFirst(/\n/,'') }
 
       //
       // MODULE: Run Download_Genomes
@@ -98,42 +102,40 @@ workflow MASHWRAPPER {
       // MODULE: Build mash database from individual mash files
       //
       MAKE_DATABASE( ch_msh )
+
       ch_inDatabase = MAKE_DATABASE.out.dmsh
 
       //
       // MODULE: Run Species_Id
       //
-      SPECIES_ID (
-          ch_inDatabase, INPUT_CHECK.out.reads
-      )
+      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads )
+
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
 
       //
       // MODULE: Collate results and log into one file to send to output
       //
-      COMBINED_OUTPUT (
-          ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
-          )
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
+
     } else {
       if (params.use_database) {
+      ch_inDatabase = file (params.use_database)
+
       //
       // MODULE: Run Species_Id
       //
-      SPECIES_ID (
-          ch_inDatabase, INPUT_CHECK.out.reads
-      )
+      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads )
+
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
 
       //
       // MODULE: Collate results and log into one file to send to output
       //
-      COMBINED_OUTPUT (
-          ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
-          )
-      }
-    }
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
+    } 
+  }
 
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (
