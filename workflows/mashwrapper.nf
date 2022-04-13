@@ -16,12 +16,24 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 
-// Check optional parameters
-// params.organism is optional and will assume that the genomes need to get downloaded and the database built
-//if (params.get_database) {ch_get_database = Channel.fromPath(params.get_database)
-//                                           .splitText()
-//                                           .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
-//if (params.use_database) {ch_inDatabase = file (params.use_database)}
+if (params.get_database) {
+  ch_get_database = Channel.fromPath(params.get_database)
+                                         .splitText()
+                                         .map { it.replaceFirst(/\n/,'') }
+} else {
+
+  if (params.use_database) {
+  ch_inDatabase = file(params.use_database)
+
+    } else {
+     exit("""
+      ERROR!
+      A major error has occurred!
+        ==> User forgot to either include either --use_database or --get_database flag.
+
+      """)
+  }
+}
 
 /*
 
@@ -73,15 +85,11 @@ workflow MASHWRAPPER {
     //
     // SUBWORKFLOW: Read in samplesheet, validate, and stage input files
     //
-    INPUT_CHECK (
-        ch_input
-    )
+    INPUT_CHECK ( ch_input )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     if (params.get_database) {
-       ch_get_database = Channel.fromPath(params.get_database)
-                                                .splitText()
-                                                .map { it.replaceFirst(/\n/,'') }
+
 
       //
       // MODULE: Run Download_Genomes
@@ -119,8 +127,8 @@ workflow MASHWRAPPER {
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
 
     } else {
+
       if (params.use_database) {
-      ch_inDatabase = file (params.use_database)
 
       //
       // MODULE: Run Species_Id
@@ -134,7 +142,7 @@ workflow MASHWRAPPER {
       // MODULE: Collate results and log into one file to send to output
       //
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
-    } 
+    }
   }
 
 /*
