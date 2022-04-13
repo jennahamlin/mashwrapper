@@ -9,7 +9,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowMashwrapper.initialise(params, log)
 
-// Check input path parameters to see if they exist  params.organism, params.database
+// Check input path parameters to see if they exist  params.get_database, params.use_database
 def checkPathParamList = [ params.input]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
@@ -17,10 +17,11 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 
 // Check optional parameters
-// params.orgnaism is optional and will assume that the genomes need to get downloaded and the database built
-if (params.organism) {ch_organism = Channel.fromPath(params.organism)
+// params.organism is optional and will assume that the genomes need to get downloaded and the database built
+if (params.get_database) {ch_get_database = Channel.fromPath(params.get_database)
                                            .splitText()
                                            .map { it.replaceFirst(/\n/,'') }} else { 'No input file of organisms to download provided!'}
+if (params.use_database) {ch_inDatabase = file (params.use_database)}
 /*
 
 ========================================================================================
@@ -69,29 +70,32 @@ workflow MASHWRAPPER {
     ch_log = Channel.empty()
 
     //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    // SUBWORKFLOW: Read in samplesheet, validate, and stage input files
     //
     INPUT_CHECK (
         ch_input
     )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
-    if(params.get_database) {
+    if (params.get_database) {
+
       //
       // MODULE: Run Download_Genomes
       //
-      DOWNLOAD_GENOMES( ch_organism )
+      DOWNLOAD_GENOMES( ch_get_database )
+
       ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
       ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)
 
       //
-      //
+      // MODULE: Make individual mash files for all genomes downloaded
       //
       MAKE_MASH( ch_fna )
+
       ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
 
       //
-      //
+      // MODULE: Build mash database from individual mash files
       //
       MAKE_DATABASE( ch_msh )
       ch_inDatabase = MAKE_DATABASE.out.dmsh
@@ -112,8 +116,7 @@ workflow MASHWRAPPER {
           ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
           )
     } else {
-      if (params.database) {
-      ch_inDatabase = params.database
+      if (params.use_database) {
       //
       // MODULE: Run Species_Id
       //
@@ -130,13 +133,7 @@ workflow MASHWRAPPER {
           ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log')
           )
       }
-
-
-
     }
-
-
-
 
 /*
     CUSTOM_DUMPSOFTWAREVERSIONS (
