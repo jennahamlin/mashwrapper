@@ -66,7 +66,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
-//include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
 
 /*
 ========================================================================================
@@ -93,7 +93,6 @@ workflow MASHWRAPPER {
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     if (params.get_database) {
-
 
       //
       // MODULE: Run Download_Genomes
@@ -144,8 +143,8 @@ workflow MASHWRAPPER {
 
       //
       // MODULE: Collate results and log into one file to send to output
-      //
-      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
+      // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_inDatabase )
     }
   }
 
