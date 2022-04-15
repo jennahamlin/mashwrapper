@@ -19,8 +19,10 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads 
 if (params.get_database) {
 
   ch_get_database = Channel.fromPath(params.get_database)
-                                         .splitText()
-                                         .map { it.replaceFirst(/\n/,'') }
+
+  // Channel.fromPath(params.get_database)
+  //                                       .splitText()
+  //                                       .map { it.replaceFirst(/\n/,'') }
 } else {
 
   if (params.use_database) {
@@ -47,6 +49,7 @@ if (params.get_database) {
 */
 
 // Local: Modules
+include { ORGANISMSHEET_CHECK} from '../modules/local/organismsheet_check'
 include { DOWNLOAD_GENOMES } from '../modules/local/download_genomes'
 include { MAKE_MASH } from '../modules/local/make_mash'
 include { MAKE_DATABASE } from '../modules/local/make_database'
@@ -95,9 +98,18 @@ workflow MASHWRAPPER {
     if (params.get_database) {
 
       //
+      // MODULE
+      //
+      ORGANISMSHEET_CHECK (ch_get_database)
+
+      ch_organism = ORGANISMSHEET_CHECK.out.txt
+                                            .splitText()
+                                            .map { it.replaceFirst(/\n/,'') }
+
+      //
       // MODULE: Run Download_Genomes
       //
-      DOWNLOAD_GENOMES( ch_get_database )
+      DOWNLOAD_GENOMES( ch_organism )
 
       ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
       ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)

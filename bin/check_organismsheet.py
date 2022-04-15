@@ -15,6 +15,7 @@ def parse_args(args=None):
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
     parser.add_argument("FILE_IN", help="Input samplesheet file.")
+    parser.add_argument("FILE_OUT", help="Output file.")
     return parser.parse_args(args)
 
 def print_error(error, context="Line", context_str=""):
@@ -73,7 +74,7 @@ def is_space(d):
  "Samplesheet: {}".format(d))
 
 
-def check_organismsheet(file_in):
+def check_organismsheet(file_in, file_out):
     """
     This function checks that the organismsheet follows the following structure:
     Note - there is no header required for this file
@@ -89,10 +90,20 @@ def check_organismsheet(file_in):
     d = detect_delimiter(file_in, 1)
     is_space(d)
 
+    with open(file_in, "r") as input:
+
+    # Creating "gfg output file.txt" as output
+    # file in write mode
+        with open(file_out, "w") as output:
+
+        # Writing each line from input file to
+        # output file using loop
+            for line in input:
+                output.write(line)
 
 def main(args=None):
     args = parse_args(args)
-    check_organismsheet(args.FILE_IN)
+    check_organismsheet(args.FILE_IN, args.FILE_OUT)
 
 
 if __name__ == "__main__":
