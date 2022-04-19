@@ -33,7 +33,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 3. OPTIONAL: Download genomes from NCBI using [NCBI datasets command line tool](https://www.ncbi.nlm.nih.gov/datasets/)
 4. OPTIONAL: Format donwloaded genomes to be Genus_Species_GenebankIdentifier.fna using [NCBI dataformat command line tool](https://www.ncbi.nlm.nih.gov/datasets/docs/v1/quickstarts/command-line-tools/#install-using-curl)
 5. OPTIONAL: Build individual [Mash sketches](https://mash.readthedocs.io/en/latest/) for all genomes downloaded
-6. OPTIONAL: Build [Mash database](https://mash.readthedocs.io/en/latest/)
+6. OPTIONAL: Build [Mash database](https://mash.readthedocs.io/en/latest/) for all mash sketches
 7. Test fastq.gz reads against either an optionally built Mash database or one provided by the user
 8. Collate results from each isolate of interest tested against the Mash database
 
@@ -74,7 +74,7 @@ The nf-core/mashwrapper pipeline comes with documentation about the pipeline [us
 
 ## Credits
 
-nf-core/mashwrapper was originally written by Jenna Hamlin. 
+nf-core/mashwrapper was originally written by Jenna Hamlin.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
@@ -98,8 +98,8 @@ An extensive list of references for the tools used by the pipeline can be found 
 
 You can cite the `nf-core` publication as follows:
 
- **The nf-core framework for community-curated bioinformatics pipelines.**
+ >**The nf-core framework for community-curated bioinformatics pipelines.**
 
- Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+ >Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 
- _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+ >_Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
