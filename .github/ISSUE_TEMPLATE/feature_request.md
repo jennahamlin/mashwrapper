@@ -1,4 +1,5 @@
-me: Feature request
+---
+name: Feature request
 about: Suggest an idea for the nf-core/bactmap pipeline
 labels: enhancement
 ---
