@@ -4,16 +4,16 @@
   |\\ | |__  __ /  ` /  \\ |__) |__         }  {
   | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
                                         `._,._,'
-  nf-core/jennahamlin-nf-core-mashwrapper v${version}
+  nf-core/jennahamlin-mashwrapper v${version}
 ----------------------------------------------------
 
 Run Name: $runName
 
 <% if (success){
-    out << "## nf-core/jennahamlin-nf-core-mashwrapper execution completed successfully! ##"
+    out << "## nf-core/jennahamlin-mashwrapper execution completed successfully! ##"
 } else {
     out << """####################################################
-## nf-core/jennahamlin-nf-core-mashwrapper execution completed unsuccessfully! ##
+## nf-core/jennahamlin-mashwrapper execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -36,5 +36,5 @@ Pipeline Configuration:
 <% out << summary.collect{ k,v -> " - $k: $v" }.join("\n") %>
 
 --
-nf-core/jennahamlin-nf-core-mashwrapper
-https://github.com/nf-core/jennahamlin-nf-core-mashwrapper
+nf-core/jennahamlin-mashwrapper
+https://github.com/nf-core/jennahamlin-mashwrapper

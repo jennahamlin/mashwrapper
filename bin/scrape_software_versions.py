@@ -8,7 +8,7 @@ for version_file in version_files:
 
     software = version_file.replace(".version.txt", "")
     if software == "pipeline":
-        software = "nf-core/bactmap"
+        software = "nf-core/jennahamlin-mashwrapper"
 
     with open(version_file) as fin:
         version = fin.read().strip()
@@ -18,8 +18,8 @@ for version_file in version_files:
 print(
     """
 id: 'software_versions'
-section_name: 'nf-core/bactmap Software Versions'
-section_href: 'https://github.com/nf-core/bactmap'
+section_name: 'nf-core/jennahamlin-mashwrapper Software Versions'
+section_href: 'https://github.com/nf-core/jennahamlin-mashwrapper'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |
@@ -30,7 +30,7 @@ for k, v in sorted(results.items()):
     print("        <dt>{}</dt><dd><samp>{}</samp></dd>".format(k, v))
 print("    </dl>")
 
-# Write out regexes as tsv file:
+# Write out as tsv file:
 with open("software_versions.tsv", "w") as f:
     for k, v in sorted(results.items()):
         f.write("{}\t{}\n".format(k, v))
