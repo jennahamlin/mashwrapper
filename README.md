@@ -17,7 +17,7 @@
 ## Introduction
 
 <!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
-**nf-core/mashwrapper** is a bioinformatics best-practice analysis pipeline for This is a wrapper around the program Mash. The input is a mash database and your fastq reads of interest. The output is a text file which displays the top five closet matches to your query. .
+**nf-core/mashwrapper** is a wrapper around the program [Mash](https://mash.readthedocs.io/en/latest/). The input is a mash database and your fastq reads of interest that are gzipped. The output is a text file which displays the top five closet matches to your query. This nextflow pipeline can also access NCBI using the [NCBI datasets command line tools](https://www.ncbi.nlm.nih.gov/datasets/) to download genomes or interest to build the mash database, if you needed.
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
 
@@ -28,8 +28,14 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 <!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+1. Confirm input sample sheet
+2. Confirm input organism sheet
+3. OPTIONAL: Download genomes from NCBI using [NCBI datasets command line tool](https://www.ncbi.nlm.nih.gov/datasets/)
+4. OPTIONAL: Format donwloaded genomes to be Genus_Species_GenebankIdentifier.fna using [NCBI dataformat command line tool](https://www.ncbi.nlm.nih.gov/datasets/docs/v1/quickstarts/command-line-tools/#install-using-curl)
+5. OPTIONAL: Build individual [Mash sketches](https://mash.readthedocs.io/en/latest/) for all genomes downloaded
+6. OPTIONAL: Build [Mash database](https://mash.readthedocs.io/en/latest/)
+7. Test fastq.gz reads against either an optionally built Mash database or one provided by the user
+8. Collate results from each isolate of interest tested against the Mash database
 
 ## Quick Start
 
@@ -55,7 +61,11 @@ On release, automated continuous integration tests run the pipeline on a full-si
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```console
-    nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --genome GRCh37
+    ## Use your already built database
+    nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --use_database myMashDatabase.msh
+
+    ## Download and built your database for organism(s) of interest
+    nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --get_database organismsheet.txt
     ```
 
 ## Documentation
@@ -67,7 +77,7 @@ The nf-core/mashwrapper pipeline comes with documentation about the pipeline [us
 nf-core/mashwrapper was originally written by Jenna Hamlin.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
-
+Sateeshe Peri, Micheal Cipriano
 <!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
@@ -86,8 +96,8 @@ An extensive list of references for the tools used by the pipeline can be found 
 
 You can cite the `nf-core` publication as follows:
 
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+ **The nf-core framework for community-curated bioinformatics pipelines.**
+
+ Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+
+ _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
