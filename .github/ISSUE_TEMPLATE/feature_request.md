@@ -1,6 +1,14 @@
 ---
 name: Feature request
+<<<<<<< Updated upstream
 about: Suggest an idea for the nf-core/bactmap pipeline
+=======
+<<<<<<< HEAD
+about: Suggest an idea for the nf-core/jennahamlin-mashwrapper pipeline
+=======
+about: Suggest an idea for the nf-core/bactmap pipeline
+>>>>>>> refs/remotes/origin/main
+>>>>>>> Stashed changes
 labels: enhancement
 ---
 
