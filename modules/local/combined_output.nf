@@ -1,5 +1,6 @@
 process COMBINED_OUTPUT {
       label 'process_low'
+      params.options = [:]
 
       input:
       path(txt)
