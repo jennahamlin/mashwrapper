@@ -1,23 +1,23 @@
-# nf-core/jennahamlin-mashwrapper: Contributing Guidelines
+# nf-core/jennahamlin-nf-core-mashwrapper: Contributing Guidelines
 
 Hi there!
-Many thanks for taking an interest in improving nf-core/jennahamlin-mashwrapper.
+Many thanks for taking an interest in improving nf-core/jennahamlin-nf-core-mashwrapper.
 
-We try to manage the required tasks for nf-core/jennahamlin-mashwrapper using GitHub issues, you probably came to this page when creating one.
+We try to manage the required tasks for nf-core/jennahamlin-nf-core-mashwrapper using GitHub issues, you probably came to this page when creating one.
 Please use the pre-filled template to save time.
 
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying nf-core/jennahamlin-mashwrapper then the best place to ask is on the nf-core Slack [#jennahamlin-mashwrapper](https://nfcore.slack.com/channels/jennahamlin-mashwrapper) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying nf-core/jennahamlin-nf-core-mashwrapper then the best place to ask is on the nf-core Slack [#jennahamlin-nf-core-mashwrapper](https://nfcore.slack.com/channels/jennahamlin-nf-core-mashwrapper) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Contribution workflow
 
-If you'd like to write some code for nf-core/jennahamlin-mashwrapper, the standard workflow is as follows:
+If you'd like to write some code for nf-core/jennahamlin-nf-core-mashwrapper, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [nf-core/jennahamlin-mashwrapper issues](https://github.com/nf-core/jennahamlin-mashwrapper/issues) to avoid duplicating work
+1. Check that there isn't already an issue about your idea in the [nf-core/jennahamlin-nf-core-mashwrapper issues](https://github.com/nf-core/jennahamlin-nf-core-mashwrapper/issues) to avoid duplicating work
     * If there isn't one already, please create one so that others know you're working on this
-2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [nf-core/jennahamlin-mashwrapper repository](https://github.com/nf-core/jennahamlin-mashwrapper) to your GitHub account
+2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [nf-core/jennahamlin-nf-core-mashwrapper repository](https://github.com/nf-core/jennahamlin-nf-core-mashwrapper) to your GitHub account
 3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
 4. Use `nf-core schema build` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
 5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
@@ -55,11 +55,11 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Getting help
 
-For further information/help, please consult the [nf-core/jennahamlin-mashwrapper documentation](https://nf-co.re/jennahamlin-mashwrapper/usage) and don't hesitate to get in touch on the nf-core Slack [#jennahamlin-mashwrapper](https://nfcore.slack.com/channels/jennahamlin-mashwrapper) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [nf-core/jennahamlin-nf-core-mashwrapper documentation](https://nf-co.re/jennahamlin-nf-core-mashwrapper/usage) and don't hesitate to get in touch on the nf-core Slack [#jennahamlin-nf-core-mashwrapper](https://nfcore.slack.com/channels/jennahamlin-nf-core-mashwrapper) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Pipeline contribution conventions
 
-To make the nf-core/jennahamlin-mashwrapper code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+To make the nf-core/jennahamlin-nf-core-mashwrapper code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
 
 ### Adding a new step
 
@@ -68,16 +68,13 @@ If you wish to contribute a new step, please use the following coding standards:
 1. Define the corresponding input channel into your new process from the expected previous process channel
 2. Write the process block (see below).
 3. Define the output channel if needed (see below).
-4. Add any new flags/options to `nextflow.config` with a default (see below).
-5. Add any new flags/options to `nextflow_schema.json` with help text (with `nf-core schema build`).
-6. Add any new flags/options to the help message (for integer/text parameters, print to help the corresponding `nextflow.config` parameter).
-7. Add sanity checks for all relevant parameters.
-8. Add any new software to the `scrape_software_versions.py` script in `bin/` and the version command to the `scrape_software_versions` process in `main.nf`.
-9. Do local tests that the new code works properly and as expected.
-10. Add a new test command in `.github/workflow/ci.yml`.
-11. If applicable add a [MultiQC](https://https://multiqc.info/) module.
-12. Update MultiQC config `assets/multiqc_config.yaml` so relevant suffixes, name clean up, General Statistics Table column order, and module figures are in the right order.
-13. Optional: Add any descriptions of MultiQC report sections and output files to `docs/output.md`.
+4. Add any new parameters to `nextflow.config` with a default (see below).
+5. Add any new parameters to `nextflow_schema.json` with help text (via the `nf-core schema build` tool).
+6. Add sanity checks and validation for all relevant parameters.
+7. Perform local tests to validate that the new code works as expected.
+8. If applicable, add a new test command in `.github/workflow/ci.yml`.
+9. Update MultiQC config `assets/multiqc_config.yaml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
+10. Add a description of the output files and if relevant any appropriate images from the MultiQC report to `docs/output.md`.
 
 ### Default values
 
@@ -101,27 +98,6 @@ Please use the following naming schemes, to make it easy to understand what is g
 ### Nextflow version bumping
 
 If you are using a new feature from core Nextflow, you may bump the minimum required version of nextflow in the pipeline with: `nf-core bump-version --nextflow . [min-nf-version]`
-
-### Software version reporting
-
-If you add a new tool to the pipeline, please ensure you add the information of the tool to the `get_software_version` process.
-
-Add to the script block of the process, something like the following:
-
-```bash
-<YOUR_TOOL> --version &> v_<YOUR_TOOL>.txt 2>&1 || true
-```
-
-or
-
-```bash
-<YOUR_TOOL> --help | head -n 1 &> v_<YOUR_TOOL>.txt 2>&1 || true
-```
-
-You then need to edit the script `bin/scrape_software_versions.py` to:
-
-1. Add a Python regex for your tool's `--version` output (as in stored in the `v_<YOUR_TOOL>.txt` file), to ensure the version is reported as a `v` and the version number e.g. `v2.1.1`
-2. Add a HTML entry to the `OrderedDict` for formatting in MultiQC.
 
 ### Images and figures
 
