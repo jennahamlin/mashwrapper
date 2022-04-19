@@ -1,57 +1,63 @@
-
-```yaml
+---
 name: Bug report
-description: Report something that is broken or incorrect
+about: Report something that is broken or incorrect
 labels: bug
-body:
+---
 
-  - type: markdown
-    attributes:
-      value: |
-        Before you post this issue, please check the documentation:
+<!--
+# nf-core/bactmap bug report
 
-        - [nf-core website: troubleshooting](https://nf-co.re/usage/..
-        - [nf-core/jennahamlin-nf-core-mashwrapper pipeline document..
+Hi there!
 
-  - type: textarea
-    id: description
-    attributes:
-      label: Description of the bug
-      description: A clear and concise description of what the bug is.
-    validations:
-      required: true
+Thanks for telling us about a problem with the pipeline.
+Please delete this text and anything that's not relevant from the template below:
+-->
 
-  - type: textarea
-    id: command_used
-    attributes:
-      label: Command used and terminal output
-      description: Steps to reproduce the behaviour. Please paste th..
-      render: console
-      placeholder: |
-        $ nextflow run ...
+## Check Documentation
 
-        Some output where something broke
+I have checked the following places for your error:
 
-  - type: textarea
-    id: files
-    attributes:
-      label: Relevant files
-      description: |
-        Please drag and drop the relevant files here. Create a `.zip..
-        Your verbose log file `.nextflow.log` is often useful _(this..
+- [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
+- [ ] [nf-core/bactmap pipeline documentation](https://nf-co.re/bactmap/usage)
 
-  - type: textarea
-    id: system
-    attributes:
-      label: System information
-      description: |
-        * Nextflow version _(eg. 21.10.3)_
-        * Hardware _(eg. HPC, Desktop, Cloud)_
-        * Executor _(eg. slurm, local, awsbatch)_
-        * Container engine: _(e.g. Docker, Singularity, Conda, Podma..
-        * OS _(eg. CentOS Linux, macOS, Linux Mint)_
-        * Version of nf-core/jennahamlin-nf-core-mashwrapper _(eg. 1..
-```
----- 
+## Description of the bug
 
-Produced by [yaml2md](https://www.google.com) and [pandoc](pandoc.org)
+<!-- A clear and concise description of what the bug is. -->
+
+## Steps to reproduce
+
+Steps to reproduce the behaviour:
+
+1. Command line: <!-- [e.g. `nextflow run ...`] -->
+2. See error: <!-- [Please provide your error message] -->
+
+## Expected behaviour
+
+<!-- A clear and concise description of what you expected to happen. -->
+
+## Log files
+
+Have you provided the following extra information/files:
+
+- [ ] The command used to run the pipeline
+- [ ] The `.nextflow.log` file <!-- this is a hidden file in the directory where you launched the pipeline -->
+
+## System
+
+- Hardware: <!-- [e.g. HPC, Desktop, Cloud...] -->
+- Executor: <!-- [e.g. slurm, local, awsbatch...] -->
+- OS: <!-- [e.g. CentOS Linux, macOS, Linux Mint...] -->
+- Version <!-- [e.g. 7, 10.13.6, 18.3...] -->
+
+## Nextflow Installation
+
+- Version: <!-- [e.g. 21.04.0] -->
+
+## Container engine
+
+- Engine: <!-- [e.g. Conda, Docker, Singularity, Podman, Shifter or Charliecloud] -->
+- version: <!-- [e.g. 1.0.0] -->
+
+## Additional context
+
+<!-- Add any other context about the problem here. -->
