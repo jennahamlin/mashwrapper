@@ -5,9 +5,6 @@
         "nf-core/modules": {
             "custom/dumpsoftwareversions": {
                 "git_sha": "20d8250d9f39ddb05dfb437603aaf99b5c0b2b41"
-            },
-            "mash/dist": {
-                "git_sha": "bf5edb86148d881965c62eafef08c09a5a4a62ba"
             }
         }
     }
