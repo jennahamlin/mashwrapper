@@ -5,7 +5,7 @@ labels: bug
 ---
 
 <!--
-# nf-core/mashwrapper bug report
+# nf-core/jennahamlin-mashwrapper bug report
 
 Hi there!
 
@@ -18,7 +18,7 @@ Please delete this text and anything that's not relevant from the template below
 I have checked the following places for your error:
 
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [nf-core/mashwrapper pipeline documentation](https://nf-co.re/mashwrapper/usage)
+- [ ] [nf-core/jennahamlin-mashwrapper pipeline documentation](https://nf-co.re/jennahamlin-mashwrapper/usage)
 
 ## Description of the bug
 

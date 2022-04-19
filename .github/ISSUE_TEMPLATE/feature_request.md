@@ -1,11 +1,11 @@
 ---
 name: Feature request
-about: Suggest an idea for the nf-core/mashwrapper pipeline
+about: Suggest an idea for the nf-core/jennahamlin-mashwrapper pipeline
 labels: enhancement
 ---
 
 <!--
-# nf-core/mashwrapper feature request
+# nf-core/jennahamlin-mashwrapper feature request
 
 Hi there!
 
