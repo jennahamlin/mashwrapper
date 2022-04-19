@@ -1,5 +1,6 @@
 process ORGANISMSHEET_CHECK {
     tag "$organismsheet"
+    label 'process_low'
 
 // does require python, will need to add container for. container should be consistent where possible
 //    conda (params.enable_conda ? "conda-forge::python=3.8.3" : null)
