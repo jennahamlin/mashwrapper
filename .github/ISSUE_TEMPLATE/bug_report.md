@@ -5,7 +5,7 @@ labels: bug
 ---
 
 <!--
-# nf-core/bactmap bug report
+# nf-core/mashwrapper bug report
 
 Hi there!
 
@@ -18,7 +18,7 @@ Please delete this text and anything that's not relevant from the template below
 I have checked the following places for your error:
 
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [nf-core/bactmap pipeline documentation](https://nf-co.re/bactmap/usage)
+- [ ] [nf-core/mashwrapper pipeline documentation](https://nf-co.re/mashwrapper/usage)
 
 ## Description of the bug
 
