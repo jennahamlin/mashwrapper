@@ -74,11 +74,13 @@ The nf-core/mashwrapper pipeline comes with documentation about the pipeline [us
 
 ## Credits
 
-nf-core/mashwrapper was originally written by Jenna Hamlin.
+nf-core/mashwrapper was originally written by Jenna Hamlin. 
 
 We thank the following people for their extensive assistance in the development of this pipeline:
-Sateeshe Peri, Micheal Cipriano
+
 <!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+* Sateeshe Peri
+* Micheal Cipriano
 
 ## Contributions and Support
 
