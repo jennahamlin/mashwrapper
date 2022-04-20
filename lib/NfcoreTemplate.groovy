@@ -17,8 +17,8 @@ class NfcoreTemplate {
             assert params.outdir.startsWith('s3:')       : "Outdir not on S3 - specify S3 Bucket to run on AWSBatch!"
         }
     }
-    
-     //
+
+    //
     //  Warn if a -profile or Nextflow config has not been provided to run the pipeline
     //
     public static void checkConfigProvided(workflow, log) {
