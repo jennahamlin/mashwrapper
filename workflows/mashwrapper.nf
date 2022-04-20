@@ -139,7 +139,7 @@ workflow MASHWRAPPER {
 
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
-      //ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
+      ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
 
       //
       // MODULE: Collate results and log into one file to send to output
@@ -160,11 +160,14 @@ workflow MASHWRAPPER {
 
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
+      ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
 
       //
       // MODULE: Collate results and log into one file to send to output
       // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_inDatabase )
+      
+      ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
       
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )

@@ -10,11 +10,11 @@ process SPECIES_ID {
       input:
       file(inDatabase)
       tuple val(meta), path(reads)
-      //path "versions.yml", emit: versions
 
       output:
       path("*.txt"), emit: txt
       path("*.log"), emit: log
+      path "versions.yml", emit: versions
 
       script:
       """
@@ -31,6 +31,7 @@ process SPECIES_ID {
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":
           python: \$(python --version | sed 's/Python //g')
+          mash: \$(mash --version | sed 's/Mash //g')
       END_VERSIONS
       """
 }
