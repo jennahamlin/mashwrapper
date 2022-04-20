@@ -13,11 +13,18 @@ process DOWNLOAD_GENOMES {
       // is many *fna files that will be used to generate .msh files and then mash database
       path("**/allDownload/*.fna"), emit: fna
       path(".command.log"), emit: dlog
+      path "versions.yml", emit: versions
 
       script:
       """
       ## Original downloadGenome.sh script allows user to specify using conda
       ## environment, so always set -c flag to False in Nextflow
       ${projectDir}/bin/downloadGenome.sh -c F -s "${organism}"
+
+      cat <<-END_VERSIONS > versions.yml
+      "${task.process}":
+          datasets: \$(datasets version | sed 's/Datasets //g')
+          dataformat: \$(dataformat version | sed 's/Dataformat //g')
+      END_VERSIONS
       """
 }

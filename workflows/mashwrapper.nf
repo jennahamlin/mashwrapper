@@ -105,6 +105,7 @@ workflow MASHWRAPPER {
       ch_organism = ORGANISMSHEET_CHECK.out.txt
                                             .splitText()
                                             .map { it.replaceFirst(/\n/,'') }
+      ch_versions = ch_versions.mix(ORGANISMSHEET_CHECK.out.versions)
 
       //
       // MODULE: Run Download_Genomes
@@ -113,6 +114,7 @@ workflow MASHWRAPPER {
 
       ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
       ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)
+      ch_versions = ch_versions.mix(DOWNLOAD_GENOMES.out.versions)
 
       //
       // MODULE: Make individual mash files for all genomes downloaded
@@ -120,6 +122,7 @@ workflow MASHWRAPPER {
       MAKE_MASH( ch_fna )
 
       ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
+      ch_versions = ch_versions.mix(MAKE_MASH.out.versions)
 
       //
       // MODULE: Build mash database from individual mash files
@@ -127,6 +130,7 @@ workflow MASHWRAPPER {
       MAKE_DATABASE( ch_msh )
 
       ch_inDatabase = MAKE_DATABASE.out.dmsh
+      ch_versions = ch_versions.mix(MAKE_DATABASE.out.versions)
 
       //
       // MODULE: Run Species_Id
@@ -135,6 +139,7 @@ workflow MASHWRAPPER {
 
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
+      //ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
 
       //
       // MODULE: Collate results and log into one file to send to output

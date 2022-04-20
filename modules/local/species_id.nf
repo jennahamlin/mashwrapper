@@ -9,8 +9,8 @@ process SPECIES_ID {
 
       input:
       file(inDatabase)
-      //path database
       tuple val(meta), path(reads)
+      //path "versions.yml", emit: versions
 
       output:
       path("*.txt"), emit: txt
@@ -27,5 +27,10 @@ process SPECIES_ID {
       readsIn1="${reads[1]}"
 
       ${projectDir}/bin/run_species_id.py -d ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}
+
+      cat <<-END_VERSIONS > versions.yml
+      "${task.process}":
+          python: \$(python --version | sed 's/Python //g')
+      END_VERSIONS
       """
 }

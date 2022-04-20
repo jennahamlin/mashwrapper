@@ -12,7 +12,8 @@ process ORGANISMSHEET_CHECK {
     file(organismsheet)
 
     output:
-    path '*.txt'       , emit: txt
+    path '*.txt', emit: txt
+    path "versions.yml", emit: versions
 
     """
     check_organismsheet.py \\

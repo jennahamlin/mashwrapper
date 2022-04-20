@@ -12,6 +12,7 @@ process MAKE_MASH {
 
       output:
       path("*.msh"), emit: msh
+      path "versions.yml", emit: versions
 
 
       script:
@@ -20,5 +21,10 @@ process MAKE_MASH {
       do
           mash sketch \$file -k 25 -s 100000
       done
+
+      cat <<-END_VERSIONS > versions.yml
+      "${task.process}":
+          mash: \$(mash --version | sed 's/Mash //g')
+      END_VERSIONS
       """
 }

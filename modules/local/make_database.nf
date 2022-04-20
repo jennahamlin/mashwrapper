@@ -12,9 +12,15 @@ process MAKE_DATABASE {
 
       output:
       path("myMashDatabase.msh"), emit: dmsh
+      path "versions.yml", emit: versions
 
       script:
       """
       mash sketch $msh -o myMashDatabase.msh
+
+      cat <<-END_VERSIONS > versions.yml
+      "${task.process}":
+          mash: \$(mash --version | sed 's/Mash //g')
+      END_VERSIONS
       """
 }
