@@ -1,6 +1,6 @@
 process COMBINED_OUTPUT {
+      tag "combinedoutput"
       label 'process_low'
-      params.options = [:]
 
       input:
       path(txt)

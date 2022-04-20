@@ -94,9 +94,6 @@ workflow MASHWRAPPER {
     //
     INPUT_CHECK ( ch_input )
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-      ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
 
     if (params.get_database) {
 
@@ -143,6 +140,8 @@ workflow MASHWRAPPER {
       // MODULE: Collate results and log into one file to send to output
       //
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
+      
+      CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' ) )
 
     } else {
 
@@ -160,14 +159,12 @@ workflow MASHWRAPPER {
       // MODULE: Collate results and log into one file to send to output
       // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_inDatabase )
+      
+      CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
+      )
     }
   }
 
-/*
-   // CUSTOM_DUMPSOFTWAREVERSIONS (
-   //     ch_versions.unique().collectFile(name: 'collated_versions.yml')
-   // )
-*/
     //
     // MODULE: MultiQC
     //
