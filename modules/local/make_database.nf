@@ -11,12 +11,13 @@ process MAKE_DATABASE {
       path(msh)
 
       output:
-      path("myMashDatabase.msh"), emit: dmsh
+      path("myMashDatabase***.msh"), emit: dmsh
       path "versions.yml", emit: versions
 
       script:
       """
-      mash sketch $msh -o myMashDatabase.msh
+      currentDate=`date +"%Y-%m-%d"`
+      mash sketch $msh -o myMashDatabase.\$currentDate.msh
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

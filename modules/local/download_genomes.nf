@@ -13,7 +13,7 @@ process DOWNLOAD_GENOMES {
       // is many *fna files that will be used to generate .msh files and then mash database
       path("**/allDownload/*.fna"), emit: fna
       path(".command.log"), emit: dlog
-      path "versions.yml", emit: versions
+      path("versions.yml"), emit: versions
 
       script:
       """

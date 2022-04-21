@@ -20,9 +20,6 @@ if (params.get_database) {
 
   ch_get_database = Channel.fromPath(params.get_database)
 
-  // Channel.fromPath(params.get_database)
-  //                                       .splitText()
-  //                                       .map { it.replaceFirst(/\n/,'') }
 } else {
 
   if (params.use_database) {
@@ -30,11 +27,13 @@ if (params.get_database) {
   ch_inDatabase = file(params.use_database)
 
     } else {
-     exit("""
+      exit("""
       ERROR!
-      You must specify a flag to either: use a database (--use_database) or generate the database (--get_database flag).
+      You must specify a flag either:  use a database (--use_database) or generate the database (--get_database),
+      followed by either the name of the mash database (.msh) or list of organisms to download as a text file (.txt).
 
           --use_database: User provides path to a pre-built mash database. Assumes sketch size of and XXX
+          
           --get_database: User provided text file of organisms to download written with on organism per row.
                           Can either be written as genus species (legionall pneumophila) or genus (legionella)
       """)
@@ -76,9 +75,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/
     RUN MAIN WORKFLOW
 ========================================================================================
 */
-
-// Info required for completion email and summary
-def multiqc_report = []
 
 workflow MASHWRAPPER {
 
@@ -144,9 +140,12 @@ workflow MASHWRAPPER {
       //
       // MODULE: Collate results and log into one file to send to output
       //
-      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
-      ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), 
+                        ch_log.unique().collectFile(name: 'collated_species_id.log'), 
+                        ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
       
+      ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
+
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' ) )
 
     } else {
@@ -165,33 +164,16 @@ workflow MASHWRAPPER {
       //
       // MODULE: Collate results and log into one file to send to output
       // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
-      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), ch_log.unique().collectFile(name: 'collated_species_id.log'), ch_inDatabase )
-      
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), 
+                        ch_log.unique().collectFile(name: 'collated_species_id.log'), 
+                        ch_inDatabase.getName()  )
+
       ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
-      
+
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )
     }
   }
-
-    //
-    // MODULE: MultiQC
-    //
-    //  workflow_summary    = WorkflowMashwrapper.paramsSummaryMultiqc(workflow, summary_params)
-    //  ch_workflow_summary = Channel.value(workflow_summary)
-
-    // ch_multiqc_files = Channel.empty()
-     //ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-     //ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-     //ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-     //ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
-     //ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
-     //MULTIQC (
-    //     ch_multiqc_files.collect()
-  //  )
-  //  multiqc_report = MULTIQC.out.report.toList()
-  //  ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 }
 
 /*
