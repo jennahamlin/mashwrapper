@@ -2,11 +2,10 @@ process ORGANISMSHEET_CHECK {
     tag "$organismsheet"
     label 'process_low'
 
-// does require python, will need to add container for. container should be consistent where possible
-//    conda (params.enable_conda ? "conda-forge::python=3.8.3" : null)
-//    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-//        'https://depot.galaxyproject.org/singularity/python:3.8.3' :
-//        'quay.io/biocontainers/python:3.8.3' }"
+    conda (params.enable_conda ? "conda-forge::python=3.7.6" : null)
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.7.6' :
+        'quay.io/biocontainers/python:3.7.6' }"
 
     input:
     file(organismsheet)

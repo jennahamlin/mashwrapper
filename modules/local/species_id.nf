@@ -14,7 +14,8 @@ process SPECIES_ID {
       output:
       path("*.txt"), emit: txt
       path("*.log"), emit: log
-      path "versions.yml", emit: versions
+      path("database.name"), emit: name optional true
+      path("versions.yml"), emit: versions
 
       script:
       """
@@ -27,6 +28,10 @@ process SPECIES_ID {
       readsIn1="${reads[1]}"
 
       ${projectDir}/bin/run_species_id.py -d ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" --max_dist ${params.max_dist} --min_kmer ${params.min_kmer} --num_threads ${params.num_threads}
+
+      echo $inDatabase >  "database.name"
+
+
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

@@ -33,7 +33,7 @@ if (params.get_database) {
       followed by either the name of the mash database (.msh) or list of organisms to download as a text file (.txt).
 
           --use_database: User provides path to a pre-built mash database. Assumes sketch size of and XXX
-          
+
           --get_database: User provided text file of organisms to download written with on organism per row.
                           Can either be written as genus species (legionall pneumophila) or genus (legionella)
       """)
@@ -84,6 +84,7 @@ workflow MASHWRAPPER {
     ch_msh = Channel.empty()
     ch_results = Channel.empty()
     ch_log = Channel.empty()
+    ch_name = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate, and stage input files
@@ -140,11 +141,9 @@ workflow MASHWRAPPER {
       //
       // MODULE: Collate results and log into one file to send to output
       //
-      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), 
-                        ch_log.unique().collectFile(name: 'collated_species_id.log'), 
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
+                        ch_log.unique().collectFile(name: 'collated_species_id.log'),
                         ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
-      
-      ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' ) )
 
@@ -160,15 +159,14 @@ workflow MASHWRAPPER {
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
       ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
+      ch_name = SPECIES_ID.out.name
 
       //
       // MODULE: Collate results and log into one file to send to output
       // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
-      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'), 
-                        ch_log.unique().collectFile(name: 'collated_species_id.log'), 
-                        ch_inDatabase.getName()  )
-
-      ch_versions = ch_versions.mix(COMBINED_OUTPUT.out.versions)
+      COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
+                        ch_log.unique().collectFile(name: 'collated_species_id.log'),
+                        ch_name.collectFile(name: 'database.name'))
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )
