@@ -1,7 +1,7 @@
 process DOWNLOAD_GENOMES {
       label 'process_low'
 
-      //container = "file://my-ncbi.sif"
+      container = "file://myImages/my-ncbi.sif"
       //conda (params.enable_conda ? "ncbi-datasets-cli" : null)
       //container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
       //'https://depot.galaxyproject.org/singularity/ncbi-genome-download:0.3.1--pyh5e36f6f_0' :
