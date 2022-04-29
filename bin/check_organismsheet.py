@@ -22,8 +22,7 @@ def print_error(error, context="Line", context_str=""):
     error_str = "ERROR: Please check samplesheet -> {}".format(error)
     if context != "" and context_str != "":
         error_str = "ERROR: Please check samplesheet -> {}\n{}: '{}'".format(
-            error, context.strip(), context_str.strip()
-        )
+            error, context.strip(), context_str.strip())
     print(error_str)
     sys.exit(1)
 
@@ -38,8 +37,8 @@ def is_file_empty(file_path):
  "Samplesheet: {}".format(file_path))
 
 def what_is_format(file_ending):
-    if file_ending.endswith((".csv", ".tsv")):
-        print_error("This is not the correct file type! Exiting.", \
+    if file_ending.endswith((".csv", ".tsv", ".msh", ".mash", ".db")):
+        print_error("This is not the correct file type, should be .txt! Exiting.",\
  "Samplesheet: {}".format(file_ending))
     else:
         print("Okay, this is a text file. Continuing...")

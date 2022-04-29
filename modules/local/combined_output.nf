@@ -10,7 +10,7 @@ process COMBINED_OUTPUT {
       output:
       path("collated_species_id_results.txt"), emit: txt
       path("collated_species_id.log"), emit: log
-      path("collated_download_genomes.log"),  emit: dlog
+      path("collated_download_genomes.log"),  emit: dlog optional true
 
 
       script:
