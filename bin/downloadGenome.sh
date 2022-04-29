@@ -150,6 +150,7 @@ fi
 ####################
 ## Loop through species array and download legionella genomes
 ## Can change source to genbank (GCA) or refseq (GCF)
+
 for val in "${species[@]}";
 do
 
