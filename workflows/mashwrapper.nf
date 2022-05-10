@@ -9,16 +9,13 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 // Validate input parameters
 WorkflowMashwrapper.initialise(params, log)
 
-// Check input path parameters to see if they exist  params.get_database, params.use_database
-def checkPathParamList = [ params.input]
-for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
-
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 
 if (params.get_database) {
 
   ch_get_database = Channel.fromPath(params.get_database)
+  ch_kmer = params.size_kmer
 
 } else {
 
@@ -35,11 +32,10 @@ if (params.get_database) {
           --use_database: User provides path to a pre-built mash database. Assumes sketch size of and XXX
 
           --get_database: User provided text file of organisms to download written with on organism per row.
-                          Can either be written as genus species (legionall pneumophila) or genus (legionella)
+                          Can either be written as genus species (legionalla pneumophila) or genus (legionella)
       """)
   }
 }
-
 /*
 
 ========================================================================================
@@ -77,7 +73,6 @@ include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/
 */
 
 workflow MASHWRAPPER {
-
     ch_versions = Channel.empty()
     ch_download = Channel.empty()
     ch_fna = Channel.empty()
@@ -116,7 +111,7 @@ workflow MASHWRAPPER {
       //
       // MODULE: Make individual mash files for all genomes downloaded
       //
-      MAKE_MASH( ch_fna )
+      MAKE_MASH( ch_fna, ch_kmer)
 
       ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
       ch_versions = ch_versions.mix(MAKE_MASH.out.versions)

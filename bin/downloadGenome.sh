@@ -297,11 +297,11 @@ cd allDownload
 
 ## Exclude legionella that is not identified to species and endosymbionts
 if [[ "$species" == "legionella" ]]; then
-  echo "Removing Legionellaendosymbiont files and files where the isolate is only identified to genus..."
+  echo "Removing Legionella endosymbiont files and files where the isolate is only identified to genus..."
   rm Legionella_sp._*.fna
   rm Legionella_endosymbiont*.fna
 else
-  echo "This is not legionella, so there are no extra files to remove..."
+  echo "This is not the genus legionella, so there are no extra files to remove..."
 fi
 
 ## Count number of files in folder with those in speicesCount file for comparison

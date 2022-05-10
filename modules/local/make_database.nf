@@ -17,7 +17,7 @@ process MAKE_DATABASE {
       script:
       """
       currentDate=`date +"%Y-%m-%d"`
-      mash sketch $msh -o myMashDatabase.\$currentDate.msh
+      mash sketch $msh -o myMashDatabasels.\$currentDate.msh
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

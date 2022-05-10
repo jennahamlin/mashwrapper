@@ -62,12 +62,18 @@
             "description": "",
             "default": "",
             "properties": {
+                "size_kmer": {
+                    "type": "integer",
+                    "default": 25,
+                    "fa_icon": "fas fa-list-ol",
+                    "description": "Default 25. Can be 1 - 32. Only available when downloading genomes. Hashes are based on a string of this many nucleotides."
+                },
                 "max_dist": {
                     "type": "number",
                     "default": 0.05,
                     "fa_icon": "fas fa-wrench",
                     "help_text": "This is an optional parameter that is used as a threshold for parsing results.",
-                    "description": "This is a mash distance threshold. By adjusting this value, one can use the cut-off as a mechanism for including or excluding isolates based on this value.",
+                    "description": "This is a mash distance threshold, which can be used as cut-off mechanism for excluding isolates in the species determination..",
                     "minimum": 0,
                     "maximum": 1
                 },
@@ -75,7 +81,7 @@
                     "type": "integer",
                     "default": 2,
                     "fa_icon": "far fa-minus-square",
-                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number of interest. For both instances though the lowest value possible is 2, which is the default.",
+                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number.  The lowest value possible is 2, which is the default.",
                     "minimum": 2
                 },
                 "num_threads": {

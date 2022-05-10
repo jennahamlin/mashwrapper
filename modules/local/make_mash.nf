@@ -9,6 +9,7 @@ process MAKE_MASH {
 
       input:
       file(fna).collect()
+      val(kmer)
 
       output:
       path("*.msh"), emit: msh
@@ -19,7 +20,7 @@ process MAKE_MASH {
       """
       for file in ${fna}
       do
-          mash sketch \$file -k 25 -s 100000
+          mash sketch \$file -k ${kmer} -s 100000
       done
 
       cat <<-END_VERSIONS > versions.yml
