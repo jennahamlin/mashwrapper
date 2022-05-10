@@ -14,7 +14,7 @@ process SPECIES_ID {
       output:
       path("*.txt"), emit: txt
       path("*.log"), emit: log
-      path("database.name"), emit: name optional true
+      path("database.name"), emit: name, optional: true
       path("versions.yml"), emit: versions
 
       script:
