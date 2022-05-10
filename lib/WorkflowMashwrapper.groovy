@@ -8,7 +8,7 @@ class WorkflowMashwrapper {
     // Check and validate parameters
     //
     public static void initialise(params, log) {
-        genomeExistsError(params, log)
+        //genomeExistsError(params, log)
 
       //  if (!params.database) {
       //      log.error "No pre-built mash sketch file was not specified with e.g. '--database mySketch.msh' or via a detectable config file."
@@ -46,14 +46,14 @@ class WorkflowMashwrapper {
     //
     // Exit pipeline if incorrect --genome key provided
     //
-    private static void genomeExistsError(params, log) {
-        if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-            log.error "=============================================================================\n" +
-                "  Genome '${params.genome}' not found in any config files provided to the pipeline.\n" +
-                "  Currently, the available genome keys are:\n" +
-                "  ${params.genomes.keySet().join(", ")}\n" +
-                "==================================================================================="
-            System.exit(1)
-        }
-    }
+    //private static void genomeExistsError(params, log) {
+      //  if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
+        //    log.error "=============================================================================\n" +
+          //      "  Genome '${params.genome}' not found in any config files provided to the pipeline.\n" +
+            //    "  Currently, the available genome keys are:\n" +
+              //  "  ${params.genomes.keySet().join(", ")}\n" +
+                //"==================================================================================="
+            //System.exit(1)
+        //}
+    //}
 }

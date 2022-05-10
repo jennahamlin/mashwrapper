@@ -56,8 +56,8 @@
                 }
             }
         },
-        "optional_parameters": {
-            "title": "Optional pipeline steps",
+        "optional_pipeline_parameters": {
+            "title": "Optional pipeline parameters",
             "type": "object",
             "description": "",
             "default": "",
@@ -247,7 +247,7 @@
             "$ref": "#/definitions/database_options"
         },
         {
-            "$ref": "#/definitions/optional_parameters"
+            "$ref": "#/definitions/optional_pipeline_parameters"
         },
         {
             "$ref": "#/definitions/institutional_config_options"
