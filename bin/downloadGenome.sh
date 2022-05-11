@@ -320,6 +320,15 @@ running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
 
+echo "PWD:"
+echo $PWD
+echo "basefolder:"
+echo $basefolder
+
+cp *.fna $basefolder
+
+
+
 echo "Exiting the program."
 echo " "
 

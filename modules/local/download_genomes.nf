@@ -10,7 +10,7 @@ process DOWNLOAD_GENOMES {
       val(organism)
 
       output:
-      path("*/*/*.fna"), emit: fna
+      path("*.fna"), emit: fna
       path(".command.log"), emit: dlog
       path("versions.yml"), emit: versions
 
