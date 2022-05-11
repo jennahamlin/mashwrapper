@@ -238,10 +238,12 @@ do
   ## Rename files using mapfile
   cd common
   awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal2$valUp.txt
+ 
+  ## Move all converted *.fna files from species common to alldownload
+  cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
 
-  ## Move all converted *.fna files to common directory
-  find . -maxdepth 5 -type f -name "*.fna" -print0 | \
-  xargs -0 cp -t $basefolder/genomesDownloaded_$timestamp/allDownload
+  #find . -maxdepth 14 -type f -name "*.fna" -print0 | \
+  #xargs -0 cp $basefolder/genomesDownloaded_$timestamp/allDownload
 
   ## Move out of common folder
   cd ..
@@ -301,7 +303,7 @@ if [[ "$species" == "legionella" ]]; then
   rm Legionella_sp._*.fna
   rm Legionella_endosymbiont*.fna
 else
-  echo "This is not the genus legionella, so there are no extra files to remove..."
+  echo "This is did not include Legionella endosymbiont or only isolates identified to genus. Thus, no extra files to remove..."
 fi
 
 ## Count number of files in folder with those in speicesCount file for comparison
@@ -317,6 +319,5 @@ can either investigate the downloadG.e***/downloadG.o*** file or just try \
 running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
-
 echo "Exiting the program."
 echo " "
