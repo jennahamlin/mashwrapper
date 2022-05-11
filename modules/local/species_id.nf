@@ -27,7 +27,7 @@ process SPECIES_ID {
       readsIn0="${reads[0]}"
       readsIn1="${reads[1]}"
 
-      ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" --max_dist ${params.max_dist} --kmer_min ${params.kmer_min} --num_threads ${params.num_threads}
+      ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" -d ${params.max_dist} -m ${params.kmer_min} -p ${params.num_threads}
 
       echo $inDatabase >  "database.name"
 

@@ -97,7 +97,7 @@ def argparser():
     optional.add_argument("--kmer_min", "-m", default=2,
                         help="Minimum copies of kmer count (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
-    optional.add_argument("--num_threads", "-t", default=2,
+    optional.add_argument("--num_threads", "-p", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
@@ -361,7 +361,6 @@ def cal_kmer():
     outputFastq1 = run_cmd(fastqCmd1)
 
     ## get genome size and coverage; will provide as ouput for user
-    print(outputFastq1.stderr)
     gSize = outputFastq1.stderr.splitlines()[0]
     gSize = gSize[23:]
     logging.info("Estimated Genome Size: %s " % gSize)
@@ -546,8 +545,8 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Input query file 2: " + inRead2 + "\n")
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
-        f.write("Maximum mash distance: " + str(inMaxDis) + "\n")
-        f.write("Minimum kmer copy number to be included in the sketch: " + str(mFlag[0]) + "\n" + "\n")
+        f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
+        f.write("Minimum kmer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
