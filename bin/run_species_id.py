@@ -356,11 +356,12 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '123456']
+    fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
 
     ## get genome size and coverage; will provide as ouput for user
+    print(outputFastq1.stderr)
     gSize = outputFastq1.stderr.splitlines()[0]
     gSize = gSize[23:]
     logging.info("Estimated Genome Size: %s " % gSize)
