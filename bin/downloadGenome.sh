@@ -319,5 +319,7 @@ can either investigate the downloadG.e***/downloadG.o*** file or just try \
 running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
+
 echo "Exiting the program."
 echo " "
+
