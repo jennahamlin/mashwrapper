@@ -379,7 +379,7 @@ def cal_kmer():
 def get_results(mFlag, inThreads):
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
-    os.remove('myCatFile')
+    #os.remove('myCatFile')
     return outputFastq2
 
 def isTie(df):

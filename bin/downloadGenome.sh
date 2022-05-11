@@ -320,14 +320,11 @@ running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
 
-echo "PWD:"
-echo $PWD
-echo "basefolder:"
-echo $basefolder
 
-cp *.fna $basefolder
-
-
+## Move files up to basefolder to all easier copying via nextflow process
+mv *.fna $basefolder
+rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
+rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 
 echo "Exiting the program."
 echo " "
