@@ -14,7 +14,7 @@ process SPECIES_ID {
       output:
       path("*.txt"), emit: txt
       path("*.log"), emit: log
-      path("database.info"), emit: info, optional: true
+      path("database.name"), emit: name, optional: true
       path("versions.yml"), emit: versions
 
       script:
@@ -29,8 +29,8 @@ process SPECIES_ID {
 
       ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" -d ${params.max_dist} -m ${params.kmer_min} -p ${params.num_threads}
 
-      echo $inDatabase >  "database.info"
-      mash info $inDatabase >> "database.info"
+      echo $inDatabase >  "database.name"
+      mash info $inDatabase >> "database.name"
 
 
 
