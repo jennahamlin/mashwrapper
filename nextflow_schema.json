@@ -20,7 +20,7 @@
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "schema": "assets/schema_input.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "description": "Path to comma-separated file: sample,fastq1.gz,fastq2.gz",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/mashwrapper/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
@@ -48,11 +48,11 @@
                 "get_database": {
                     "type": "string",
                     "fa_icon": "fas fa-database",
-                    "description": "Path to text file with organisms to download per line. Can be written either as genus species or just species."
+                    "description": "Path to text file with organisms to download from NCBI. List is one per line. Can be written either as genus species or just species."
                 },
                 "use_database": {
                     "type": "string",
-                    "description": "Path to pre-build mash database"
+                    "description": "Path to pre-build mash database."
                 }
             }
         },
@@ -66,14 +66,14 @@
                     "type": "integer",
                     "default": 25,
                     "fa_icon": "fas fa-list-ol",
-                    "description": "Default 25. Can be 1 - 32. Only available when downloading genomes. Hashes are based on a string of this many nucleotides."
+                    "description": "Can be 1 - 32. Only available when downloading genomes. Hashes are based on a string of this many nucleotides."
                 },
                 "max_dist": {
                     "type": "number",
                     "default": 0.05,
                     "fa_icon": "fas fa-wrench",
                     "help_text": "This is an optional parameter that is used as a threshold for parsing results.",
-                    "description": "This is a mash distance threshold, which can be used as cut-off mechanism for excluding isolates in the species determination..",
+                    "description": "This is a mash distance threshold. Used as cut-off mechanism for determining species identification.",
                     "minimum": 0,
                     "maximum": 1
                 },
@@ -81,14 +81,14 @@
                     "type": "integer",
                     "default": 2,
                     "fa_icon": "far fa-minus-square",
-                    "description": "Default 2. This parameter is estimated internally via the calculation of estimated genome coverage divided by three. However, one can override that value by specifying your minimum kmer copy number.  The lowest value possible is 2, which is the default.",
+                    "description": "This parameter is estimated internally via the calculation of estimated genome coverage divided by three. One can override by specifying your minimum kmer copy number.  The lowest value possible is 2.",
                     "minimum": 2
                 },
                 "num_threads": {
                     "type": "integer",
                     "default": 2,
                     "fa_icon": "fas fa-tshirt",
-                    "description": "Default is 2. This parameter allows one to adjust the number of threads used.",
+                    "description": "Use this parameter to adjust the number of threads used.",
                     "minimum": 2
                 }
             }
