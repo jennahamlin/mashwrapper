@@ -497,6 +497,11 @@ def parseResults(cmd, inMaxDis):
     dfSortOut = isTie(dfSorted)
     bestGenusSort = dfSortOut[0]
     bestSpeciesSort = dfSortOut[1]
+    #pd.set_option('display.max_columns', 12)
+    #pd.set_option('display.float_format', str)
+    #use 7g to have it choose best viz or 7e to print scientific notation
+    #pd.options.display.float_format = '{:.7g}'.format
+    #print("Line 500", dfSorted)
 
     ## use column (axis = 1), to create minimal dataframe
     dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
@@ -550,7 +555,7 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
-        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center")+ "\n")
+        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=".4f")+ "\n")
 
 if __name__ == '__main__':
 
