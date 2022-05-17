@@ -148,8 +148,9 @@ fi
 ####################
 ##DOWNLOAD GENOMES##
 ####################
-## Loop through species array and download legionella genomes
+## Loop through species array and download genomes
 ## Can change source to genbank (GCA) or refseq (GCF)
+## I use genebank option as this has a larger number of genomes
 
 for val in "${species[@]}";
 do
@@ -192,7 +193,7 @@ do
 
   find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;            ## These are plasmid files also
   find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-  find . -name "cds_from_genomic.fna" -exec rm -rf {} \;			                  ## Remove these files. Downloaded via conda
+  find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                        ## Remove these files. Downloaded via conda
   find . -size 0 -type f -delete                                                ## Remove files with zero bytes
 
   ## Make summary file of the downloaded data
@@ -201,7 +202,7 @@ do
   dataformat tsv genome --inputfile *.jsonl \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 
-  awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv 	## Remove duplicate header
+  awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
   rm temp
 
   sed -i 's/\//-/g' downloaded-$valUp.tsv
@@ -238,7 +239,7 @@ do
   ## Rename files using mapfile
   cd common
   awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal2$valUp.txt
- 
+
   ## Move all converted *.fna files from species common to alldownload
   cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
 
@@ -274,7 +275,7 @@ done
 
 awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
 
-## Exclude legionella that is not identified to species and endosymbionts.
+## Exclude legionella that is not identified to species or is endosymbionts.
 ## If other species, will give error of no such file. Could ignore but better
 ## To not unless for legionella....
 
@@ -303,7 +304,7 @@ if [[ "$species" == "legionella" ]]; then
   rm Legionella_sp._*.fna
   rm Legionella_endosymbiont*.fna
 else
-  echo "This is did not include Legionella endosymbiont or only isolates identified to genus. Thus, no extra files to remove..."
+  echo "This was not either Legionella endosymbiont or those identified to species (Legionella sp.). Thus, no extra files to remove..."
 fi
 
 ## Count number of files in folder with those in speicesCount file for comparison
@@ -328,4 +329,3 @@ rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 
 echo "Exiting the program."
 echo " "
-
