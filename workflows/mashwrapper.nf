@@ -161,7 +161,7 @@ workflow MASHWRAPPER {
       // TO DO: would like to save the name of the database that was provided and send that to the combinedOutput folder
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
                         ch_log.unique().collectFile(name: 'collated_species_id.log'), 
-                        ch_name.collectFile(name: 'database.info'))
+                        ch_name.collectFile(name: 'database.name'))
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )
