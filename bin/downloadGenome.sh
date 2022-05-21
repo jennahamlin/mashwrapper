@@ -174,13 +174,20 @@ do
       echo "It appears that the name you specified via -s flag is not recognized by NCBI, please check spelling. Exiting."
       exit 1
   else
-
-   7z x $valUp.zip -o*
-
+      echo "Good, the names are recognized by NCBI. Continuing..."
+  fi
+  
+  if test -z "$CONDA_DEFAULT_ENV"; then
+     echo "\$var is empty"
+     unzip $valUp.zip -d $valUp
+  else
+     echo "\$var is NOT empty"
+     7z x $valUp.zip -o*
+  fi
+   
   datasets rehydrate --directory $valUp
 
   cd $valUp/ncbi_dataset/data
-  fi
 
   ## Check for plasmids and remove
   echo "Checking for plasmids..."
