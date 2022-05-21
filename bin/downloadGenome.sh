@@ -175,7 +175,7 @@ do
       exit 1
   else
 
-  unzip $valUp.zip -d $valUp
+   7z x $valUp.zip -o*
 
   datasets rehydrate --directory $valUp
 
