@@ -16,11 +16,9 @@
 
 ## Introduction
 
-**nf-core/mashwrapper** is a wrapper around the program [Mash](https://mash.readthedocs.io/en/latest/). The input is a mash database and your fastq reads of interest that are gzipped. The output is a text file which displays the top five closet matches to your query. This nextflow pipeline can also access NCBI using the [NCBI datasets command line tools](https://www.ncbi.nlm.nih.gov/datasets/) to download genomes or interest to build the mash database, if you needed.
+**nf-core/mashwrapper** is a wrapper around the program [Mash](https://mash.readthedocs.io/en/latest/) and the [NCBI Datasets command line tools](https://www.ncbi.nlm.nih.gov/datasets/docs/v1/download-and-install/). Ultimately, the tool identifies the most likely species from a pair of gzipped fastq reads. The database that the reads are tested against can either be generated via the tool from a text file (--get_database) or an already built database supplied to the tool (--use_database). The output is a text file of the top five hits associated with the input reads along with standard Mash output. 
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible. The [Nextflow DSL2](https://www.nextflow.io/docs/latest/dsl2.html) implementation of this pipeline uses one container per process which makes it much easier to maintain and update software dependencies. Where possible, these processes have been submitted to and installed from [nf-core/modules](https://github.com/nf-core/modules) in order to make them available to all nf-core pipelines, and to everyone within the Nextflow community!
-
-<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
 
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/mashwrapper/results).
 
@@ -41,28 +39,34 @@ On release, automated continuous integration tests run the pipeline on a full-si
 
 2. Install any of [`Docker`](https://docs.docker.com/engine/installation/), [`Singularity`](https://www.sylabs.io/guides/3.0/user-guide/), [`Podman`](https://podman.io/), [`Shifter`](https://nersc.gitlab.io/development/shifter/how-to-use/) or [`Charliecloud`](https://hpc.github.io/charliecloud/) for full pipeline reproducibility _(please only use [`Conda`](https://conda.io/miniconda.html) as a last resort; see [docs](https://nf-co.re/usage/configuration#basic-configuration-profiles))_
 
-3. Download the pipeline and test it on a minimal dataset with a single command:
+3. Clone the pipeline and test it on a minimal dataset:
+
+ >  A test dataset is available once you git clone this repo and includes [five files](https://github.com/jennahamlin/mashwrapper/tree/main/test-data):
+ > - inputDB.txt - text file of species to download when using the test profile testGet (-profile testGet). Does not include a header
+ > - inputReads.csv - csv file with single pair of reads listed and includes the header: sample,fastq_1,fastq_2
+ > - myMashDatabase.msh - prebuilt Mash database using the same isolates listed in the inputDB.txt file. Will be used if test profile is set to testUse (-profile testUse)
+ > - subERR125190_(1,2).fastq.gz - subset reads of *Legionella fallonii* to only 45000 reads
+
+*For CDC users, you need to include the flag --custom_config_base and point to the conf subdirectory to supply the certificate information for singularity use, via this [custom config file](https://github.com/jennahamlin/mashwrapper/tree/main/conf) (e.g., --custom_config_base /scicomp/home-pure/ptx4/mashwrapper/conf)*
+ 
 
    ```console
-   nextflow run nf-core/mashwrapper -profile test,YOURPROFILE
+    ## test out download of database
+    nextflow run mashwrapper -profile testGet,YOURPROFILE
+    
+    ## test out using pre-built database
+    nextflow run mashwrapper -profile testUse,YOURPROFILE 
    ```
-
-   Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
-
-   > - The pipeline comes with config profiles called `docker`, `singularity`, `podman`, `shifter`, `charliecloud` and `conda` which instruct the pipeline to use the named tool for software management. For example, `-profile test,docker`.
-   > - Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
-   > - If you are using `singularity` and are persistently observing issues downloading Singularity images directly due to timeout or network issues, then you can use the `--singularity_pull_docker_container` parameter to pull and convert the Docker image instead. Alternatively, you can use the [`nf-core download`](https://nf-co.re/tools/#downloading-pipelines-for-offline-use) command to download images first, before running the pipeline. Setting the [`NXF_SINGULARITY_CACHEDIR` or `singularity.cacheDir`](https://www.nextflow.io/docs/latest/singularity.html?#singularity-docker-hub) Nextflow options enables you to store and re-use the images from a central location for future pipeline runs.
-   > - If you are using `conda`, it is highly recommended to use the [`NXF_CONDA_CACHEDIR` or `conda.cacheDir`](https://www.nextflow.io/docs/latest/conda.html) settings to store the environments in a central location for future pipeline runs.
-
+   
 4. Start running your own analysis!
 
-   ```console
+  ```console
    ## Use your already built database
-   nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --use_database myMashDatabase.msh
+   nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --use_database myMashDatabase.msh --custom_config_base /scicomp/home-pure/ptx4/mashwrapper/conf
 
    ## Download and built your database for organism(s) of interest
-   nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --get_database organismsheet.txt
-   ```
+   nextflow run nf-core/mashwrapper -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --get_database organismsheet.txt --custom_config_base /scicomp/home-pure/ptx4/mashwrapper/conf
+  ```
 
 ## Documentation
 
