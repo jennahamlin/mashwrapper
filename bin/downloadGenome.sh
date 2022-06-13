@@ -176,7 +176,8 @@ do
   else
       echo "Good, the names are recognized by NCBI. Continuing..."
   fi
-  
+ 
+ #added this if statement to deal with of unzipping. 7z is installed within singualrity.  
   if test -z "$CONDA_DEFAULT_ENV"; then
      echo "\$var is empty"
      unzip $valUp.zip -d $valUp
