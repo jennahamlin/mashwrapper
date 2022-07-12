@@ -13,7 +13,7 @@
 ## file conversion should be done when used for other species.
 
 ## species tested on
-## "legionella" "fluoribacter" "tatlockia mlsicdadei"
+## "legionella" "fluoribacter" "tatlockia micdadei"
 
 timestamp=$(date +%d-%m-%Y_%H-%M-%S)
 basefolder=$PWD
@@ -26,16 +26,17 @@ Help()
    ## Display Help
    echo " "
    echo "Download all genomes from NCBI using their command line tools (datasets/dataformat). \
-Then convert GCA#.fna files to be named Genus_Species_GCA#.fna"
+Then convert GCA#.fna files to be named Genus_species_GCA#.fna"
    echo
    echo "Syntax: downloadGenome.sh [-c|s|h]"
-   echo "options:"
+   echo "Options:"
    echo " -c    Required: Activate the conda enviroment? (T/F). \
 Assumes conda environment named ncbi_datasets"
    echo " -s    Required: Genus or species to download. Can use multiple -s flags. \
 Example: -s \"legionella\" -s \"tatlockia micdadei\" "
+   echo " -h    Print this help."
    echo " "
-   echo " -h	Print this help."
+   echo "Example command: downloadGenome.sh -c F -s \"legionella\" "
    echo " "
 }
 
@@ -47,9 +48,9 @@ while getopts ":c:s:h" option; do
          exit;;
       c) ## Activate the conda env? (T/F)
          conda=$OPTARG;;
-      s) ## Specifiy the species you want to download. Can be multiple
+      s) ## Specifiy the species you want to download. Can be multiple, seperated by a space. If using genus species then place in quotes ("tatlockia micdadei")
          species+=("$OPTARG");;
-     \?) ## Incorrect option
+     ?) ## Incorrect option
          echo "Error: Invalid option"
          exit;;
    esac
@@ -81,7 +82,7 @@ then
   fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
-  echo 'Assuming you have datasets and dataforamt in your PATH...'
+  echo 'Assuming you have datasets and dataforamt in your PATH or are using a container...'
 elif [[ $conda == @(False|false|F|f) && !$species ]]
 then
     echo 'Must include the -s flag. Exampe: -s \"legionella\" or -s \"legionella pneumophila\". Exiting.'
@@ -177,13 +178,15 @@ do
       echo "Good, the names are recognized by NCBI. Continuing..."
   fi
  
- #added this if statement to deal with of unzipping. 7z is installed within singualrity.  
+ #added this if statement to deal with of unzipping. 7z is
   if test -z "$CONDA_DEFAULT_ENV"; then
-     echo "\$var is empty"
+     #echo "\$var is empty"
+     echo $CONDA_DEFAULT_ENV " is not empty"
      unzip $valUp.zip -d $valUp
   else
      echo "\$var is NOT empty"
-     7z x $valUp.zip -o*
+     unzip $valUp.zip -d $valUp
+     #7z x $valUp.zip -o*
   fi
    
   datasets rehydrate --directory $valUp
