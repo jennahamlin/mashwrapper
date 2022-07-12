@@ -77,7 +77,7 @@ then
   echo 'These are the tools in your conda enviroment....'
   conda list -n ncbi_datasets
   else
-    echo "This tool assumes the conda environment is called ncbi_datasets. Exiting."
+    echo "This tool assumes the conda environment is called ncbi_datasets. To confirm the name of the environment, you can run 'conda info --envs' Exiting."
     exit 1
   fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
@@ -178,15 +178,16 @@ do
       echo "Good, the names are recognized by NCBI. Continuing..."
   fi
  
- #added this if statement to deal with of unzipping. 7z is
+#TODO: add better documentation here:
+ #added this if statement to deal with of unzipping.
   if test -z "$CONDA_DEFAULT_ENV"; then
-     #echo "\$var is empty"
-     echo $CONDA_DEFAULT_ENV " is not empty"
+     echo "Okay this is when -c F:" $condaAct
      unzip $valUp.zip -d $valUp
   else
-     echo "\$var is NOT empty"
+     echo "Okay this is when -c T:" $condaAct
      unzip $valUp.zip -d $valUp
      #7z x $valUp.zip -o*
+
   fi
    
   datasets rehydrate --directory $valUp
