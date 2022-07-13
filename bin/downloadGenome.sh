@@ -17,6 +17,7 @@
 
 timestamp=$(date +%d-%m-%Y_%H-%M-%S)
 basefolder=$PWD
+
 #############################
 ##DESCRIPTION AND HELP MENU##
 #############################
@@ -50,9 +51,6 @@ while getopts ":c:s:h" option; do
          conda=$OPTARG;;
       s) ## Specifiy the species you want to download. Can be multiple, seperated by a space. If using genus species then place in quotes ("tatlockia micdadei")
          species+=("$OPTARG");;
-     ?) ## Incorrect option
-         echo "Error: Invalid option"
-         exit;;
    esac
 done
 
@@ -60,51 +58,54 @@ done
 ##PARSE THE FLAGS##
 ###################
 
-## Determine what to do based on input from -c (conda) flag
-if [[ $conda == @(True|true|T|t) && ! $species ]]
+## Make sure both -c and -s flags are included and not empty
+if [[ $conda == "" && $species == "" ]]
 then
-  echo 'Must include -s flag. Example: -s \"legionella\" or -s \"legionella pneumophila\". Exiting. '
-  exit 1
-elif [[ $conda == @(True|true|T|t) && $species ]]
-then
-  echo 'Activating the conda environment, assuming it is called ncbi_datasets...'
-  eval "$(conda shell.bash hook)"
-  conda activate ncbi_datasets
-  condaAct=`echo $CONDA_DEFAULT_ENV`
-  echo "This is your conda enviroment that is activated: " $condaAct
-  if [[ $condaAct == 'ncbi_datasets' ]]
-  then
-  echo 'These are the tools in your conda enviroment....'
-  conda list -n ncbi_datasets
-  else
-    echo "This tool assumes the conda environment is called ncbi_datasets. To confirm the name of the environment, you can run 'conda info --envs' Exiting."
+    echo 'You must supply both the -c and -s flags along with their required request.
+Please look at the help menu. Exiting.'
+    echo ""
     exit 1
-  fi
+elif [[ $conda == "" ]]
+then
+    echo 'You did not provide any information after the -c flag (T/F). Exiting.'
+    exit 1
+elif [[ $species == "" ]]
+then
+    echo 'You did not provide an organism to download for the -s flag. Exiting.'
+    exit 1
+fi
+
+## Determine what to do based on input from -c (conda) flag
+if [[ $conda == @(True|true|T|t) && $species ]]
+then
+    echo 'Activating the conda environment, assuming it is called ncbi_datasets...'
+    eval "$(conda shell.bash hook)"
+    conda activate ncbi_datasets
+    condaAct=`echo $CONDA_DEFAULT_ENV`
+    echo "This is your conda enviroment that is activated:" $condaAct
+    if [[ $condaAct == 'ncbi_datasets' ]]
+    then
+        echo 'These are the tools in your conda enviroment....'
+        conda list -n ncbi_datasets
+    else
+        echo "This tool assumes the ncbi datasets cli conda environment is called ncbi_datasets. Exiting."
+        exit 1
+    fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
-  echo 'Assuming you have datasets and dataforamt in your PATH or are using a container...'
-elif [[ $conda == @(False|false|F|f) && !$species ]]
-then
-    echo 'Must include the -s flag. Exampe: -s \"legionella\" or -s \"legionella pneumophila\". Exiting.'
-    exit 1
+    echo "Confirm both NCBI datasets and dataformat tools are available..."
+  ## Check that both tools are available. If not then exit
+    command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
+    command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
 else
-  echo " "
-  echo "Did you include the -c flag. This flag is REQUIRED and determines if \
-NCBI datasets/dataform is in your path (-c False) or if conda enviroment \
-should be activated (-c True)."
-echo " "
-echo "Did you include the -s flag. This flag is REQUIRED as it tells the \
-tool which organism to download. Example: -s legionella will download all \
-fasta files of any Legionella species "
-echo ""
-  exit 1
-fi
+   echo 'Assuming you have datasets and dataforamt in your PATH or are using a container...'
+ fi
 
 #################
 ##BEGIN PROCESS##
 #################
 echo " "
-echo "Starting the tool..."
+echo "Beginning the process..."
 
 mkdir genomesDownloaded_$timestamp
 cd genomesDownloaded_$timestamp
@@ -115,8 +116,8 @@ echo "Checking your directory..."
 #####################
 ##CHECK FILE/FOLDER##
 #####################
-FILE=downloadedData.tsv
 
+FILE=downloadedData.tsv
 if [[ -f "$FILE" ]]; then
     echo "$FILE exists, this script will overwrite to previous $FILE \
 and you will lose that summary file. Exiting."
@@ -124,8 +125,8 @@ and you will lose that summary file. Exiting."
 else
     echo "Good, a $FILE summary file does not already exist, will continue..."
 fi
-FILE2=speciesCount.txt
 
+FILE2=speciesCount.txt
 if [[ -f "$FILE2" ]]; then
     echo "$FILE2 exists, this script will overwrite to previous $FILE2 \
 and you will lose that summary file. Exiting"
@@ -135,7 +136,6 @@ else
 fi
 
 DIR=allDownload
-
 if [[ -d "$DIR" ]]; then
     echo "$DIR directory exists! Please rename or remove the $DIR directory. \
 Exiting."
@@ -159,12 +159,6 @@ do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
-  echo "Confirm both NCBI datasets and dataformat tools are available..."
-
-  ## Check that both tools are available. If not then exit
-  command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
-  command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-
   echo "Beginning to dowload genomes from NCBI..."
 
   datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
@@ -177,8 +171,8 @@ do
   else
       echo "Good, the names are recognized by NCBI. Continuing..."
   fi
- 
-#TODO: add better documentation here:
+
+#TO DO: add better documentation here:
  #added this if statement to deal with of unzipping.
   if test -z "$CONDA_DEFAULT_ENV"; then
      echo "Okay this is when -c F:" $condaAct
@@ -187,9 +181,8 @@ do
      echo "Okay this is when -c T:" $condaAct
      unzip $valUp.zip -d $valUp
      #7z x $valUp.zip -o*
-
   fi
-   
+
   datasets rehydrate --directory $valUp
 
   cd $valUp/ncbi_dataset/data
@@ -254,9 +247,6 @@ do
 
   ## Move all converted *.fna files from species common to alldownload
   cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-
-  #find . -maxdepth 14 -type f -name "*.fna" -print0 | \
-  #xargs -0 cp $basefolder/genomesDownloaded_$timestamp/allDownload
 
   ## Move out of common folder
   cd ..
@@ -332,7 +322,6 @@ can either investigate the downloadG.e***/downloadG.o*** file or just try \
 running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
     fi
-
 
 ## Move files up to basefolder to all easier copying via nextflow process
 mv *.fna $basefolder
