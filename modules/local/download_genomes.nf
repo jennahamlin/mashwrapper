@@ -8,6 +8,7 @@ process DOWNLOAD_GENOMES {
 
       input:
       val(organism)
+      val(conda)
 
       output:
       path("*.fna"), emit: fna
@@ -17,9 +18,9 @@ process DOWNLOAD_GENOMES {
       script:
       """
       ## Original downloadGenome.sh script allows user to specify using conda
-      ## environment, so always set -c flag to False in Nextflow
+      ## environment, incorporate a boolean for conda to be used with -c flag
       
-      ${projectDir}/bin/downloadGenome.sh -c F -s "${organism}"
+      ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

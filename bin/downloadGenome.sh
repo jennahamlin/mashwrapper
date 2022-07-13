@@ -93,12 +93,12 @@ then
     fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
-    echo "Confirm both NCBI datasets and dataformat tools are available..."
+    echo "Confirming both NCBI datasets and dataformat tools are available..."
   ## Check that both tools are available. If not then exit
     command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
     command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-else
-   echo 'Assuming you have datasets and dataforamt in your PATH or are using a container...'
+    #probably should have a response that the tools are avialble
+    echo "Great both tools available to access NCBI..."
  fi
 
 #################
@@ -181,6 +181,7 @@ do
      echo "Okay this is when -c T:" $condaAct
      unzip $valUp.zip -d $valUp
      #7z x $valUp.zip -o*
+
   fi
 
   datasets rehydrate --directory $valUp
