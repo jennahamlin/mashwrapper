@@ -177,21 +177,22 @@ do
 ## with the unzip command which is in the BusyBox instance associated with singularity. When looking
 ## at the unzip github (https://github.com/brgl/busybox/blob/master/archival/unzip.c), a comment is 
 ## included which says "Don't die. Who knows maybe len calculation was botched somewhere. After all, 
-## crc matched!" This is associated with the validate comparsion if statement and using unzip -l 
-## within the continue provides an estimate of length, but not in human readable form and does not
-## match if ls -lh after unzipping. 
+## crc matched!" This is associated with the validate comparsion if statement (Line 392). Using 
+## `unzip -l` within the continue provides an estimate of length, but not in human readable form and
+## does not match if ls -lh after unzipping. 
 
 #TO DO: add better documentation here:
 #added this if statement to deal with of unzipping.
-#  if test -z "$CONDA_DEFAULT_ENV"; then
-#     echo "Okay this is when -c F:" $condaAct
+if test -z "$CONDA_DEFAULT_ENV"; then
+    echo "When -c F, then there should be no conda environment" $condaAct
+    unzip $valUp.zip -d $valUp
+    echo " "
+    echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might be with a len calculation with unzip in the BusyBox instance associated with the container. See: https://github.com/brgl/busybox/blob/master/archival/unzip.c ' 
+else
+    echo "Okay this is when -c T:" $condaAct
 #     unzip $valUp.zip -d $valUp
-#  else
-#     echo "Okay this is when -c T:" $condaAct
-#     unzip $valUp.zip -d $valUp
-#     #7z x $valUp.zip -o*
-
-  fi
+    7z x $valUp.zip -o*
+fi
 
   datasets rehydrate --directory $valUp
 
