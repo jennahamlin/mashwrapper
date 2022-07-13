@@ -44,7 +44,8 @@ def what_is_format(file_ending):
         print("Okay, this is a text file. Continuing...")
         return(file_ending)
 
-def head_file(filename: str, n: int):
+#filename: str, n: int
+def head_file(filename, n):
     try:
         with open(filename) as f:
             head_lines = [next(f).rstrip() for x in range(n)]
@@ -53,8 +54,8 @@ def head_file(filename: str, n: int):
             head_lines = f.read().splitlines()
     return head_lines
 
-
-def detect_delimiter(filename: str, n=2):
+#filename: str, n=2
+def detect_delimiter(filename, n=2):
     sample_lines = head_file(filename, n)
     common_delimiters= [',',';','\t',' ','|',':',' ']
     for d in common_delimiters:
