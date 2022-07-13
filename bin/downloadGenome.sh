@@ -172,15 +172,24 @@ do
       echo "Good, the names are recognized by NCBI. Continuing..."
   fi
 
+## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
+## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
+## with the unzip command which is in the BusyBox instance associated with singularity. When looking
+## at the unzip github (https://github.com/brgl/busybox/blob/master/archival/unzip.c), a comment is 
+## included which says "Don't die. Who knows maybe len calculation was botched somewhere. After all, 
+## crc matched!" This is associated with the validate comparsion if statement and using unzip -l 
+## within the continue provides an estimate of length, but not in human readable form and does not
+## match if ls -lh after unzipping. 
+
 #TO DO: add better documentation here:
- #added this if statement to deal with of unzipping.
-  if test -z "$CONDA_DEFAULT_ENV"; then
-     echo "Okay this is when -c F:" $condaAct
-     unzip $valUp.zip -d $valUp
-  else
-     echo "Okay this is when -c T:" $condaAct
-     unzip $valUp.zip -d $valUp
-     #7z x $valUp.zip -o*
+#added this if statement to deal with of unzipping.
+#  if test -z "$CONDA_DEFAULT_ENV"; then
+#     echo "Okay this is when -c F:" $condaAct
+#     unzip $valUp.zip -d $valUp
+#  else
+#     echo "Okay this is when -c T:" $condaAct
+#     unzip $valUp.zip -d $valUp
+#     #7z x $valUp.zip -o*
 
   fi
 
@@ -267,15 +276,16 @@ echo "Summarizing the entire download..."
 ## This uses NCBI command line tool dataformat On the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
+echo 'Line 270'
 for val in "${species[@]}"
 do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
-
+  echo 'Line 275'
   dataformat tsv genome --package $valUp.zip \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 done
-
+echo 'Line 279'
 awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
 
 ## Exclude legionella that is not identified to species or is endosymbionts.
@@ -284,7 +294,7 @@ awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     
 
 grep -v 'Legionella endosymbiont' downloadedData.tsv > temp
 grep -v 'Legionella sp. ' temp > downloadedData.tsv
-
+echo 'Line 288'
 ## Create a txt file of a count of all species downloaded
 cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
 
