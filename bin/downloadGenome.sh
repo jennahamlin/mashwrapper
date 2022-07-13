@@ -166,7 +166,8 @@ do
   --filename $valUp.zip
 
   if [[ $? -ne 0 ]] ; then
-      echo "It appears that the name you specified via -s flag is not recognized by NCBI, please check spelling. Exiting."
+      echo "It appears that the name you specified via -s flag is not recognized\
+by NCBI, please check spelling. Exiting."
       exit 1
   else
       echo "Good, the names are recognized by NCBI. Continuing..."
@@ -187,7 +188,9 @@ if test -z "$CONDA_DEFAULT_ENV"; then
     echo "When -c F, then there should be no conda environment" $condaAct
     unzip $valUp.zip -d $valUp
     echo " "
-    echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might be with a len calculation with unzip in the BusyBox instance associated with the container. See: https://github.com/brgl/busybox/blob/master/archival/unzip.c ' 
+    echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might\
+be with a len calculation with unzip in the BusyBox instance associated with the container.\
+See: https://github.com/brgl/busybox/blob/master/archival/unzip.c ' 
 else
     echo "Okay this is when -c T:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -277,16 +280,16 @@ echo "Summarizing the entire download..."
 ## This uses NCBI command line tool dataformat On the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-echo 'Line 270'
+echo 'Line 284'
 for val in "${species[@]}"
 do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
-  echo 'Line 275'
+  echo 'Line 289'
   dataformat tsv genome --package $valUp.zip \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 done
-echo 'Line 279'
+echo 'Line 293'
 awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
 
 ## Exclude legionella that is not identified to species or is endosymbionts.
@@ -295,7 +298,7 @@ awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     
 
 grep -v 'Legionella endosymbiont' downloadedData.tsv > temp
 grep -v 'Legionella sp. ' temp > downloadedData.tsv
-echo 'Line 288'
+
 ## Create a txt file of a count of all species downloaded
 cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
 

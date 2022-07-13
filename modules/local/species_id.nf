@@ -19,6 +19,10 @@ process SPECIES_ID {
 
       script:
       """
+      echo 123 > number
+      parameter="\$(cat number)"
+      echo "\${parameter}"
+
       ## converts .fastq.gz file to .fastq
       gunzip -f "${reads[0]}"
       gunzip -f "${reads[1]}"
@@ -31,8 +35,6 @@ process SPECIES_ID {
 
       echo $inDatabase >  "database.info"
       mash info $inDatabase >> "database.info"
-
-
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

@@ -558,7 +558,6 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=".4f")+ "\n")
 
 if __name__ == '__main__':
-
     ## parser is created from the function argparser
     ## parse the arguments
     parser = argparser()
