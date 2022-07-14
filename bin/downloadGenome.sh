@@ -95,10 +95,10 @@ elif [[ $conda == @(False|false|F|f) && $species ]]
 then
     echo "Confirming both NCBI datasets and dataformat tools are available..."
   ## Check that both tools are available. If not then exit
-    command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
-    command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
+    #command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
+    #command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
     #probably should have a response that the tools are avialble
-    echo "Great both tools available to access NCBI..."
+    #echo "Great both tools available to access NCBI..."
  fi
 
 #################
@@ -159,6 +159,7 @@ do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
+  command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   echo "Beginning to dowload genomes from NCBI..."
 
   datasets download genome taxon "$val" --dehydrated --exclude-gff3 \

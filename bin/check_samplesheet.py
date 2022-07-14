@@ -12,21 +12,15 @@ import argparse
 major, minor, micro, _, _ = sys.version_info
 if (major) < (3):
     try:
-        print("current python version: %d.%d" % (major, minor))
-        print("this code requires python 3 for operation")
+        print("Current python version: %d.%d" % (major, minor))
+        print("This code requires python 3 for operation. Exiting.")
     except:
-        print "current python version: %d.%d" % (major, minor)
-        print "this code requires python 3 for operation"
+        print("Current python version: %d.%d" % (major, minor))
+        print("This code requires python 3 for operation. Exiting.")
     finally:
         exit()
-else:
-    print("okay")
-
-
-#def check_version():
-#    if sys.version_info[0] < 3:
-#        #raise Exception("Must be using Python 3")
-#        sys.exit(1)
+else: 
+    print("Great, you have the correct major version Python: %d" % (major))
 
 def parse_args(args=None):
     Description = "Reformat nf-core/mashwrapper samplesheet file and check its contents."
@@ -157,7 +151,6 @@ def check_samplesheet(file_in, file_out):
 
 
 def main(args=None):
-    check_version()
     args = parse_args(args)
     check_samplesheet(args.FILE_IN, args.FILE_OUT)
 
