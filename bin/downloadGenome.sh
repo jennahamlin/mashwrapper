@@ -26,16 +26,17 @@ Help()
 {
    ## Display Help
    echo " "
-   echo "Download all genomes from NCBI using their command line tools (datasets/dataformat). \
-Then convert GCA#.fna files to be named Genus_species_GCA#.fna"
+   echo "Download all genomes from NCBI using their command line \
+tools (datasets/dataformat). Then convert GCA#.fna files to be named \
+Genus_species_GCA#.fna"
    echo
    echo "Syntax: downloadGenome.sh [-c|s|h]"
    echo "Options:"
-   echo " -c    Required: Activate the conda enviroment? (T/F). \
+   echo " -c   Required: Activate the conda enviroment? (T/F). \
 Assumes conda environment named ncbi_datasets"
-   echo " -s    Required: Genus or species to download. Can use multiple -s flags. \
+   echo " -s   Required: Download genus or species. Can use multiple -s flags. \
 Example: -s \"legionella\" -s \"tatlockia micdadei\" "
-   echo " -h    Print this help."
+   echo " -h   Print this help."
    echo " "
    echo "Example command: downloadGenome.sh -c F -s \"legionella\" "
    echo " "
@@ -49,7 +50,8 @@ while getopts ":c:s:h" option; do
          exit;;
       c) ## Activate the conda env? (T/F)
          conda=$OPTARG;;
-      s) ## Specifiy the species you want to download. Can be multiple, seperated by a space. If using genus species then place in quotes ("tatlockia micdadei")
+      s) ## Specifiy the organism to download. Can be multiple, seperated by a
+         ## space. Using genus species, place in quotes ("tatlockia micdadei")
          species+=("$OPTARG");;
    esac
 done
@@ -75,31 +77,50 @@ then
     exit 1
 fi
 
+if [[ -z $nf ]]
+then
+    echo 'nf is not defined'
+else
+    echo 'nf is defined'
+
+fi
+
+
+
+
 ## Determine what to do based on input from -c (conda) flag
 if [[ $conda == @(True|true|T|t) && $species ]]
 then
-    echo 'Activating the conda environment, assuming it is called ncbi_datasets...'
+    echo 'Activating the conda environment, assuming it is called ncbi-datasets-*...'
     eval "$(conda shell.bash hook)"
-    conda activate ncbi_datasets
-    condaAct=`echo $CONDA_DEFAULT_ENV`
+    condaAct=$(dirname ~/*/conda/ncbi-datasets*/)
+    conda activate $condaAct/$(basename ncbi-datasets-*)
+    #condaAct=`echo $CONDA_DEFAULT_ENV`
     echo "This is your conda enviroment that is activated:" $condaAct
-    if [[ $condaAct == 'ncbi_datasets' ]]
-    then
-        echo 'These are the tools in your conda enviroment....'
-        conda list -n ncbi_datasets
-    else
-        echo "This tool assumes the ncbi datasets cli conda environment is called ncbi_datasets. Exiting."
-        exit 1
-    fi
-elif [[ $conda == @(False|false|F|f) && $species ]]
-then
-    echo "Confirming both NCBI datasets and dataformat tools are available..."
-  ## Check that both tools are available. If not then exit
-    #command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
-    #command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-    #probably should have a response that the tools are avialble
-    #echo "Great both tools available to access NCBI..."
- fi
+
+    #conda activate ~/*/conda/env-10db7ebb5e3778b1e77a5f670d30b1b6
+    #condaAct=$(dirname ~/*/conda/env-10db7ebb5e3778b1e77a5f670d30b1b6)
+    #echo "This is the path to the conda environment:" $condaAct
+    #conda activate $condaAct/$(basename env-10db7ebb5e3778b1e77a5f670d30b1b6)
+    #conda list -n env-10db7ebb5e3778b1e77a5f670d30b1b6
+    #echo "This is your conda enviroment that is activated:" $condaAct
+    #if [[ $condaAct == 'env-10db7ebb5e3778b1e77a5f670d30b1b6' ]]
+    #then
+    #    echo 'These are the tools in your conda enviroment....'
+    #    conda list -n env-10db7ebb5e3778b1e77a5f670d30b1b6
+    #else
+    #    echo "Tool assumes the ncbi datasets cli conda environment is called env-10db7ebb5e3778b1e77a5f670d30b1b6. Exiting."
+    #    exit 1
+fi
+#elif [[ $conda == @(False|false|F|f) && $species ]]
+#then
+#    echo "Confirming both NCBI datasets and dataformat tools are available..."
+    ## Check that both tools are available. If not then exit
+#    command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
+#    command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
+    ## probably should have a response that the tools are avialble
+#    echo "Great both tools available to access NCBI..."
+#fi
 
 #################
 ##BEGIN PROCESS##
@@ -159,7 +180,6 @@ do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
-  command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   echo "Beginning to dowload genomes from NCBI..."
 
   datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
@@ -177,26 +197,36 @@ by NCBI, please check spelling. Exiting."
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
 ## with the unzip command which is in the BusyBox instance associated with singularity. When looking
-## at the unzip github (https://github.com/brgl/busybox/blob/master/archival/unzip.c), a comment is 
-## included which says "Don't die. Who knows maybe len calculation was botched somewhere. After all, 
-## crc matched!" This is associated with the validate comparsion if statement (Line 392). Using 
+## at the unzip github (https://github.com/brgl/busybox/blob/master/archival/unzip.c), a comment is
+## included which says "Don't die. Who knows maybe len calculation was botched somewhere. After all,
+## crc matched!" This is associated with the validate comparsion if statement (Line 392). Using
 ## `unzip -l` within the continue provides an estimate of length, but not in human readable form and
-## does not match if ls -lh after unzipping. 
+## does not match if ls -lh after unzipping.
 
-#TO DO: add better documentation here:
-#added this if statement to deal with of unzipping.
-if test -z "$CONDA_DEFAULT_ENV"; then
-    echo "When -c F, then there should be no conda environment" $condaAct
-    unzip $valUp.zip -d $valUp
-    echo " "
-    echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might\
-be with a len calculation with unzip in the BusyBox instance associated with the container.\
-See: https://github.com/brgl/busybox/blob/master/archival/unzip.c ' 
-else
-    echo "Okay this is when -c T:" $condaAct
+## TO DO: add better documentation here:
+## TO DO: check this on another hpc
+#if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
+#    # conda default env should be empty if using a container
+#    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
+#    unzip $valUp.zip -d $valUp
+#        echo " "
+#        echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might be
+#        with a len calculation with unzip in the BusyBox instance associated with the container.
+#        See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
+#        echo " "
+#elif [[ $condaAct != "ncbi_datasets" ]]; then
+#     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
-    7z x $valUp.zip -o*
-fi
+#elif ! [[ -x "$(command -v 7z)" ]]; then
+#     echo "Checking for the program 7z..."
+#     echo "7z installs with conda loaded from nf module"
+#     unzip $valUp.zip -d $valUp
+#else
+#     echo "This is when -c is True as the user specified using the conda environment:" $condaAct
+#     7z x $valup.zip -o*
+#fi
+
+unzip $valUp.zip -d $valUp
 
   datasets rehydrate --directory $valUp
 

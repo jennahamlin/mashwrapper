@@ -1,7 +1,8 @@
 process DOWNLOAD_GENOMES {
       label 'process_low'
       
-      conda (params.enable_conda ? "bioconda::p7zip=15.09 conda-forge::ncbi-datasets-cli=12.20.1" : null)
+      conda '/scicomp/home-pure/ptx4/env.yml'
+      //conda (params.enable_conda ? "bioconda::p7zip=15.09 conda-forge::ncbi-datasets-cli=12.20.1" : null)
       container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
       'https://depot.galaxyproject.org/singularity/ncbi-datasets-cli:12.20.1' :
       'quay.io/biocontainers/ncbi-datasets-cli:12.11.0' }"
@@ -19,7 +20,10 @@ process DOWNLOAD_GENOMES {
       """
       ## Original downloadGenome.sh script allows user to specify using conda
       ## environment, incorporate a boolean for conda to be used with -c flag
-      
+      nf="using nextflow" 
+      echo \$nf  
+      #export nf
+      #export \$nf   
       ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
 
       cat <<-END_VERSIONS > versions.yml
