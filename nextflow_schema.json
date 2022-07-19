@@ -48,11 +48,11 @@
                 "get_database": {
                     "type": "string",
                     "fa_icon": "fas fa-database",
-                    "description": "Path to text file with organisms to download from NCBI. List is one per line. Can be written either as genus species or just species."
+                    "description": "Path to text file with organisms to download from NCBI. List is one per line. Can be written either as genus species or species."
                 },
                 "use_database": {
                     "type": "string",
-                    "description": "Path to pre-build mash database."
+                    "description": "Path to pre-built mash database."
                 }
             }
         },
@@ -66,14 +66,14 @@
                     "type": "integer",
                     "default": 25,
                     "fa_icon": "fas fa-list-ol",
-                    "description": "Can be 1 - 32. Only available when downloading genomes. Hashes are based on a string of this many nucleotides."
+                    "description": "Can be 1 - 32. Only available when downloading genomes and is inferred if using a pre-built mash database. Hashes are based on a string of this many nucleotides."
                 },
                 "max_dist": {
                     "type": "number",
                     "default": 0.05,
                     "fa_icon": "fas fa-wrench",
                     "help_text": "This is an optional parameter that is used as a threshold for parsing results.",
-                    "description": "This is a mash distance threshold. Used as cut-off mechanism for determining species identification.",
+                    "description": "This is a threshold of mash distance. Used as cut-off measure for determining best species identification.",
                     "minimum": 0,
                     "maximum": 1
                 },

@@ -19,9 +19,6 @@ process SPECIES_ID {
 
       script:
       """
-      echo 123 > number
-      parameter="\$(cat number)"
-      echo "\${parameter}"
 
       ## converts .fastq.gz file to .fastq
       gunzip -f "${reads[0]}"
