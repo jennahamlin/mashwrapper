@@ -63,8 +63,8 @@ done
 ## Make sure both -c and -s flags are included and not empty
 if [[ $conda == "" && $species == "" ]]
 then
-    echo 'You must supply both the -c and -s flags along with their required request.
-Please look at the help menu. Exiting.'
+    echo 'Please supply both -c and -s flags along with their required request.
+Please look at the help menu. Exiting.'rm
     echo ""
     exit 1
 elif [[ $conda == "" ]]
@@ -77,50 +77,49 @@ then
     exit 1
 fi
 
-if [[ -z $nf ]]
-then
-    echo 'nf is not defined'
-else
-    echo 'nf is defined'
-
-fi
-
-
-
-
 ## Determine what to do based on input from -c (conda) flag
+## First check if conda is specifed as True
 if [[ $conda == @(True|true|T|t) && $species ]]
 then
-    echo 'Activating the conda environment, assuming it is called ncbi-datasets-*...'
-    eval "$(conda shell.bash hook)"
-    condaAct=$(dirname ~/*/conda/ncbi-datasets*/)
-    conda activate $condaAct/$(basename ncbi-datasets-*)
-    #condaAct=`echo $CONDA_DEFAULT_ENV`
-    echo "This is your conda enviroment that is activated:" $condaAct
+  ## Determine if conda == T request is from nextflow or not. $nf is exported
+  ## from the downloadGeome.nf module
+    if [[ -z "$nf" ]]
+    then
+        echo $nf
+        echo "Line 89"
+        echo 'The variable check to determine if next flow is running is empty.
+Activating your local conda environment...'
+        eval "$(conda shell.bash hook)"
+        conda activate ncbi-datasets
+        condaAct=`echo $CONDA_DEFAULT_ENV`
+        echo "This is your local conda enviroment that is activated:" $condaAct
+        ## If conda == T is not from nextflow; then confirm name of environment
+          if [[ $condaAct == 'ncbi_datasets' ]]
+          then
+            echo 'These are the tools in your local conda enviroment...'
+            conda list -n ncbi_datasets
+          else
+            echo "This tool assumes the ncbi datasets cli conda environment is
+called ncbi_datasets. Exiting."
+            exit 1
+          fi
+        else
+          echo $nf "and the user has requested conda. Continuing..."
+    fi
+elif [[ $conda == @(False|false|F|f) && $species ]]
+then
+  echo "Confirming both NCBI datasets and dataformat tools are available..."
+      ## Check that both tools are available. If not then exit
+  command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
+  command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
+      ## Inform user that the tools are accessible for when conda is false
+  echo "Great both tools available to access NCBI..."
 
-    #conda activate ~/*/conda/env-10db7ebb5e3778b1e77a5f670d30b1b6
-    #condaAct=$(dirname ~/*/conda/env-10db7ebb5e3778b1e77a5f670d30b1b6)
-    #echo "This is the path to the conda environment:" $condaAct
-    #conda activate $condaAct/$(basename env-10db7ebb5e3778b1e77a5f670d30b1b6)
-    #conda list -n env-10db7ebb5e3778b1e77a5f670d30b1b6
-    #echo "This is your conda enviroment that is activated:" $condaAct
-    #if [[ $condaAct == 'env-10db7ebb5e3778b1e77a5f670d30b1b6' ]]
-    #then
-    #    echo 'These are the tools in your conda enviroment....'
-    #    conda list -n env-10db7ebb5e3778b1e77a5f670d30b1b6
-    #else
-    #    echo "Tool assumes the ncbi datasets cli conda environment is called env-10db7ebb5e3778b1e77a5f670d30b1b6. Exiting."
-    #    exit 1
+else
+  echo 'Unable to activate a conda environment, find the tools in a bin folder,
+or confirm that the tool is using a container. Exiting.'
+  exit 1
 fi
-#elif [[ $conda == @(False|false|F|f) && $species ]]
-#then
-#    echo "Confirming both NCBI datasets and dataformat tools are available..."
-    ## Check that both tools are available. If not then exit
-#    command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
-#    command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-    ## probably should have a response that the tools are avialble
-#    echo "Great both tools available to access NCBI..."
-#fi
 
 #################
 ##BEGIN PROCESS##
@@ -144,7 +143,7 @@ if [[ -f "$FILE" ]]; then
 and you will lose that summary file. Exiting."
     exit 1
 else
-    echo "Good, a $FILE summary file does not already exist, will continue..."
+    echo "Good, a $FILE summary file does not already exist. Continuing..."
 fi
 
 FILE2=speciesCount.txt
@@ -153,7 +152,7 @@ if [[ -f "$FILE2" ]]; then
 and you will lose that summary file. Exiting"
     exit 1
 else
-    echo "Good, the $FILE2 summary file doesn't already exist, will continue..."
+    echo "Good, the $FILE2 summary file doesn't already exist. Continuing..."
 fi
 
 DIR=allDownload
@@ -208,12 +207,14 @@ by NCBI, please check spelling. Exiting."
 #if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
 #    # conda default env should be empty if using a container
 #    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
-#    unzip $valUp.zip -d $valUp
-#        echo " "
-#        echo 'unzip: bad length is nothing to worry about. Tool runs to completion successfully. It might be
-#        with a len calculation with unzip in the BusyBox instance associated with the container.
-#        See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-#        echo " "
+
+unzip $valUp.zip -d $valUp
+echo " "
+echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
+completion successfully. It might be with a len calculation with unzip in the
+BusyBox instance associated with the container.
+See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
+echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
 #     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -225,8 +226,6 @@ by NCBI, please check spelling. Exiting."
 #     echo "This is when -c is True as the user specified using the conda environment:" $condaAct
 #     7z x $valup.zip -o*
 #fi
-
-unzip $valUp.zip -d $valUp
 
   datasets rehydrate --directory $valUp
 
@@ -311,21 +310,18 @@ echo "Summarizing the entire download..."
 ## This uses NCBI command line tool dataformat On the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-echo 'Line 284'
 for val in "${species[@]}"
 do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
-  echo 'Line 289'
+
   dataformat tsv genome --package $valUp.zip \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 done
-echo 'Line 293'
+
 awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
 
 ## Exclude legionella that is not identified to species or is endosymbionts.
-## If other species, will give error of no such file. Could ignore but better
-## To not unless for legionella....
 
 grep -v 'Legionella endosymbiont' downloadedData.tsv > temp
 grep -v 'Legionella sp. ' temp > downloadedData.tsv
@@ -348,11 +344,13 @@ cd allDownload
 
 ## Exclude legionella that is not identified to species and endosymbionts
 if [[ "$species" == "legionella" ]]; then
-  echo "Removing Legionella endosymbiont files and files where the isolate is only identified to genus..."
+  echo "Removing Legionella endosymbiont files and files where the isolate is
+only identified to genus..."
   rm Legionella_sp._*.fna
   rm Legionella_endosymbiont*.fna
 else
-  echo "This was not either Legionella endosymbiont or those identified to species (Legionella sp.). Thus, no extra files to remove..."
+  echo "This was not either Legionella endosymbiont or those identified to
+species (Legionella sp.). Thus, no extra files to remove..."
 fi
 
 ## Count number of files in folder with those in speicesCount file for comparison
