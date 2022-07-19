@@ -86,11 +86,10 @@ then
     if [[ -z "$nf" ]]
     then
         echo $nf
-        echo "Line 89"
         echo 'The variable check to determine if next flow is running is empty.
 Activating your local conda environment...'
         eval "$(conda shell.bash hook)"
-        conda activate ncbi-datasets
+        conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
         echo "This is your local conda enviroment that is activated:" $condaAct
         ## If conda == T is not from nextflow; then confirm name of environment
