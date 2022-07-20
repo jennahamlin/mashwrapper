@@ -149,7 +149,7 @@ def make_output_log(log):
     logging.info("Starting the tool...")
 
 inKSize = os.getenv('kSize')
-print("The value of kmer size is exported from species_id.nf: %s" % inKSize)
+print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
     """
@@ -324,7 +324,7 @@ def run_cmd(command):
     Parameters
     ----------
     XX : XX
-        XXX
+        XXXcd
 
     Returns
     -------
@@ -335,7 +335,8 @@ def run_cmd(command):
     try:
         result = subprocess.run(command, capture_output=True,\
         check=True, text=True)
-        logging.info("This is the command... \n %s " % command)
+        new_cmd=(' '.join(command))
+        logging.info("This is the command... \n %s " % new_cmd)
     except subprocess.CalledProcessError:
         logging.critical("CRITICAL ERROR. The following command had an improper\
  error: \n %s ." % command)
@@ -359,7 +360,6 @@ def cal_kmer():
 
     f = open('myCatFile', 'r')
     fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '42']
-    print("line 360")
 
     outputFastq1 = run_cmd(fastqCmd1)
 
