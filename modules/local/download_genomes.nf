@@ -22,7 +22,6 @@ process DOWNLOAD_GENOMES {
 
       ## export nf variable to tell downloadGenome script if nextflow is in use
       nf="This is script is running via NextFlow"
-      #echo \$nf
       export nf
 
       ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"

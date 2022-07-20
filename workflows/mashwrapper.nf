@@ -11,7 +11,7 @@ WorkflowMashwrapper.initialise(params, log)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
-if (params.enable_conda == false ) { ch_conda = params.enable_conda } else { ch_conda = params.enable_conda } 
+if (params.enable_conda == false ) { ch_conda = params.enable_conda } else { ch_conda = params.enable_conda }
 
 if (params.get_database) {
 
@@ -128,7 +128,7 @@ workflow MASHWRAPPER {
       //
       // MODULE: Run Species_Id
       //
-      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads )
+      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads, ch_kmer )
 
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
@@ -161,7 +161,7 @@ workflow MASHWRAPPER {
       // MODULE: Collate results and log into one file to send to output
       //
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
-                        ch_log.unique().collectFile(name: 'collated_species_id.log'), 
+                        ch_log.unique().collectFile(name: 'collated_species_id.log'),
                         ch_info.collectFile(name: 'database.info'))
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )

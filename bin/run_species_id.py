@@ -112,7 +112,6 @@ def fastq_name(inRead1):
     Parameters
     ----------
     inRead1 : xx
-        xxx
 
     Returns
     -------
@@ -149,8 +148,10 @@ def make_output_log(log):
     logging.info("New log file created in output directory - %s... " % log)
     logging.info("Starting the tool...")
 
+inKSize = os.getenv('kSize')
+print("The value of kmer size is exported from species_id.nf: %s" % inKSize)
 
-def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads):
+def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
     """
     Prints the command line input to the log file
 
@@ -181,8 +182,9 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads):
  * Mash Databse: %s \n \
  * Maximum Distance: %s \n \
  * Minimum Kmer Count: %s \n \
+ * Size of Kmer: %s \n \
  * Number of Threads: %s \n " %
- (inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads))
+ (inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads))
 
 def check_files(inRead1, inRead2, inMash):
     """
@@ -357,6 +359,7 @@ def cal_kmer():
 
     f = open('myCatFile', 'r')
     fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '42']
+    print("line 360")
 
     outputFastq1 = run_cmd(fastqCmd1)
 
@@ -374,7 +377,6 @@ def cal_kmer():
     ## this is used the calucate the minimum kmer copies to use (-m flag)
     mFlag = minKmer(minKmers, inKmer) # returned as an integer
     return mFlag, gSize, gCoverage
-
 
 def get_results(mFlag, inThreads):
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
@@ -540,7 +542,6 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
     ----------
     txt file
         text file with each isolates results appended that were run through
-
     """
 
     with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
@@ -581,7 +582,7 @@ log = name + "_run"  + ".log"
 req_programs=['mash', 'python']
 
 make_output_log(log)
-get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inThreads)
+get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads)
 
 logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)

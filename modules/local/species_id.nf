@@ -10,6 +10,8 @@ process SPECIES_ID {
       input:
       file(inDatabase)
       tuple val(meta), path(reads)
+      val(kmer)
+
 
       output:
       path("*.txt"), emit: txt
@@ -19,6 +21,9 @@ process SPECIES_ID {
 
       script:
       """
+      declare -i kSize=${kmer}
+      ## echo \$kSize
+      export kSize
 
       ## converts .fastq.gz file to .fastq
       gunzip -f "${reads[0]}"
