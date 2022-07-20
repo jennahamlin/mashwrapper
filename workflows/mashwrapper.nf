@@ -23,6 +23,7 @@ if (params.get_database) {
   if (params.use_database) {
 
   ch_inDatabase = file(params.use_database)
+  ch_kmer = params.size_kmer
 
     } else {
       exit("""
@@ -150,7 +151,7 @@ workflow MASHWRAPPER {
       //
       // MODULE: Run Species_Id
       //
-      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads )
+      SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads, ch_kmer )
 
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)

@@ -552,7 +552,9 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
         f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
-        f.write("Minimum kmer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" + "\n")
+        f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
+        f.write("K-mer size used for sketching: " + inKSize + "\n" )
+        f.write("Mash Database name: " + inMash + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
