@@ -25,11 +25,11 @@ On release, automated continuous integration tests run the pipeline on a full-si
 ## Pipeline summary
 
 1. Confirm input sample sheet
-2. Confirm input organism sheet
-3. OPTIONAL: Download genomes from NCBI using [NCBI datasets command line tool](https://www.ncbi.nlm.nih.gov/datasets/)
-4. OPTIONAL: Format donwloaded genomes to be Genus_Species_GenebankIdentifier.fna using [NCBI dataformat command line tool](https://www.ncbi.nlm.nih.gov/datasets/docs/v1/quickstarts/command-line-tools/#install-using-curl)
-5. OPTIONAL: Build individual [Mash sketches](https://mash.readthedocs.io/en/latest/) for all genomes downloaded
-6. OPTIONAL: Build [Mash database](https://mash.readthedocs.io/en/latest/) for all mash sketches
+2. OPTIONAL (--get_database): Confirm input organism sheet
+3. OPTIONAL (--get_database): Download genomes from NCBI using [NCBI datasets command line tool](https://www.ncbi.nlm.nih.gov/datasets/)
+4. OPTIONAL (--get_database): Format donwloaded genomes to be Genus_Species_GenebankIdentifier.fna using [NCBI dataformat command line tool](https://www.ncbi.nlm.nih.gov/datasets/docs/v1/quickstarts/command-line-tools/#install-using-curl)
+5. OPTIONAL (--get_database): Build individual [Mash sketches](https://mash.readthedocs.io/en/latest/) for all genomes downloaded
+6. OPTIONAL (--get_database): Build [Mash database](https://mash.readthedocs.io/en/latest/) for all mash sketches
 7. Test fastq.gz reads against either an optionally built Mash database or one provided by the user
 8. Collate results from each isolate of interest tested against the Mash database
 
