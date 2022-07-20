@@ -21,6 +21,13 @@ process SPECIES_ID {
 
       script:
       """
+      if [ -z "$kmer" ]
+      then
+        echo "$kmer is empty"
+      else
+          echo "$kmer is NOT empty"
+      fi
+
       declare -i kSize=${kmer}
       ## echo \$kSize
       export kSize
