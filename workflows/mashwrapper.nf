@@ -13,6 +13,7 @@ WorkflowMashwrapper.initialise(params, log)
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 //if (params.enable_conda == false ) { ch_conda = params.enable_conda } else { ch_conda = params.enable_conda }
 ch_conda = params.enable_conda
+ch_assembly = params.assembly_level
 
 if (params.get_database) {
 
@@ -105,7 +106,7 @@ workflow MASHWRAPPER {
       //
       // MODULE: Run Download_Genomes
       //
-      DOWNLOAD_GENOMES( ch_organism, ch_conda)
+      DOWNLOAD_GENOMES( ch_organism, ch_conda, ch_assembly )
 
       ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
       ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)

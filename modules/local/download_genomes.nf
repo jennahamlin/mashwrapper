@@ -9,6 +9,7 @@ process DOWNLOAD_GENOMES {
       input:
       val(organism)
       val(conda)
+      val(assembly)
 
       output:
       path("*.fna"), emit: fna
@@ -24,7 +25,7 @@ process DOWNLOAD_GENOMES {
       nf="This is script is running via NextFlow"
       export nf
 
-      ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
+      ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

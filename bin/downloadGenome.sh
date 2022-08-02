@@ -32,22 +32,26 @@ Genus_species_GCA#.fna"
    echo
    echo "Syntax: downloadGenome.sh [-c|s|h]"
    echo "Options:"
+   echo " -a   Optional: Assembly-level Restrict assemblies to be \
+chromosome, complete_genome, contig, scaffold"
    echo " -c   Required: Activate the conda enviroment? (T/F). \
 Assumes conda environment named ncbi_datasets"
    echo " -s   Required: Download genus or species. Can use multiple -s flags. \
 Example: -s \"legionella\" -s \"tatlockia micdadei\" "
    echo " -h   Print this help."
    echo " "
-   echo "Example command: downloadGenome.sh -c F -s \"legionella\" "
+   echo "Example command: downloadGenome.sh -c F -s \"legionella pneumophila\" -a complete_genome "
    echo " "
 }
 
 ## Get the options
-while getopts ":c:s:h" option; do
+while getopts ":a:c:s:h" option; do
    case $option in
       h) ## Display Help
          Help
          exit;;
+      a) ## Assembly-level
+         assembly=$OPTARG;;
       c) ## Activate the conda env? (T/F)
          conda=$OPTARG;;
       s) ## Specifiy the organism to download. Can be multiple, seperated by a
@@ -172,6 +176,9 @@ fi
 ## Can change source to genbank (GCA) or refseq (GCF)
 ## I use genebank option as this has a larger number of genomes
 
+echo "If assembly-level was specified, then this was the level of restriction \
+for genomes to download: $assembly"
+
 for val in "${species[@]}";
 do
 
@@ -179,10 +186,17 @@ do
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
   echo "Beginning to dowload genomes from NCBI..."
+  #echo "$assembly"  
 
-  datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
-  --exclude-protein --exclude-rna --assembly-source genbank \
-  --filename $valUp.zip
+  #if [[  ! -z "$assembly" ]] ; then
+  #	datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+  #	--exclude-protein --exclude-rna --assembly-source genbank \
+  #	--filename $valUp.zip
+  #else 
+        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+        --exclude-protein --exclude-rna --assembly-source genbank --assembly-level "$assembly"  \
+        --filename $valUp.zip
+ # fi
 
   if [[ $? -ne 0 ]] ; then
       echo "It appears that the name you specified via -s flag is not recognized\

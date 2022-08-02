@@ -53,6 +53,10 @@
                 "use_database": {
                     "type": "string",
                     "description": "Path to pre-built mash database."
+                },
+                "assembly_level": {
+                    "type": "string",
+                    "description": "Restrict level of genomes to downlowad:  chromosome, complete_genome, scaffolds, contig. Can be a comma separated list"
                 }
             }
         },
