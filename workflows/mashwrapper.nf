@@ -11,9 +11,8 @@ WorkflowMashwrapper.initialise(params, log)
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
-//if (params.enable_conda == false ) { ch_conda = params.enable_conda } else { ch_conda = params.enable_conda }
 ch_conda = params.enable_conda
-ch_assembly = params.assembly_level
+//ch_assembly = params.assembly_level
 
 if (params.get_database) {
 
@@ -84,6 +83,8 @@ workflow MASHWRAPPER {
     ch_results = Channel.empty()
     ch_log = Channel.empty()
     ch_info = Channel.empty()
+    ch_assembly = Channel.empty()
+    ch_assembly = params.assembly_level
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate, and stage input files

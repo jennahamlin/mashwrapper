@@ -24,8 +24,13 @@ process DOWNLOAD_GENOMES {
       ## export nf variable to tell downloadGenome script if nextflow is in use
       nf="This is script is running via NextFlow"
       export nf
+      echo $assembly
 
-      ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
+      if [[ "$assembly" != false ]]; then
+          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
+      else
+          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
+      fi
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":
