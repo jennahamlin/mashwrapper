@@ -124,9 +124,12 @@ def fastq_name(inRead1):
     elif inRead1.endswith("_R1_001.fastq"):
         name = inRead1.split("_R1_001.fastq")[0]
         return(name)
+    elif inRead1.endswith("_R1.fastq"):
+        name = inRead1.split("_R1.fastq")[0]
+        return(name)
     else:
         logging.critical("Please check your file endings, assumes either \
-_1.fastq(.gz) or _R1_001.fastq(.gz)")
+_1.fastq(.gz), _R1_001.fastq(.gz), or _R1.fastq(.gz)")
         sys.exit(1)
 
 def make_output_log(log):
