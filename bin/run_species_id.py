@@ -150,6 +150,13 @@ def make_output_log(log):
     format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
     logging.info("New log file created in output directory - %s... " % log)
     logging.info("Starting the tool...")
+    sysOutput=(os.uname())
+    logging.info("Returning information identifying the current operating system... ")
+    logging.info("System: {}".format(sysOutput[0]))
+    logging.info("Node Name: {}".format(sysOutput[1]))
+    logging.info("Release: {}".format(sysOutput[2]))
+    logging.info("Version: {}".format(sysOutput[3]))
+    logging.info("Machine: {}".format(sysOutput[4]))
 
 inKSize = os.getenv('kSize')
 print("The kmer size is exported from database using mash info: %s" % inKSize)
@@ -369,10 +376,10 @@ def cal_kmer():
     ## get genome size and coverage; will provide as ouput for user
     gSize = outputFastq1.stderr.splitlines()[0]
     gSize = gSize[23:]
-    logging.info("Estimated Genome Size: %s " % gSize)
+    #logging.info("Estimated Genome Size: %s " % gSize)
     gCoverage = outputFastq1.stderr.splitlines()[1]
     gCoverage = gCoverage[23:]
-    logging.info("Estimated Genome coverage: %s "% gCoverage)
+    #logging.info("Estimated Genome coverage: %s "% gCoverage)
 
     minKmers = int(float(gCoverage))/3
     minKmers = int(float(minKmers))
@@ -384,7 +391,16 @@ def cal_kmer():
 def get_results(mFlag, inThreads):
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
-    #os.remove('myCatFile')
+    
+    ## get genome size and coverage; will provide as ouput for user
+    gSizeRun2 = outputFastq2.stderr.splitlines()[0]
+    gSizeRun2 = gSizeRun2[23:]
+    logging.info("Estimated Genome Size: %s " % gSizeRun2)
+    gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
+    gCoverageRun2 = gCoverageRun2[23:]
+    logging.info("Estimated Genome coverage: %s "% gCoverageRun2)
+    print(type(outputFastq2))
+
     return outputFastq2
 
 def isTie(df):
