@@ -376,10 +376,10 @@ def cal_kmer():
     ## get genome size and coverage; will provide as ouput for user
     gSize = outputFastq1.stderr.splitlines()[0]
     gSize = gSize[23:]
-    #logging.info("Estimated Genome Size: %s " % gSize)
+    logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
     gCoverage = outputFastq1.stderr.splitlines()[1]
     gCoverage = gCoverage[23:]
-    #logging.info("Estimated Genome coverage: %s "% gCoverage)
+    logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
 
     minKmers = int(float(gCoverage))/3
     minKmers = int(float(minKmers))
@@ -395,11 +395,12 @@ def get_results(mFlag, inThreads):
     ## get genome size and coverage; will provide as ouput for user
     gSizeRun2 = outputFastq2.stderr.splitlines()[0]
     gSizeRun2 = gSizeRun2[23:]
-    logging.info("Estimated Genome Size: %s " % gSizeRun2)
+    logging.info("Estimated Genome Size with the added -m flag: %s " % gSizeRun2)
     gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
     gCoverageRun2 = gCoverageRun2[23:]
-    logging.info("Estimated Genome coverage: %s "% gCoverageRun2)
-    print(type(outputFastq2))
+    logging.info("Estimated Genome coverage with the added -m flag: %s "% gCoverageRun2)
+    #print(type(outputFastq2))
+    #print(outputFastq2)
 
     return outputFastq2
 
@@ -568,8 +569,8 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
         f.write("Input query file 1: " + inRead1 + "\n")
         f.write("Input query file 2: " + inRead2 + "\n")
-        f.write("Genome size estimate for fastq files: " + mFlag[1] + " " +"(bp)" +"\n") #make into variable
-        f.write("Genome coverage estimate for fastq files: " + mFlag[2]  + "\n") #make into variables
+        f.write("Genome size estimate for fastq files with using the -m flag: " + gSizeRun2 + " " +"(bp)" +"\n") #make into variable
+        f.write("Genome coverage estimate for fastq files with using the -m flag: " + gCoverageRun2  + "\n") #make into variables
         f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
         f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
         f.write("K-mer size used for sketching: " + inKSize + "\n" )
@@ -626,6 +627,11 @@ identified ...")
 logging.info("Running Mash Dist command with -m flag...")
 outputFastq2 = get_results(mFlag[0], inThreads)
 logging.info("Completed running mash dist command...")
+
+gSizeRun2 = outputFastq2.stderr.splitlines()[0]
+gSizeRun2 = gSizeRun2[23:]
+gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
+gCoverageRun2 = gCoverageRun2[23:]
 
 logging.info("Beginning to parse the output results from mash dist...")
 results = parseResults(outputFastq2, inMaxDis)
