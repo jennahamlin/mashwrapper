@@ -102,6 +102,9 @@ def argparser():
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
 
+inKSize = os.getenv('kSize')
+print("The kmer size is exported from database using mash info: %s" % inKSize)
+
 ###############
 ## FUNCTIONS ##
 ###############
@@ -159,14 +162,9 @@ def make_output_log(log):
 * Machine %s \n" %
 (sysOutput[0], sysOutput[1], sysOutput[2], sysOutput[3], sysOutput[4]))
 
-   # logging.info("System: {}".format(sysOutput[0]))
-   # logging.info("Node Name: {}".format(sysOutput[1]))
-   # logging.info("Release: {}".format(sysOutput[2]))
-   # logging.info("Version: {}".format(sysOutput[3]))
-   # logging.info("Machine: {}".format(sysOutput[4]))
 
-inKSize = os.getenv('kSize')
-print("The kmer size is exported from database using mash info: %s" % inKSize)
+#inKSize = os.getenv('kSize')
+#print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
     """
@@ -411,6 +409,15 @@ def get_results(mFlag, inThreads):
 
     return outputFastq2
 
+def get_SC(outputFastq2):
+	
+	gSizeRun2 = outputFastq2.stderr.splitlines()[0]
+	gSizeRun2 = gSizeRun2[23:]
+	gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
+	gCoverageRun2 = gCoverageRun2[23:]
+	return gSizeRun2, gCoverageRun2
+
+
 def isTie(df):
     """
     Determine if the kmers count value is a tie with the second top isolate; if
@@ -576,8 +583,8 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
         f.write("Input query file 1: " + inRead1 + "\n")
         f.write("Input query file 2: " + inRead2 + "\n")
-        f.write("Genome size estimate for fastq files with using the -m flag: " + gSizeRun2 + " " +"(bp)" +"\n") #make into variable
-        f.write("Genome coverage estimate for fastq files with using the -m flag: " + gCoverageRun2  + "\n") #make into variables
+        f.write("Genome size estimate for fastq files with using the -m flag: " + scData[0] + " " +"(bp)" +"\n") #make into variable
+        f.write("Genome coverage estimate for fastq files with using the -m flag: " + scData[1]  + "\n") #make into variables
         f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
         f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
         f.write("K-mer size used for sketching: " + inKSize + "\n" )
@@ -635,10 +642,10 @@ logging.info("Running Mash Dist command with -m flag...")
 outputFastq2 = get_results(mFlag[0], inThreads)
 logging.info("Completed running mash dist command...")
 
-gSizeRun2 = outputFastq2.stderr.splitlines()[0]
-gSizeRun2 = gSizeRun2[23:]
-gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
-gCoverageRun2 = gCoverageRun2[23:]
+logging.info("Copying over estimated genome size and coverage to results...")
+scData = get_SC(outputFastq2)
+logging.info("Successfully, added estimated genome size and coverage to \
+output...")
 
 logging.info("Beginning to parse the output results from mash dist...")
 results = parseResults(outputFastq2, inMaxDis)
