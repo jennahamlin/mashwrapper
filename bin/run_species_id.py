@@ -8,6 +8,7 @@ import pandas as pd
 from io import StringIO
 from datetime import datetime
 from tabulate import tabulate
+from decimal import getcontext
 
 #############################
 ## Argument Error Messages ##
@@ -558,9 +559,11 @@ def parseResults(cmd, inMaxDis):
     ## split the kmers for sorting because xx/xxxx
     df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)
     df['KmersCount'] = df.KmersCount.astype(int)
+    getcontext().prec = 4000000000000 
+
 
     ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
-    df['% Seq Sim'] =  (1 - df['Mash Dist']) * 100
+    df['% Seq Sim'] =  (1 - df['Mash Dist'])  * 100
 
     ## now sort and get top species; test for a tie in kmerscount value
     dfSorted = df.sort_values('KmersCount', ascending=False)
@@ -654,7 +657,7 @@ req_programs=['mash', 'python']
 make_output_log(log)
 get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads)
 
-check_mash()
+#check_mash()
 
 logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
@@ -664,6 +667,10 @@ logging.info("Checking if all the prerequisite programs are installed...")
 for program in req_programs:
     check_program(program)
 logging.info("All prerequisite programs are accessible...")
+
+logging.info("Peforming internal system checks...")
+check_mash()
+logging.info("Great, internal system checks passed...")
 
 logging.info("Begin concatenation of the fastq files...")
 cat_files(inRead1, inRead2)
