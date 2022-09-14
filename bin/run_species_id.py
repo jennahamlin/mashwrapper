@@ -151,12 +151,19 @@ def make_output_log(log):
     logging.info("New log file created in output directory - %s... " % log)
     logging.info("Starting the tool...")
     sysOutput=(os.uname())
-    logging.info("Returning information identifying the current operating system... ")
-    logging.info("System: {}".format(sysOutput[0]))
-    logging.info("Node Name: {}".format(sysOutput[1]))
-    logging.info("Release: {}".format(sysOutput[2]))
-    logging.info("Version: {}".format(sysOutput[3]))
-    logging.info("Machine: {}".format(sysOutput[4]))
+    logging.info("Returning information identifying the current operating system... \n \n \
+* System: %s  \n \
+* Node Name: %s  \n \
+* Release: %s  \n \
+* Version: %s  \n \
+* Machine %s \n" %
+(sysOutput[0], sysOutput[1], sysOutput[2], sysOutput[3], sysOutput[4]))
+
+   # logging.info("System: {}".format(sysOutput[0]))
+   # logging.info("Node Name: {}".format(sysOutput[1]))
+   # logging.info("Release: {}".format(sysOutput[2]))
+   # logging.info("Version: {}".format(sysOutput[3]))
+   # logging.info("Machine: {}".format(sysOutput[4]))
 
 inKSize = os.getenv('kSize')
 print("The kmer size is exported from database using mash info: %s" % inKSize)
