@@ -162,10 +162,6 @@ def make_output_log(log):
 * Machine %s \n" %
 (sysOutput[0], sysOutput[1], sysOutput[2], sysOutput[3], sysOutput[4]))
 
-
-#inKSize = os.getenv('kSize')
-#print("The kmer size is exported from database using mash info: %s" % inKSize)
-
 def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
     """
     Prints the command line input to the log file
@@ -271,7 +267,46 @@ def check_program(program_name):
             sys.exit(1)
     else:
         logging.critical("Program %s not found! Cannot continue; dependency\
- not fulfilled. Exiting." % program_name)
+not fulfilled. Exiting." % program_name)
+        sys.exit(1)
+
+
+def check_mash(): 
+    
+    dirpath = os.path.dirname(os.path.realpath(__file__))
+    filePath1 = os.path.join(dirpath, 'test-data/myCatFile')
+    filePath2 = os.path.join(dirpath, 'test-data/myMashDatabase.msh')
+
+    ## open(filepath)  # or whatever you use to open the file
+    f1 = open(filePath1, 'r')
+    f2 = open(filePath2, 'r')
+    mashCheck = ['mash', 'dist', '-k', '25', '-s', '100000', filePath1, filePath2]
+    
+    result = subprocess.run(mashCheck, capture_output=True,\
+        check=True, text=True)
+    
+    df = pd.read_csv(StringIO(result.stdout), sep='\t',
+    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
+    index_col=False)
+
+    dfDropped = df.drop(['Ref ID', 'P-value', 'Kmer' ], axis=1)
+    dfCheckSpecies = df['Query ID'].str.split('/')
+    dfCheckSpecies = dfCheckSpecies[0] ##should be feeli
+    dfCheckDist = dfDropped['Mash Dist'][0]
+    dfCheckSpecies =(''.join(dfCheckSpecies))
+    #logging.info("This is the sorted df from test: %s " % dfCheck2)
+    if dfCheckSpecies == 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna' and int(dfCheckDist) == int(0.0185156) :
+        logging.info("Great, the test to confirm Mash is running properly return our expected answers...")
+        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
+        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
+        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
+        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist) 
+    else:
+        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
+        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
+        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
+        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist)
+        logging.critical("The unit test to confirm species and mash value return a different answer than expected. Exiting")
         sys.exit(1)
 
 def cat_files(inRead1, inRead2):
@@ -492,7 +527,6 @@ def parseResults(cmd, inMaxDis):
         Initial command to run for either fasta or fastq
     inMaxDis : XXX
         XXX
-
     Returns
     ----------
     bestGenus
@@ -526,7 +560,7 @@ def parseResults(cmd, inMaxDis):
     df['KmersCount'] = df.KmersCount.astype(int)
 
     ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
-    df['% Seq Sim'] =  (1 - df['Mash Dist'])*100
+    df['% Seq Sim'] =  (1 - df['Mash Dist']) * 100
 
     ## now sort and get top species; test for a tie in kmerscount value
     dfSorted = df.sort_values('KmersCount', ascending=False)
@@ -619,6 +653,8 @@ req_programs=['mash', 'python']
 
 make_output_log(log)
 get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads)
+
+check_mash()
 
 logging.info("Checking if all the required input files exist...")
 check_files(inRead1, inRead2, inMash)
