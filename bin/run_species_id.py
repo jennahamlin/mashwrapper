@@ -274,12 +274,10 @@ not fulfilled. Exiting." % program_name)
 
 def check_mash(): 
     
-    dirpath = os.path.dirname(os.path.realpath(__file__))
-    dirpath2 = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test-data/myCatFile'))
-    logging.info("This is dirpath: %s" % dirpath)
-    logging.info("This is dirpath2: %s" % dirpath2)
-    filePath1 = os.path.join(dirpath, 'test-data/myCatFile')
-    filePath2 = os.path.join(dirpath, 'test-data/myMashDatabase.msh')
+    dirpath2 = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test-data/'))
+
+    filePath1 = os.path.join(dirpath2, 'myCatFile')
+    filePath2 = os.path.join(dirpath2, 'myMashDatabase.msh')
 
     ## open(filepath)  # or whatever you use to open the file
     f1 = open(filePath1, 'r')

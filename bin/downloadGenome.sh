@@ -186,17 +186,17 @@ do
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
   echo "Beginning to dowload genomes from NCBI..."
-  #echo "$assembly"  
+  echo "$assembly"  
 
-  #if [[  ! -z "$assembly" ]] ; then
-  #	datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
-  #	--exclude-protein --exclude-rna --assembly-source genbank \
-  #	--filename $valUp.zip
-  #else 
+  if [[  ! -z "$assembly" ]] ; then
+  	datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+  	--exclude-protein --exclude-rna --assembly-source genbank \
+  	--filename $valUp.zip
+  else 
         datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
         --exclude-protein --exclude-rna --assembly-source genbank --assembly-level "$assembly"  \
         --filename $valUp.zip
- # fi
+  fi
 
   if [[ $? -ne 0 ]] ; then
       echo "It appears that the name you specified via -s flag is not recognized\
