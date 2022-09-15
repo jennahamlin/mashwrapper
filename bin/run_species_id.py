@@ -8,7 +8,9 @@ import pandas as pd
 from io import StringIO
 from datetime import datetime
 from tabulate import tabulate
-from decimal import Decimal
+
+inKSize = os.getenv('kSize')
+print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 #############################
 ## Argument Error Messages ##
@@ -103,8 +105,8 @@ def argparser():
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
 
-inKSize = os.getenv('kSize')
-print("The kmer size is exported from database using mash info: %s" % inKSize)
+#inKSize = os.getenv('kSize')
+#print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 ###############
 ## FUNCTIONS ##
@@ -561,7 +563,7 @@ def parseResults(cmd, inMaxDis):
     df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)	
     df['KmersCount'] = df.KmersCount.astype(int)
 
-    #logging.info("Should give dtype: %s" % df.dtypes)
+    #df['Mash Dist'] = df['Mash Dist'].apply(lambda x: round(x,8)) 
 
     ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
     df['% Seq Sim'] =  1 - df['Mash Dist'] # multiplying by 100 gives strange result 
@@ -634,7 +636,7 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 hits:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
-        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=".4f")+ "\n")
+        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=(None, None, None, ".5f", ".4f", ".5"), showindex=False)+ "\n")
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
