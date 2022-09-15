@@ -8,7 +8,7 @@ import pandas as pd
 from io import StringIO
 from datetime import datetime
 from tabulate import tabulate
-from decimal import getcontext
+from decimal import Decimal
 
 #############################
 ## Argument Error Messages ##
@@ -275,6 +275,9 @@ not fulfilled. Exiting." % program_name)
 def check_mash(): 
     
     dirpath = os.path.dirname(os.path.realpath(__file__))
+    dirpath2 = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test-data/myCatFile'))
+    logging.info("This is dirpath: %s" % dirpath)
+    logging.info("This is dirpath2: %s" % dirpath2)
     filePath1 = os.path.join(dirpath, 'test-data/myCatFile')
     filePath2 = os.path.join(dirpath, 'test-data/myMashDatabase.msh')
 
@@ -557,19 +560,23 @@ def parseResults(cmd, inMaxDis):
     df = df.join(tmpDF)
 
     ## split the kmers for sorting because xx/xxxx
-    df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)
+    df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)	
     df['KmersCount'] = df.KmersCount.astype(int)
-    getcontext().prec = 4000000000000 
 
+    #logging.info("Should give dtype: %s" % df.dtypes)
 
     ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
-    df['% Seq Sim'] =  (1 - df['Mash Dist'])  * 100
+    df['% Seq Sim'] =  1 - df['Mash Dist'] # multiplying by 100 gives strange result 
+    df['% Seq Sim'] = df['% Seq Sim'] * 100    
 
+
+    #logging.info("Should give dtype after adding to seq sim: %s" % df.dtypes)
     ## now sort and get top species; test for a tie in kmerscount value
     dfSorted = df.sort_values('KmersCount', ascending=False)
     dfSortOut = isTie(dfSorted)
     bestGenusSort = dfSortOut[0]
     bestSpeciesSort = dfSortOut[1]
+
     #pd.set_option('display.max_columns', 12)
     #pd.set_option('display.float_format', str)
     #use 7g to have it choose best viz or 7e to print scientific notation
