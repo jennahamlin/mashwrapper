@@ -55,6 +55,22 @@ workflow NFCORE_MASHWRAPPER {
 workflow {
     NFCORE_MASHWRAPPER ()
 }
+ workflow.onComplete {
+
+    def msg = """\
+        Pipeline execution summary
+        ---------------------------
+        Completed at: ${workflow.complete}
+        Duration    : ${workflow.duration}
+        Success     : ${workflow.success}
+        workDir     : ${workflow.workDir}
+        exit status : ${workflow.exitStatus}
+        Error report: ${workflow.errorReport ?: '-'}
+        """
+        .stripIndent()
+
+        sendMail(to: 'ptx4@cdc.gov', subject: "Species Identification Results", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+    }
 
 /*
 ========================================================================================

@@ -185,26 +185,31 @@ do
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
+## TO DO; errors out if there are species on the list that don't have complete genomes when 
+## assembly level is specified. Need to skip those
   echo "Beginning to dowload genomes from NCBI..."
   echo "$assembly"  
 
-  if [[  ! -z "$assembly" ]] ; then
+  if [[  -z "$assembly" ]] ; then
   	datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
   	--exclude-protein --exclude-rna --assembly-source genbank \
   	--filename $valUp.zip
-  else 
+ # elif [[ ! -z "$assemlby" ]] ; then 
+  else
         datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
         --exclude-protein --exclude-rna --assembly-source genbank --assembly-level "$assembly"  \
-        --filename $valUp.zip
+        --filename $valUp.zip 
+ # else
+ #       echo "Looks like for the assembly level selected ("$assembly"), there is no data"
   fi
 
-  if [[ $? -ne 0 ]] ; then
-      echo "It appears that the name you specified via -s flag is not recognized\
-by NCBI, please check spelling. Exiting."
-      exit 1
-  else
-      echo "Good, the names are recognized by NCBI. Continuing..."
-  fi
+ # if [[ $? -ne 0 ]] ; then
+ #     echo "It appears that the name you specified via -s flag is not recognized\
+#by NCBI, please check spelling. Exiting."
+#      exit 1
+#  else
+#      echo "Good, the names are recognized by NCBI. Continuing..."
+#  fi
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
