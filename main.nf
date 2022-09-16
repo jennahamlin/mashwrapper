@@ -55,8 +55,8 @@ workflow NFCORE_MASHWRAPPER {
 workflow {
     NFCORE_MASHWRAPPER ()
 }
- workflow.onComplete {
 
+ workflow.onComplete {
     def msg = """\
         Pipeline execution summary
         ---------------------------
@@ -69,7 +69,12 @@ workflow {
         """
         .stripIndent()
 
+        if (params.email_subject ==  "") {
         sendMail(to: 'ptx4@cdc.gov', subject: "Species Identification Results", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+}
+else {
+        sendMail(to: 'ptx4@cdc.gov', subject: "${params.email_subject}", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+        }
     }
 
 /*
