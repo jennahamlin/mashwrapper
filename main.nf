@@ -68,10 +68,10 @@ workflow {
         Error report: ${workflow.errorReport ?: '-'}
         """
         .stripIndent()
-
-        sendMail(to: 'ptx4@cdc.gov', subject: "Results from mashWrapper for identifying species - ${params.email_subject}", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+        if(params.email_addy) {
+        sendMail(to: params.email_addy, subject: "Results from mashWrapper for identifying species - ${params.email_subject}", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
     }
-
+}
 /*
 ========================================================================================
     THE END
