@@ -56,6 +56,7 @@ workflow {
     NFCORE_MASHWRAPPER ()
 }
 
+c_blue = "\033[0;34m";
  workflow.onComplete {
     def msg = """\
         Pipeline execution summary
@@ -87,8 +88,9 @@ workflow {
                         attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
        } else {
                 println("""
-                User did not provide an email address. Results will not be emailed. Please check your specified out directory for the results. 
-                ${workflow.launchDir}/${params.outdir}
+                Results will not be emailed. 
+                Please check your specified out directory for the results. 
+                Your results folder is called: ${c_blue}${params.outdir}
                 """)
        }
     }
