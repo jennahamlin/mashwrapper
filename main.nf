@@ -60,16 +60,16 @@ workflow {
     def msg = """\
         Pipeline execution summary
         ---------------------------
-        Completed at               : ${workflow.complete}
-        Duration                   : ${workflow.duration}
-        Success                    : ${workflow.success}
-        Command line               : ${workflow.commandLine}
-        workDir                    : ${workflow.workDir}
-        Exit status                : ${workflow.exitStatus}
-        Error Message              : ${workflow.errorMessage ?: 'None'}
-        Error report               : ${workflow.errorReport ?: '-'}
-        Nextflow version           : ${workflow.nextflow.version}
-        Nextflow build             : ${workflow.nextflow.build}
+        Completed at : ${workflow.complete}
+        Duration : ${workflow.duration}
+        Success : ${workflow.success}
+        Command line : ${workflow.commandLine}
+        workDir : ${workflow.workDir}
+        Exit status : ${workflow.exitStatus}
+        Error Message : ${workflow.errorMessage ?: 'None'}
+        Error report : ${workflow.errorReport ?: '-'}
+        Nextflow version : ${workflow.nextflow.version}
+        Nextflow build : ${workflow.nextflow.build}
         Nextflow Compile Timestamp : ${workflow.nextflow.timestamp}
         """
         .stripIndent()
