@@ -32,11 +32,17 @@
                 },
                 "email_addy": {
                     "type": "string",
-                    "description": "Email address to see results file to"
+                    "description": "Primary email address for who the results file is sent too",
+                    "fa_icon": "far fa-envelope"
+                },
+                "email_cc": {
+                    "type": "string",
+                    "description": "Email addresses for those that should be CC'd when emailing results",
+                    "fa_icon": "fas fa-envelope"
                 },
                 "email_subject": {
                     "type": "string",
-                    "description": "Can specify the email subject.",
+                    "description": "Add unique subject to email subject line",
                     "default": "Results from mashWrapper to identify species"
                 }
             }
@@ -50,7 +56,7 @@
                 "get_database": {
                     "type": "string",
                     "fa_icon": "fas fa-database",
-                    "description": "Path to text file with organisms to download from NCBI. List is one per line. Can be written either as genus species or species."
+                    "description": "Path to text file with organisms to download from NCBI. List is one per line, written either as genus species or  genus"
                 },
                 "use_database": {
                     "type": "string",

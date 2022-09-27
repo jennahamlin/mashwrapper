@@ -68,10 +68,19 @@ workflow {
         Error report: ${workflow.errorReport ?: '-'}
         """
         .stripIndent()
-        if(params.email_addy) {
-        sendMail(to: params.email_addy, subject: "Results from mashWrapper for identifying species - ${params.email_subject}", body: msg, attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
-    }
-}
+        if(params.email_addy && params.email_cc) {
+        sendMail(to: params.email_addy, 
+                 cc: params.email_cc,
+                 subject: "Results from mashWrapper for identifying species - ${params.email_subject}", 
+                 body: msg, 
+                 attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+    } else {
+      sendMail(to: params.email_addy,
+               subject: "Results from mashWrapper for identifying species - ${params.email_subject}",
+               body: msg,
+               attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+           }
+   }
 /*
 ========================================================================================
     THE END
