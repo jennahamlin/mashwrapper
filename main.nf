@@ -60,12 +60,17 @@ workflow {
     def msg = """\
         Pipeline execution summary
         ---------------------------
-        Completed at: ${workflow.complete}
-        Duration    : ${workflow.duration}
-        Success     : ${workflow.success}
-        workDir     : ${workflow.workDir}
-        exit status : ${workflow.exitStatus}
-        Error report: ${workflow.errorReport ?: '-'}
+        Completed at               : ${workflow.complete}
+        Duration                   : ${workflow.duration}
+        Success                    : ${workflow.success}
+        Command line               : ${workflow.commandLine}
+        workDir                    : ${workflow.workDir}
+        Exit status                : ${workflow.exitStatus}
+        Error Message              : ${workflow.errorMessage ?: 'None'}
+        Error report               : ${workflow.errorReport ?: '-'}
+        Nextflow version           : ${workflow.nextflow.version}
+        Nextflow build             : ${workflow.nextflow.build}
+        Nextflow Compile Timestamp : ${workflow.nextflow.timestamp}
         """
         .stripIndent()
         if(params.email_addy && params.email_cc) {
