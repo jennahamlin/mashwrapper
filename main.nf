@@ -73,19 +73,27 @@ workflow {
         Nextflow Compile Timestamp : ${workflow.nextflow.timestamp}
         """
         .stripIndent()
-        if(params.email_addy && params.email_cc) {
+        if (params.email_addy && params.email_cc) {
         sendMail(to: params.email_addy, 
                  cc: params.email_cc,
                  subject: "Results from mashWrapper for identifying species - ${params.email_subject}", 
                  body: msg, 
                  attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
-    } else {
-      sendMail(to: params.email_addy,
-               subject: "Results from mashWrapper for identifying species - ${params.email_subject}",
-               body: msg,
-               attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
-           }
-   }
+        } else { 
+               if (params.email_addy && !params.email_cc) {
+               sendMail(to: params.email_addy,
+                        subject: "Results from mashWrapper for identifying species - ${params.email_subject}",
+                        body: msg,
+                        attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+       } else {
+                println("""
+                User did not provide an email address. Results will not be emailed. Please check your specified out directory for the results. 
+                ${workflow.launchDir}/${params.outdir}
+                """)
+       }
+    }
+  }
+
 /*
 ========================================================================================
     THE END
