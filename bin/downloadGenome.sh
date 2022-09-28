@@ -181,7 +181,7 @@ fi
 
 for val in "${species[@]}";
 do
-
+  echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
@@ -238,6 +238,7 @@ do
       echo "There are no assembly files in this subdirectory"
       exit  
     else
+      echo "Unzipping the associated files..."
       unzip $valUp.zip -d $valUp
       
       echo " "
