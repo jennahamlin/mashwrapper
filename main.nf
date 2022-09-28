@@ -56,7 +56,7 @@ workflow {
     NFCORE_MASHWRAPPER ()
 }
 
-c_blue = "\033[0;34m";
+c_green = "\033[0;32m";
  workflow.onComplete {
     def msg = """\
         Pipeline execution summary
@@ -90,7 +90,7 @@ c_blue = "\033[0;34m";
                 println("""
                 Results will not be emailed. 
                 Please check your specified out directory for the results. 
-                Your results folder is called: ${c_blue}${params.outdir}
+                Your results folder is called: ${c_green}${params.outdir}
                 """)
        }
     }

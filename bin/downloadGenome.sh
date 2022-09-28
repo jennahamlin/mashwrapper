@@ -176,8 +176,8 @@ fi
 ## Can change source to genbank (GCA) or refseq (GCF)
 ## I use genebank option as this has a larger number of genomes
 
-echo "If assembly-level was specified, then this was the level of restriction \
-for genomes to download: $assembly"
+#echo "If assembly-level was specified, then this was the level of restriction \
+#for genomes to download: $assembly"
 
 for val in "${species[@]}";
 do
@@ -188,23 +188,29 @@ do
 ## TO DO; errors out if there are species on the list that don't have complete genomes when 
 ## assembly level is specified. Need to skip those
   echo "Beginning to dowload genomes from NCBI..."
-  echo "$assembly"  
 
-  if [[  -z "$assembly" ]] ; then
-  	datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
-  	--exclude-protein --exclude-rna --assembly-source genbank \
-  	--filename $valUp.zip
- # elif [[ ! -z "$assemlby" ]] ; then 
-  else
+  if [[ -z "$assembly" ]] ; then
+  	echo "Assembly level is not specified as the parameter is empty $assembly..."
         datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
-        --exclude-protein --exclude-rna --assembly-source genbank --assembly-level "$assembly"  \
-        --filename $valUp.zip 
- # else
- #       echo "Looks like for the assembly level selected ("$assembly"), there is no data"
+  	--exclude-protein --exclude-rna --assembly-source genbank \
+  	--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig 
+  else
+        echo "Assembly level is specified and will only download $assembly..."
+        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+        --exclude-protein --exclude-rna --assembly-source genbank \
+        --filename $valUp.zip --assembly-level "$assembly"
+        
+ #       output=$(datasets download genome taxon '$val' --assembly-level complete_genome 2>&1 )
+ #       errorChk=$(echo $output | cut -c1-5)
+ #       var='Error'
+ #  if [[ $errorChk == $var ]]; then
+ #     echo "$var and $errorChk are the same indicatng that there are no $assembly files for this organism."
+ #     :
+ #  fi
   fi
 
- # if [[ $? -ne 0 ]] ; then
- #     echo "It appears that the name you specified via -s flag is not recognized\
+# if [[ $? -ne 0 ]] ; then
+#     echo "It appears that the name you specified via -s flag is not recognized\
 #by NCBI, please check spelling. Exiting."
 #      exit 1
 #  else
@@ -226,13 +232,13 @@ do
 #    # conda default env should be empty if using a container
 #    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
 
-unzip $valUp.zip -d $valUp
-echo " "
-echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
+    unzip $valUp.zip -d $valUp
+    echo " "
+    echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
 completion successfully. It might be with a len calculation with unzip in the
 BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-echo " "
+    echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
 #     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -245,79 +251,79 @@ echo " "
 #     7z x $valup.zip -o*
 #fi
 
-  datasets rehydrate --directory $valUp
+    datasets rehydrate --directory $valUp
 
-  cd $valUp/ncbi_dataset/data
+    cd $valUp/ncbi_dataset/data
 
   ## Check for plasmids and remove
-  echo "Checking for plasmids..."
+    echo "Checking for plasmids..."
 
-  for i in */*.fna
-  do
-    awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
-    mv ${i%\.*}_cleaned.fna $i
-  done
+    for i in */*.fna
 
-  find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;            ## These are plasmid files also
-  find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-  find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                        ## Remove these files. Downloaded via conda
-  find . -size 0 -type f -delete                                                ## Remove files with zero bytes
+    do
+      awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
+      mv ${i%\.*}_cleaned.fna $i
+    done
+
+    find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;            ## These are plasmid files also
+    find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
+    find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                        ## Remove these files. Downloaded via conda
+    find . -size 0 -type f -delete                                                ## Remove files with zero bytes
 
   ## Make summary file of the downloaded data
-  echo "Making $valUp map file for file name conversion..."
+    echo "Making $valUp map file for file name conversion..."
 
-  dataformat tsv genome --inputfile *.jsonl \
+    dataformat tsv genome --inputfile *.jsonl \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 
-  awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
-  rm temp
+    awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
+    rm temp
 
-  sed -i 's/\//-/g' downloaded-$valUp.tsv
+    sed -i 's/\//-/g' downloaded-$valUp.tsv
 
   ## Replaces spaces with dash
-  sed 's/ /_/g' downloaded-$valUp.tsv > map1$valUp.txt
+    sed 's/ /_/g' downloaded-$valUp.tsv > map1$valUp.txt
 
   ## Now combine column 1 with underscore and column 2
-  awk '{ print $1 "_" $2 }' map1$valUp.txt > map2$valUp.txt
+    awk '{ print $1 "_" $2 }' map1$valUp.txt > map2$valUp.txt
 
   ## Remove headers
-  sed -i '1d' map1$valUp.txt
-  sed -i '1d' map2$valUp.txt
+    sed -i '1d' map1$valUp.txt
+    sed -i '1d' map2$valUp.txt
 
   ## Make final map file
-  cut -f2 map1$valUp.txt | paste -d " " map2$valUp.txt - > mapFinal$valUp.txt
+    cut -f2 map1$valUp.txt | paste -d " " map2$valUp.txt - > mapFinal$valUp.txt
 
   ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
   ## File names that are duplicated between isolates
-  for d in */
-  do
-    FILEPATH=$d*.fna
-    mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
-  done
+    for d in */
+    do
+      FILEPATH=$d*.fna
+      mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
+    done
 
   ## Makes file of two columns old file name and new file name
-  awk '{ print $2 ".fna" " " $1}' mapFinal$valUp.txt > mapFinal2$valUp.txt
+    awk '{ print $2 ".fna" " " $1}' mapFinal$valUp.txt > mapFinal2$valUp.txt
 
   ## Move to common folder
-  mkdir common
-  cp */*.fna common
-  cp mapFinal2$valUp.txt common
+    mkdir common
+    cp */*.fna common
+    cp mapFinal2$valUp.txt common
 
   ## Rename files using mapfile
-  cd common
-  awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal2$valUp.txt
+    cd common
+    awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal2$valUp.txt
 
   ## Move all converted *.fna files from species common to alldownload
-  cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
+    cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
 
   ## Move out of common folder
-  cd ..
+    cd ..
 
-  rm -r common
+    rm -r common
 
   ## Move back to base directory of genomesDownloaded_timestamp
-  cd $subfolder
-
+    cd $subfolder
 done
 
 echo "Summarizing the entire download..."
