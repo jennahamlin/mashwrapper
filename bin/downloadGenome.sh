@@ -200,13 +200,15 @@ do
         --exclude-protein --exclude-rna --assembly-source genbank \
         --filename $valUp.zip --assembly-level "$assembly"
         
- #       output=$(datasets download genome taxon '$val' --assembly-level complete_genome 2>&1 )
- #       errorChk=$(echo $output | cut -c1-5)
- #       var='Error'
- #  if [[ $errorChk == $var ]]; then
- #     echo "$var and $errorChk are the same indicatng that there are no $assembly files for this organism."
- #     :
- #  fi
+        #output=$(datasets download genome taxon '$val' --assembly-level complete_genome 2>&1 )
+        #errorChk=$(echo $output | cut -c1-5)
+        #var='Error'
+        #echo $errorChk
+        #echo $var
+        #if [[ $errorChk == $var ]]; then
+        #   echo "$var and $errorChk are the same indicatng that there are no $assembly files for this organism."
+        #   break
+        #fi
   fi
 
 # if [[ $? -ne 0 ]] ; then
@@ -232,13 +234,18 @@ do
 #    # conda default env should be empty if using a container
 #    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
 
-    unzip $valUp.zip -d $valUp
-    echo " "
-    echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
+    if [[ ! -f $valUp.zip ]]; then
+      echo "There are no assembly files in this subdirectory"
+      exit  
+    else
+      unzip $valUp.zip -d $valUp
+      
+      echo " "
+      echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
 completion successfully. It might be with a len calculation with unzip in the
 BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-    echo " "
+      echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
 #     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -324,6 +331,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 
   ## Move back to base directory of genomesDownloaded_timestamp
     cd $subfolder
+  fi
 done
 
 echo "Summarizing the entire download..."
