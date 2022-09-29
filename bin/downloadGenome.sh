@@ -391,7 +391,7 @@ between HPC and NCBI.";
  #       all_succeeded=false
         echo "No $assembly" files available. Exiting.
         cd ..
-        echo "There are no $assembly files avilable at the level specified. Exiting" > "${species[@]}"-noFNA.fna
+        echo "There are no $assembly files avilable at the level specified. Exiting" > noFNA.fna
         break
       fi
     done

@@ -19,10 +19,10 @@ process MAKE_MASH {
       """
       for file in ${fna}
       do
-      if  [[ "${fna}" != "*-noFNA.fna" ]] ; then
+      if  [[ "${fna}" != "noFNA.fna" ]] ; then
         mash sketch \$file -k ${kmer} -s 100000 -S 42
       else
-        echo "no .fna files found for the isolate, so no mash file will be generated" > noMash_"${fna}".msh
+        echo "no .fna files found for the isolate, so no mash file will be generated" > noMas.msh
       fi
       done
 
