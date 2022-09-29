@@ -333,7 +333,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
   ## Move back to base directory of genomesDownloaded_timestamp
     cd $subfolder
   fi
-#done
+done
 
 echo "Summarizing the entire download..."
 
@@ -343,14 +343,14 @@ echo "Summarizing the entire download..."
 ## This uses NCBI command line tool dataformat On the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-#for val in "${species[@]}"
-#do
-#  valUp="${val:1:-1}"                                                           ## Remove quotes
-#  valUp=${val//[[:blank:]]/}                                                    ## Remove space
+for val in "${species[@]}"
+do
+  valUp="${val:1:-1}"                                                           ## Remove quotes
+  valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
   dataformat tsv genome --package $valUp.zip \
   --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
-#done
+done
 
 awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
 
@@ -407,4 +407,3 @@ rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 
 echo "Exiting the program."
 echo " "
-done
