@@ -19,7 +19,11 @@ process MAKE_MASH {
       """
       for file in ${fna}
       do
-          mash sketch \$file -k ${kmer} -s 100000 -S 42
+      if  [[ "${fna}" != "*-noFNA.fna" ]] ; then
+        mash sketch \$file -k ${kmer} -s 100000 -S 42
+      else
+        echo "no .fna files found for the isolate, so no mash file will be generated" > noMash_"${fna}".msh
+      fi
       done
 
       cat <<-END_VERSIONS > versions.yml

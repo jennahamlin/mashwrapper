@@ -18,7 +18,14 @@ process MAKE_DATABASE {
       """
       currentDate=`date +"%Y-%m-%d_%T"`
       
-      mash sketch $msh -o myMashDatabase.\$currentDate.msh -S 42
+     for file in ${msh}
+      do
+      if [[ ${msh} == "noMash.msh" ]]; then
+          echo "no .fna files found for isolate, so no msh will be generated" > noMash.msh
+          continue;
+      fi
+          mash sketch $msh -o myMashDatabase.\$currentDate.msh -S 42
+      done
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":
