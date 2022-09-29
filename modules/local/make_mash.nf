@@ -22,7 +22,7 @@ process MAKE_MASH {
       if  [[ "${fna}" != *-noFNA.fna ]]; then
         mash sketch \$file -k ${kmer} -s 100000 -S 42
       else
-        echo "Because there were no .fna files for this species, no mash sketch files (.msh) will be generated." > "${fna}"-noMash.msh
+        echo "Because there were no .fna files for this species, this is a place holder mash files (.msh) that will not get added in the next step of creating a database." > "${fna}"-noMash.msh
       fi
       done
 
