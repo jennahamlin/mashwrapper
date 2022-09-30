@@ -18,13 +18,12 @@ process MAKE_DATABASE {
       """
       currentDate=`date +"%Y-%m-%d_%T"`
       
-      for file in ${msh}
-      do
-      if  [[ "${msh}" != *-noMash.msh ]]; then
-        mash sketch $msh -o myMashDatabase.\$currentDate.msh -S 42
-      else
-          echo "Because there is no mash file (.msh) for this species, it will not be added to the database" > noMashDB 
-      done
+      rm *-noFNA.fna-noMash.msh
+      mash sketch *.msh -o myMashDatabase.\$currentDate.msh -S 42
+      
+     
+      
+      #echo "Because there is no mash file (.msh) for this species, it will not be added to the database" > noMashDB 
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

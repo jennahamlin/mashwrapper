@@ -9,8 +9,8 @@ from io import StringIO
 from datetime import datetime
 from tabulate import tabulate
 
-inKSize = os.getenv('kSize')
-print("The kmer size is exported from database using mash info: %s" % inKSize)
+#inKSize = os.getenv('kSize')
+#print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 #############################
 ## Argument Error Messages ##
@@ -105,8 +105,8 @@ def argparser():
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
 
-#inKSize = os.getenv('kSize')
-#print("The kmer size is exported from database using mash info: %s" % inKSize)
+inKSize = os.getenv('kSize')
+print("The kmer size is exported from database using mash info: %s" % inKSize)
 
 ###############
 ## FUNCTIONS ##

@@ -179,12 +179,6 @@ fi
 #echo "If assembly-level was specified, then this was the level of restriction \
 #for genomes to download: $assembly"
 
-
-#ITERATION=0
-#all_succeeded=false
-#while [ "$all_succeeded" = "false" -a $ITERATION -le 5 ]
-#do
-#  all_succeeded=true
     for val in "${species[@]}";
     do
       echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
@@ -313,21 +307,13 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
-
-#  done
-
         echo "Summarizing the entire download..."
 
 ####################
 ##CREATE SUMMARIES##
 ####################
-## This uses NCBI command line tool dataformat On the zipped files
+## This uses NCBI command line tool dataformat on the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
-
-#for val in "${species[@]}"
-#do
-#  valUp="${val:1:-1}"                                                           ## Remove quotes
-#  valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
         dataformat tsv genome --package $valUp.zip \
 --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
@@ -388,12 +374,9 @@ between HPC and NCBI.";
         echo "Exiting the program."
         echo " "
       else
- #       all_succeeded=false
         echo "No $assembly" files available. Exiting.
         cd ..
-        echo "There are no $assembly files avilable at the level specified. Exiting" > $valUp-noFNA.fna
+        echo "There are no $assembly files avilable at the level specified. Exiting" > $valUp-$assembly-noFNA.fna
         break
       fi
     done
-#    let ITERATION++
-#done
