@@ -18,7 +18,7 @@ process MAKE_DATABASE {
       """
       currentDate=`date +"%Y-%m-%d_%T"`
       
-      rm *-noFNA.fna-noMash.msh
+      #rm *-noFNA.fna-noMash.msh #this works for assembly level calls but not for when assembly level is not specified
       mash sketch *.msh -o myMashDatabase.\$currentDate.msh -S 42
       
      
