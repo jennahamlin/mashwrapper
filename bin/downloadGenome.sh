@@ -374,9 +374,9 @@ between HPC and NCBI.";
         echo "Exiting the program."
         echo " "
       else
-        echo "No $assembly" files available. Exiting.
+        echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
         cd ..
-        echo "There are no $assembly files avilable at the level specified. Exiting" > $valUp-$assembly-noFNA.fna
+        echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
         break
       fi
     done
