@@ -300,7 +300,7 @@ def check_mash():
     dfCheckSpecies =(''.join(dfCheckSpecies))
     #logging.info("This is the sorted df from test: %s " % dfCheck2)
     if dfCheckSpecies == 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna' and int(dfCheckDist) == int(0.0185156) :
-        logging.info("Great, the test to confirm Mash is running properly return our expected answers...")
+        logging.info("Great, the test to confirm Mash is running properly and returned our expected answers...")
         logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
         logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
         logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
@@ -513,7 +513,7 @@ def noResult(inFile, inMaxDis, bestG, bestS):
     logging.info("Confirming that best match is less than user specfied distance...")
 
     if (inFile['Mash Dist'].values[0] < inMaxDis):
-        logging.info("Okay, a best species match was found with mash distance \
+        logging.info("Great, a best species match was found with mash distance \
 less than %s..." % inMaxDis)
     else:
         bestG = "No matches found with mash distances < %s..." % inMaxDis
