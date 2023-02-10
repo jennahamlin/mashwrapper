@@ -179,27 +179,28 @@ fi
 #echo "If assembly-level was specified, then this was the level of restriction \
 #for genomes to download: $assembly"
 
-    for val in "${species[@]}";
-    do
-      echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
-      valUp="${val:1:-1}"                                                           ## Remove quotes
-      valUp=${val//[[:blank:]]/}                                                    ## Remove space
+for val in "${species[@]}";
+do
+  echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
+  valUp="${val:1:-1}"                                                           ## Remove quotes
+  valUp=${val//[[:blank:]]/}                                                    ## Remove space
 
 ## TO DO; errors out if there are species on the list that don't have complete genomes when
 ## assembly level is specified. Need to skip those
-      echo "Beginning to dowload genomes from NCBI..."
+  echo "Beginning to dowload genomes from NCBI..."
 
-      if [[ -z "$assembly" ]] ; then
-      echo "Assembly level is not specified as the parameter is empty $assembly..."
-        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+  #if [[ -z "$assembly" ]] ; then
+#    echo "Assembly level is not specified as the parameter is empty $assembly..."
+#datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+#--exclude-protein --exclude-rna --assembly-source genbank \
+#--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
+#  else
+    #echo "Assembly level is specified and will only download $assembly..."
+    datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
 --exclude-protein --exclude-rna --assembly-source genbank \
---filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
-      else
-        echo "Assembly level is specified and will only download $assembly..."
-        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
---exclude-protein --exclude-rna --assembly-source genbank \
---filename $valUp.zip --assembly-level "$assembly"
-      fi
+--filename $valUp.zip
+#--assembly-level "$assembly"
+#  fi
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
@@ -215,15 +216,19 @@ fi
 #if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
 #    # conda default env should be empty if using a container
 #    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
-      if [[ -f $valUp.zip ]]; then
-        echo "Unzipping the associated files..."
-        unzip $valUp.zip -d $valUp
-        echo " "
-        echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs to
-completion successfully. It might be with a len calculation with unzip in the
+count=`ls -1 *.zip 2>/dev/null | wc -l`
+  #if [[ -f $valUp.zip ]]; then
+  if [ $count != 0 ]; then
+    echo "Line 221 - and this is count"
+    echo $count
+    echo "Unzipping the associated files..."
+    unzip $valUp.zip -d $valUp
+    echo " "
+    echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
+to completion successfully. It might be with a len calculation with unzip in the
 BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-        echo " "
+    echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
 #     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -236,12 +241,12 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #     7z x $valup.zip -o*
 #fi
 
-        datasets rehydrate --directory $valUp
+    datasets rehydrate --directory $valUp
 
-        cd $valUp/ncbi_dataset/data
+    cd $valUp/ncbi_dataset/data
 
   ## Check for plasmids and remove
-        echo "Checking for plasmids..."
+    echo "Checking for plasmids..."
 
         for i in */*.fna
         do
@@ -375,10 +380,10 @@ between HPC and NCBI.";
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         echo "Exiting the program."
         echo " "
-      else
-        echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
-        cd ..
-        echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
-        break
-      fi
-    done
+  #else
+  #  echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
+  #  cd ..
+  #  echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
+  #  break
+  fi
+done
