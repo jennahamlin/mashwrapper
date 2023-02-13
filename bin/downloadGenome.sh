@@ -68,16 +68,18 @@ done
 if [[ $conda == "" && $species == "" ]]
 then
     echo 'Please supply both -c and -s flags along with their required request.
-Please look at the help menu. Exiting.'rm
+Please look at the help menu, if you need additional information. Exiting.'
     echo ""
     exit 1
 elif [[ $conda == "" ]]
 then
-    echo 'You did not provide any information after the -c flag (T/F). Exiting.'
+    echo 'You did not provide any information after the -c flag (T/F).
+Please look at the help menu, if you need additional information. Exiting.'
     exit 1
 elif [[ $species == "" ]]
 then
-    echo 'You did not provide an organism to download for the -s flag. Exiting.'
+    echo 'You did not provide an organism to download for the -s flag. Exiting.
+Please look at the help menu, if you need additional information. '
     exit 1
 fi
 
@@ -85,13 +87,14 @@ fi
 ## First check if conda is specifed as True
 if [[ $conda == @(True|true|T|t) && $species ]]
 then
-  ## Determine if conda == T request is from nextflow or not. $nf is exported
-  ## from the downloadGeome.nf module
+  ## Determine if conda == T request is from nextflow or not, by that I mean
+  ## is the conda environment loaded  locally or requested to be used via
+  ## nextflow. $nf exported from the downloadGeome.nf module, if from nextflow.
     if [[ -z "$nf" ]]
     then
         echo $nf
         echo 'The variable check to determine if next flow is running is empty.
-Activating your local conda environment...'
+Activating your local conda environment. Continuing...'
         eval "$(conda shell.bash hook)"
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
@@ -111,12 +114,13 @@ called ncbi_datasets. Exiting."
     fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
-  echo "Confirming both NCBI datasets and dataformat tools are available..."
+  echo "Confirming both NCBI datasets/dataformat tools and Mash are available..."
       ## Check that both tools are available. If not then exit
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
+  command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
       ## Inform user that the tools are accessible for when conda is false
-  echo "Great both tools available to access NCBI..."
+  echo "Great tools available to access NCBI and run Mash. Continuing.."
 
 else
   echo 'Unable to activate a conda environment, find the tools in a bin folder,
@@ -176,8 +180,8 @@ fi
 ## Can change source to genbank (GCA) or refseq (GCF)
 ## I use genebank option as this has a larger number of genomes
 
-#echo "If assembly-level was specified, then this was the level of restriction \
-#for genomes to download: $assembly"
+echo "If assembly-level was specified, then this was the level of restriction \
+for genomes to download: $assembly"
 
 for val in "${species[@]}";
 do
@@ -190,7 +194,7 @@ do
   echo "Beginning to dowload genomes from NCBI..."
 
   #if [[ -z "$assembly" ]] ; then
-#    echo "Assembly level is not specified as the parameter is empty $assembly..."
+#    echo "Assembly level is not specified as the parameter is empty: $assembly..."
 #datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
 #--exclude-protein --exclude-rna --assembly-source genbank \
 #--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
@@ -387,3 +391,4 @@ between HPC and NCBI.";
   #  break
   fi
 done
+echo "-------------------------------------------------------------------------"
