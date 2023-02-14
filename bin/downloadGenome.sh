@@ -118,10 +118,9 @@ then
       ## Check that both tools are available. If not then exit
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-  command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
+  #command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
       ## Inform user that the tools are accessible for when conda is false
   echo "Great tools available to access NCBI and run Mash. Continuing.."
-
 else
   echo 'Unable to activate a conda environment, find the tools in a bin folder,
 or confirm that the tool is using a container. Exiting.'
@@ -180,8 +179,22 @@ fi
 ## Can change source to genbank (GCA) or refseq (GCF)
 ## I use genebank option as this has a larger number of genomes
 
-echo "If assembly-level was specified, then this was the level of restriction \
-for genomes to download: $assembly"
+# echo "If assembly-level was specified, then this was the level of restriction \
+# for genomes to download: $assembly"
+
+
+myls() {     ds download genome taxon "legionella jamestowniensis" --assembly-level complete_genome ;  }
+
+error_handler()
+{
+  #echo "Error: ($?) $1"
+  echo 'This should exit from this isolate but test the others'
+  echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
+  cd ..
+  echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
+  #exit 1
+}
+
 
 for val in "${species[@]}";
 do
@@ -193,18 +206,18 @@ do
 ## assembly level is specified. Need to skip those
   echo "Beginning to dowload genomes from NCBI..."
 
-  #if [[ -z "$assembly" ]] ; then
-#    echo "Assembly level is not specified as the parameter is empty: $assembly..."
-#datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
-#--exclude-protein --exclude-rna --assembly-source genbank \
-#--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
-#  else
-    #echo "Assembly level is specified and will only download $assembly..."
-    datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+      if [[ -z "$assembly" ]] ; then
+        echo "Assembly level is not specified as the parameter is empty..."
+        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
 --exclude-protein --exclude-rna --assembly-source genbank \
---filename $valUp.zip
-#--assembly-level "$assembly"
-#  fi
+--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
+##|| error_handler
+      elif [[ -n "$assembly"  ]]; then
+        echo "Assembly level is specified and will only download $assembly..."
+        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
+ --exclude-protein --exclude-rna --assembly-source genbank \
+ --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
+      fi
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
@@ -217,22 +230,22 @@ do
 
 ## TO DO: add better documentation here:
 ## TO DO: check this on another hpc
-#if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
-#    # conda default env should be empty if using a container
-#    echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
-count=`ls -1 *.zip 2>/dev/null | wc -l`
+##if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
+   # conda default env should be empty if using a container
+##   echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
+    count=`ls -1 *.zip 2>/dev/null | wc -l`
   #if [[ -f $valUp.zip ]]; then
-  if [ $count != 0 ]; then
-    echo "Line 221 - and this is count"
-    echo $count
-    echo "Unzipping the associated files..."
-    unzip $valUp.zip -d $valUp
-    echo " "
-    echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
+      if [ $count != 0 ]; then
+        echo "Line 221 - and this is count"
+        echo $count
+        echo "Unzipping the associated files..."
+        unzip $valUp.zip -d $valUp
+        echo " "
+        echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
 to completion successfully. It might be with a len calculation with unzip in the
 BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-    echo " "
+        echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
 #     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
 #     unzip $valUp.zip -d $valUp
@@ -245,13 +258,12 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #     7z x $valup.zip -o*
 #fi
 
-    datasets rehydrate --directory $valUp
+        datasets rehydrate --directory $valUp
 
-    cd $valUp/ncbi_dataset/data
+        cd $valUp/ncbi_dataset/data
 
   ## Check for plasmids and remove
-    echo "Checking for plasmids..."
-
+        echo "Checking for plasmids..."
         for i in */*.fna
         do
           awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
@@ -377,18 +389,12 @@ can either investigate the downloadG.e***/downloadG.o*** file or just try \
 running the script again as sometimes there are communication issues \
 between HPC and NCBI.";
         fi
-
 ## Move files up to basefolder to all easier copying via nextflow process
         mv *.fna $basefolder
        # rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+
         echo "Exiting the program."
         echo " "
-  #else
-  #  echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
-  #  cd ..
-  #  echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
-  #  break
   fi
 done
-echo "-------------------------------------------------------------------------"
