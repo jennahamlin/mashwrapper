@@ -182,17 +182,14 @@ fi
 # echo "If assembly-level was specified, then this was the level of restriction \
 # for genomes to download: $assembly"
 
-
-myls() {     ds download genome taxon "legionella jamestowniensis" --assembly-level complete_genome ;  }
-
 error_handler()
 {
-  #echo "Error: ($?) $1"
-  echo 'This should exit from this isolate but test the others'
+  #echo 'This will exit from this isolate but test the others...'
   echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
   cd ..
   echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
-  #exit 1
+  echo "Exiting from this isolate..."
+  echo "----------------------------------------"
 }
 
 
@@ -201,9 +198,7 @@ do
   echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
-
-## TO DO; errors out if there are species on the list that don't have complete genomes when
-## assembly level is specified. Need to skip those
+  
   echo "Beginning to dowload genomes from NCBI..."
 
       if [[ -z "$assembly" ]] ; then
@@ -211,7 +206,7 @@ do
         datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
 --exclude-protein --exclude-rna --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
-##|| error_handler
+
       elif [[ -n "$assembly"  ]]; then
         echo "Assembly level is specified and will only download $assembly..."
         datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
@@ -228,22 +223,21 @@ do
 ## `unzip -l` within the continue provides an estimate of length, but not in human readable form and
 ## does not match if ls -lh after unzipping.
 
-## TO DO: add better documentation here:
 ## TO DO: check this on another hpc
 ##if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
-   # conda default env should be empty if using a container
+##   conda default env should be empty if using a container
 ##   echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
-    count=`ls -1 *.zip 2>/dev/null | wc -l`
+      count=`ls -1 *.zip 2>/dev/null | wc -l`
   #if [[ -f $valUp.zip ]]; then
       if [ $count != 0 ]; then
-        echo "Line 221 - and this is count"
-        echo $count
+        #echo "Line 221 - and this is count"
+        #echo $count
         echo "Unzipping the associated files..."
         unzip $valUp.zip -d $valUp
         echo " "
         echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
-to completion successfully. It might be with a len calculation with unzip in the
-BusyBox instance associated with the container.
+to completion successfully. It might be with a len calculation with 
+unzip in the BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         echo " "
 #elif [[ $condaAct != "ncbi_datasets" ]]; then
@@ -257,7 +251,6 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #     echo "This is when -c is True as the user specified using the conda environment:" $condaAct
 #     7z x $valup.zip -o*
 #fi
-
         datasets rehydrate --directory $valUp
 
         cd $valUp/ncbi_dataset/data
@@ -270,10 +263,10 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
           mv ${i%\.*}_cleaned.fna $i
         done
 
-        find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;            ## These are plasmid files also
+        find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;        ## These are plasmid files also
         find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-        find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                        ## Remove these files. Downloaded via conda
-        find . -size 0 -type f -delete                                                ## Remove files with zero bytes
+        find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                    ## Remove these files. Downloaded via conda
+        find . -size 0 -type f -delete                                            ## Remove files with zero bytes
 
       ## Make summary file of the downloaded data
         echo "Making $valUp map file for file name conversion..."
@@ -395,6 +388,6 @@ between HPC and NCBI.";
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 
         echo "Exiting the program."
-        echo " "
+        echo "-----------------------------"
   fi
 done
