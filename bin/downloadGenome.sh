@@ -359,11 +359,11 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## Exclude legionella that is not identified to species and endosymbionts
         if [[ "$species" == "legionella" ]]; then
           echo "Removing Legionella endosymbiont files and files where the isolate is
-only identified to genus..."
+not identified to a recognized species..."
           rm Legionella_sp._*.fna
           rm Legionella_endosymbiont*.fna
-          rm uncultered_Legionella*.fna
-          rm Legionella genomosp.*
+          rm uncultured_Legionella*.fna
+          rm Legionella_genomosp.*
         else
           echo "This was not either Legionella endosymbiont or those identified to
 species (Legionella sp.). Thus, no extra files to remove..."
