@@ -338,7 +338,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         ## Exclude legionella that is not identified to species or is endosymbionts.
 
         grep -v 'Legionella endosymbiont' downloadedData.tsv > temp
-        grep -v ' sp\. ' temp > temp2 #must include space before or get rid of Lp subspecies
+        grep -v 'Legionella sp\. ' temp > temp2 #must include space before or get rid of Lp subspecies
         grep -v 'genomosp.' temp2 > downloadedData.tsv
    
 
@@ -351,7 +351,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-        rm temp temp2
+       # rm temp temp2
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -373,7 +373,7 @@ not identified to a recognized species..."
           echo "This was not either Legionella endosymbiont or those identified to
 species (Legionella sp.). Thus, no extra files to remove..."
         fi
-
+echo "This is line 376"
 ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
 
@@ -390,7 +390,7 @@ again as sometimes there are communication issues between HPC and NCBI.";
 ## Move files up to basefolder to all easier copying via nextflow process
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          mv *.fna $basefolder
+          cp *.fna $basefolder ### but should be mv
         #rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
