@@ -333,14 +333,15 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 --fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 #done
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp2    ## Remove duplicate header if doing multiple species
 
         ## Exclude legionella that is not identified to species or is endosymbionts.
 
-        grep -v 'Legionella endosymbiont' downloadedData.tsv > temp
-        grep -v 'Legionella sp\. ' temp > temp2 #must include space before or get rid of Lp subspecies
-        grep -v 'genomosp.' temp2 > downloadedData.tsv
-   
+        grep -v 'Legionella endosymbiont' temp2 > temp3
+        grep -v 'uncultured' temp3 > temp4
+        grep -v 'Legionella sp\. ' temp4 > temp5 #must include space before or get rid of Lp subspecies
+        grep -v 'genomosp.' temp5 > temp6
+        grep -v 'Legionella sp\.' temp6 > downloadedData.tsv
 
         ## Create a txt file of a count of all species downloaded
         cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
@@ -351,7 +352,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-       # rm temp temp2
+        rm temp temp2 temp3 temp4 temp5 temp6
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -373,7 +374,7 @@ not identified to a recognized species..."
           echo "This was not either Legionella endosymbiont or those identified to
 species (Legionella sp.). Thus, no extra files to remove..."
         fi
-echo "This is line 376"
+##echo "This is line 376"
 ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
 
@@ -390,7 +391,7 @@ again as sometimes there are communication issues between HPC and NCBI.";
 ## Move files up to basefolder to all easier copying via nextflow process
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          cp *.fna $basefolder ### but should be mv
+          mv *.fna $basefolder ### but should be mv
         #rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
