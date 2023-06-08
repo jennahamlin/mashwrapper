@@ -1,10 +1,10 @@
 process DOWNLOAD_GENOMES {
       label 'process_low'
 
-      conda (params.enable_conda ? "bioconda::p7zip=15.09 conda-forge::ncbi-datasets-cli=14.26.0" : null)
+      conda (params.enable_conda ? "bioconda::p7zip=15.09 conda-forge::ncbi-datasets-cli=12.20.1" : null)
       container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-      'https://depot.galaxyproject.org/singularity/ncbi-datasets-cli:14.26.0' :
-      'quay.io/biocontainers/ncbi-datasets-cli:14.26.0' }"
+      'https://depot.galaxyproject.org/singularity/ncbi-datasets-cli:12.20.1' :
+      'quay.io/biocontainers/ncbi-datasets-cli:12.20.1' }"
 
       input:
       val(organism)

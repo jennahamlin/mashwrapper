@@ -205,7 +205,7 @@ do
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
---filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig
+--filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig #complete_genomes to complete
 
       elif [[ -n "$assembly"  ]]; then
         echo "Assembly level is specified and will only download $assembly..."
@@ -331,7 +331,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## Output is a tsv file with species and genebank accession downloaded
 
         dataformat tsv genome --package $valUp.zip \
---fields organism-name,accession,assminfo-paired-assmaccession >> temp ##update due to version change from 12.20.1 to 14.26.0
+--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
 
 ##--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 #done
