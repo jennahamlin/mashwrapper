@@ -30,7 +30,7 @@ Help()
 tools (datasets/dataformat). Then convert GCA#.fna files to be named \
 Genus_species_GCA#.fna"
    echo
-   echo "Syntax: downloadGenome.sh [-c|s|h]"
+   echo "Syntax: downloadGenome.sh [-a|c|s|h]"
    echo "Options:"
    echo " -a   Optional: Assembly-level Restrict assemblies to be \
 chromosome, complete_genome, contig, scaffold"
@@ -119,6 +119,7 @@ then
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
   #command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
+
       ## Inform user that the tools are accessible for when conda is false
   echo "Great tools available to access NCBI and run Mash. Continuing.."
 else
@@ -198,21 +199,21 @@ do
   echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
   valUp="${val:1:-1}"                                                           ## Remove quotes
   valUp=${val//[[:blank:]]/}                                                    ## Remove space
-  
+
   echo "Beginning to dowload genomes from NCBI..."
 
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
-        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
---exclude-protein --exclude-rna --assembly-source genbank \
---filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig
+        datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
+--filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig
 
       elif [[ -n "$assembly"  ]]; then
         echo "Assembly level is specified and will only download $assembly..."
-        datasets download genome taxon "$val" --dehydrated --exclude-gff3 \
- --exclude-protein --exclude-rna --assembly-source genbank \
+        datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
       fi
+
+#--exclude-gff3 --exclude-protein --exclude-rna version 12 used exclude. No longer available in 14
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
@@ -236,7 +237,7 @@ do
         unzip $valUp.zip -d $valUp
         echo " "
         echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
-to completion successfully. It might be with a len calculation with 
+to completion successfully. It might be with a len calculation with
 unzip in the BusyBox instance associated with the container.
 See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         echo " "
@@ -330,7 +331,9 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## Output is a tsv file with species and genebank accession downloaded
 
         dataformat tsv genome --package $valUp.zip \
---fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
+--fields organism-name,accession,assminfo-paired-assmaccession >> temp ##update due to version change from 12.20.1 to 14.26.0
+
+##--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 #done
 
         awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloadedData.tsv     ## Remove duplicate header if doing multiple species
