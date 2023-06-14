@@ -205,7 +205,7 @@ do
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
---filename $valUp.zip --assembly-level complete_genome,chromosome,scaffold,contig #complete_genomes to complete
+--filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig #complete_genomes to complete
 
       elif [[ -n "$assembly"  ]]; then
         echo "Assembly level is specified and will only download $assembly..."
