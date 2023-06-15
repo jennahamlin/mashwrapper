@@ -99,6 +99,7 @@ Activating your local conda environment. Continuing...'
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
         echo "This is your local conda enviroment that is activated:" $condaAct
+
         ## If conda == T is not from nextflow; then confirm name of environment
           if [[ $condaAct == 'ncbi_datasets' ]]
           then
@@ -115,6 +116,7 @@ called ncbi_datasets. Exiting."
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
   echo "Confirming both NCBI datasets/dataformat tools and Mash are available..."
+
       ## Check that both tools are available. If not then exit
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
@@ -176,9 +178,11 @@ fi
 ####################
 ##DOWNLOAD GENOMES##
 ####################
-## Loop through species array and download genomes
-## Can change source to genbank (GCA) or refseq (GCF)
-## I use genebank option as this has a larger number of genomes
+## Loop through species array and download genomes.
+## Can change source to genbank (GCA) or refseq (GCF.)
+## I use genebank option as this has a larger number of genomes.
+## But with some internal checks to not included questionable genomes
+## like those with an inconclusive taxonomy status. 
 
 # echo "If assembly-level was specified, then this was the level of restriction \
 # for genomes to download: $assembly"
@@ -204,8 +208,10 @@ do
 
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
+
+  ##complete_genome to complete with version change 12.2.0 -> 15.2.0
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
---filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig #complete_genomes to complete
+--filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
       elif [[ -n "$assembly"  ]]; then
         echo "Assembly level is specified and will only download $assembly..."
@@ -213,7 +219,7 @@ do
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
       fi
 
-#--exclude-gff3 --exclude-protein --exclude-rna version 12 used exclude. No longer available in 14
+#--exclude-gff3 --exclude-protein --exclude-rna version 12 used exclude, no longer necessary in 15
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
@@ -231,7 +237,6 @@ do
       count=`ls -1 *.zip 2>/dev/null | wc -l`
   #if [[ -f $valUp.zip ]]; then
       if [ $count != 0 ]; then
-        #echo "Line 221 - and this is count"
         #echo $count
         echo "Unzipping the associated files..."
         unzip $valUp.zip -d $valUp
@@ -273,10 +278,9 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         echo "Making $valUp map file for file name conversion..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
-#--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 
         awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
-        rm temp
+        
         sed -i 's/\//-/g' downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
@@ -314,7 +318,8 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 
         ## Move all converted *.fna files from species common to alldownload
         cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-
+        rm temp map1* map2* mapFinal* map2Final* 
+        
         ## Move out of common folder
         cd ..
         rm -r common
@@ -332,9 +337,6 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp
 #--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
 
-##--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
-#done
-        echo "This is line 338, which is after the second call of dataformat"
         awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp2    ## Remove duplicate header if doing multiple species
 
         ## Exclude legionella that is not identified to species or is endosymbionts.
@@ -354,7 +356,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-        rm temp temp2 temp3 temp4 temp5 temp6
+       #rm temp temp2 temp3 temp4 temp5 temp6
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -376,7 +378,7 @@ not identified to a recognized species..."
           echo "This was not either Legionella endosymbiont or those identified to
 species (Legionella sp.). Thus, no extra files to remove..."
         fi
-##echo "This is line 376"
+
 ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
 
@@ -390,10 +392,11 @@ can either investigate the output/error files or just try running the script\
 again as sometimes there are communication issues between HPC and NCBI.";
         exit 1
         fi
+
 ## Move files up to basefolder to all easier copying via nextflow process
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          mv *.fna $basefolder ### but should be mv
+          mv *.fna $basefolder ## should be mv
         #rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
         rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
