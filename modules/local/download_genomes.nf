@@ -15,6 +15,7 @@ process DOWNLOAD_GENOMES {
       path("*.fna"), emit: fna
       path(".command.log"), emit: dlog
       path("versions.yml"), emit: versions
+      path("excluded_genomes.txt"), emit: incon
 
       script:
       """

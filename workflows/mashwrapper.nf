@@ -84,6 +84,7 @@ workflow MASHWRAPPER {
     ch_log = Channel.empty()
     ch_info = Channel.empty()
     ch_assembly = Channel.empty()
+    ch_incon = Channel.empty()
     ch_assembly = params.assembly_level
 
     //
@@ -110,6 +111,7 @@ workflow MASHWRAPPER {
       DOWNLOAD_GENOMES( ch_organism, ch_conda, ch_assembly )
 
       ch_download = ch_download.mix(DOWNLOAD_GENOMES.out.dlog)
+      ch_incon = ch_incon.mix(DOWNLOAD_GENOMES.out.incon)
       ch_fna = ch_fna.mix(DOWNLOAD_GENOMES.out.fna)
       ch_versions = ch_versions.mix(DOWNLOAD_GENOMES.out.versions)
 
@@ -143,7 +145,8 @@ workflow MASHWRAPPER {
       //
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
                         ch_log.unique().collectFile(name: 'collated_species_id.log'),
-                        ch_download.unique().collectFile(name: 'collated_download_genomes.log') )
+                        ch_download.unique().collectFile(name: 'collated_download_genomes.log'),
+                        ch_incon.unique().collectFile(name: 'collated_excluded_genomes.txt') )
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' ) )
 
@@ -166,7 +169,8 @@ workflow MASHWRAPPER {
       //
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
                         ch_log.unique().collectFile(name: 'collated_species_id.log'),
-                        ch_info.collectFile(name: 'database.info'))
+                        ch_info.collectFile(name: 'database.info'),
+                        ch_incon.unique().collectFile(name: 'collated_excluded_genomes.txt') )
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )

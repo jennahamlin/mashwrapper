@@ -258,7 +258,8 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #fi
         datasets rehydrate --directory $valUp
         
-        cat $valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> inConclusive${valUp}.txt
+        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> excluded_genomes.txt
+        cp excluded_genomes.txt  $basefolder
 
         cd $valUp/ncbi_dataset/data
   
