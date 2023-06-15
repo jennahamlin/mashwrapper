@@ -117,7 +117,7 @@ elif [[ $conda == @(False|false|F|f) && $species ]]
 then
   echo "Confirming both NCBI datasets/dataformat tools and Mash are available..."
 
-      ## Check that both tools are available. If not then exit
+  ## Check that both tools are available. If not then exit
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
   #command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
@@ -209,7 +209,8 @@ do
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
 
-  ##complete_genome to complete with version change 12.2.0 -> 15.2.0
+  ## Changed complete_genome to complete and no longer required to specify which files to exclude
+  ## with version change 12.2.0 -> 15.2.0
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
@@ -218,8 +219,6 @@ do
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
       fi
-
-#--exclude-gff3 --exclude-protein --exclude-rna version 12 used exclude, no longer necessary in 15
 
 ## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
 ## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
@@ -258,9 +257,15 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #     7z x $valup.zip -o*
 #fi
         datasets rehydrate --directory $valUp
+        
+        cat $valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> inConclusive${valUp}.txt
 
         cd $valUp/ncbi_dataset/data
-
+  
+  ## Checking for genomes where NCBI taxonomy status is inconclusive
+        #cat assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' >> TEST_Inconclusive.txt
+        #cat assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> inConclusive${valUp}.txt
+        
   ## Check for plasmids and remove
         echo "Checking for plasmids..."
         for i in */*.fna
@@ -318,7 +323,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 
         ## Move all converted *.fna files from species common to alldownload
         cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-        rm temp map1* map2* mapFinal* map2Final* 
+       # rm temp map1* map2* mapFinal* map2Final* 
         
         ## Move out of common folder
         cd ..
@@ -356,7 +361,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-       #rm temp temp2 temp3 temp4 temp5 temp6
+        rm temp temp2 temp3 temp4 temp5 temp6
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -397,8 +402,9 @@ again as sometimes there are communication issues between HPC and NCBI.";
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
           mv *.fna $basefolder ## should be mv
-        #rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
-        rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+          
+          rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
+          rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
            echo "There were no .fna files generated"
         fi
