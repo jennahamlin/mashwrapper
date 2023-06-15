@@ -33,7 +33,8 @@ process DOWNLOAD_GENOMES {
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":
-          datasets: \$(datasets version | sed 's/Datasets //g')
+      ##  datasets: \$(datasets version | sed 's/Datasets //g')
+          datasets: \$(datasets version | sed 's/Datasets //g' | cut -d" " -f3)
           dataformat: \$(dataformat version | sed 's/Dataformat //g')
       END_VERSIONS
       """
