@@ -272,12 +272,11 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
       ## Make summary file of the downloaded data
         echo "Making $valUp map file for file name conversion..."
 
-        dataformat tsv genome --inputfile *.jsonl \
---fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
+        dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+#--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 
         awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
         rm temp
-
         sed -i 's/\//-/g' downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
@@ -330,12 +329,12 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## This uses NCBI command line tool dataformat on the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-        dataformat tsv genome --package $valUp.zip \
---fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
+        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+#--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
 
 ##--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp
 #done
-
+        echo "This is line 338, which is after the second call of dataformat"
         awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp2    ## Remove duplicate header if doing multiple species
 
         ## Exclude legionella that is not identified to species or is endosymbionts.
