@@ -91,6 +91,7 @@ parse
 
 ## Determine what to do based on input from -c (conda) flag
 ## First check if conda is specifed as True
+condaOrNot(){
 if [[ $conda == @(True|true|T|t) && $species ]]
 then
   ## Determine if conda == T request is from nextflow or not, by that I mean
@@ -101,8 +102,10 @@ then
         echo $nf
         echo 'The variable check to determine if next flow is running is empty.
 Activating your local conda environment. Assumes conda environment is called ncbi_datasets. Continuing...'
-        eval "$(conda shell.bash hook)" ### activate conda to get conda env
-        source ~/miniconda3/etc/profile.d/conda.sh
+        ## I used to be able to do just the eval statement, now it does not work
+        ## and i don't like that this sources from somewhere that a user might not have (miniconda)...
+        #eval "$(conda shell.bash hook)" ## initialize the shell to use conda
+        source ~/miniconda3/etc/profile.d/conda.sh 
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
         echo "This is your local conda enviroment that is activated:" $condaAct
@@ -136,6 +139,8 @@ else
 or confirm that the tool is using a container. Exiting.'
   exit 1
 fi
+}
+condaOrNot
 
 #################
 ##BEGIN PROCESS##
@@ -152,7 +157,7 @@ echo "Checking your directory..."
 #####################
 ##CHECK FILE/FOLDER##
 #####################
-
+fileCheck(){
 FILE=downloadedData.tsv
 if [[ -f "$FILE" ]]; then
     echo "$FILE exists, this script will overwrite to previous $FILE \
@@ -181,6 +186,8 @@ else
 begin..."
     mkdir allDownload
 fi
+}
+fileCheck
 
 ####################
 ##DOWNLOAD GENOMES##
@@ -294,9 +301,10 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         echo "Making $valUp map file for file name conversion..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+        
+        ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
         
-
         awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > downloaded-$valUp.tsv ## Remove duplicate header
         
         sed -i 's/\//-/g' downloaded-$valUp.tsv
