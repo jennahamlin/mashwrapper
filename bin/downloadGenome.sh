@@ -364,15 +364,15 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp >> temp1
 #--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2    ## Remove duplicate header if doing multiple species
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > downloadedData.tsv #temp2    ## Remove duplicate header if doing multiple species
 
         ## Exclude legionella that is not identified to species or is endosymbionts.
 
-        grep -v 'Legionella endosymbiont' temp2 > temp3
-        grep -v 'uncultured' temp3 > temp4
-        grep -v 'Legionella sp\. ' temp4 > temp5 #must include space before or get rid of Lp subspecies
-        grep -v 'genomosp.' temp5 > temp6
-        grep -v 'Legionella sp\.' temp6 > downloadedData.tsv
+        #grep -v 'Legionella endosymbiont' temp2 > temp3
+        #grep -v 'uncultured' temp3 > temp4
+        #grep -v 'Legionella sp\. ' temp4 > temp5 #must include space before or get rid of Lp subspecies
+        #grep -v 'genomosp.' temp5 > temp6
+        #grep -v 'Legionella sp\.' temp6 > downloadedData.tsv
 
         ## Create a txt file of a count of all species downloaded
         cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
@@ -395,10 +395,10 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #|| [[ "${species^}" == "Legionella genomosp. 1" ]]; then
           echo "Removing Legionella endosymbiont files and files where the isolate is
 not identified to a recognized species..."
-          rm Legionella_sp._*.fna
-          rm Legionella_endosymbiont*.fna
+          #rm Legionella_sp._*.fna
+          #rm Legionella_endosymbiont*.fna
           rm uncultured_Legionella*.fna
-          rm Legionella_genomosp.*
+          #rm Legionella_genomosp.*
         elif [[ "${species^}" == "Legionella genomosp. 1" ]]; then 
           rm Legionella_genomosp.*
         else
