@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/bash 
 
+## adding -l makes the script run in an interactive shell, which allows the conda option to work. Dont like this need to fix
 ## Author J. Hamlin
 ## Date 01/05/2022
 ## This script is to download all available *legionella* and
@@ -37,7 +38,7 @@ Genus_species_GCA#.fna"
 chromosome, complete_genome, contig, scaffold"
    echo " -c   Required: Activate the conda enviroment? (T/F). \
 Assumes conda environment named ncbi_datasets"
-   echo " -s   Required: Download genus or species. Can use multiple -s flags. \
+   echo " -s   Required: Download genus or species. Can use multiple -s flags. Place in quotes. \
 Example: -s \"legionella\" -s \"tatlockia micdadei\" "
    echo " -h   Print this help."
    echo " "
@@ -48,7 +49,7 @@ Example: -s \"legionella\" -s \"tatlockia micdadei\" "
 ## Get the options
 while getopts ":a:c:s:h" option; do
    case $option in
-      h) ## Display Help
+      h) ## Display Help by calling help function
          Help
          exit;;
       a) ## Assembly-level
@@ -66,6 +67,7 @@ done
 ###################
 
 ## Make sure both -c and -s flags are included and not empty
+parse() {
 if [[ $conda == "" && $species == "" ]]
 then
     echo 'Please supply both -c and -s flags along with their required request.
@@ -83,6 +85,9 @@ then
 Please look at the help menu, if you need additional information. '
     exit 1
 fi
+}
+
+parse
 
 ## Determine what to do based on input from -c (conda) flag
 ## First check if conda is specifed as True
@@ -96,7 +101,8 @@ then
         echo $nf
         echo 'The variable check to determine if next flow is running is empty.
 Activating your local conda environment. Assumes conda environment is called ncbi_datasets. Continuing...'
-        eval "$(conda shell.bash hook)"
+        eval "$(conda shell.bash hook)" ### activate conda to get conda env
+        source ~/miniconda3/etc/profile.d/conda.sh
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
         echo "This is your local conda enviroment that is activated:" $condaAct
@@ -116,7 +122,7 @@ called ncbi_datasets. Exiting."
     fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
-  echo "Confirming both NCBI datasets/dataformat tools and Mash are available..."
+  echo "Confirming both NCBI datasets/dataformat tools are available..."
 
   ## Check that both tools are available. If not then exit. 
   ## Checking for mash will fail because we have not gotten to that module yet
@@ -257,22 +263,21 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #fi
         datasets rehydrate --directory $valUp
 
-        ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, if found
+        ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, 
+        ## if found and then deleting those folders via while loop that reads the created exclude_genomes file
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> excluded_genomes.txt
-        #cp excluded_genomes.txt  $basefolder
-        #xargs -I {} rm -r "{}" < excluded_genomes.txt
-        echo $PWD
-        ls -l         
+       
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
           echo "$file"
           rm -r $valUp/ncbi_dataset/data/"$file" 
         done < "$TO_BE_DEL"
+       
         cp excluded_genomes.txt $basefolder
 
         cd $valUp/ncbi_dataset/data
           
-     ## Check for plasmids and remove
+        ## Check for plasmids and remove
         echo "Checking for plasmids. This can take a some time..."
         for i in */*.fna
         do
@@ -285,7 +290,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                    ## Remove these files. Downloaded via conda
         find . -size 0 -type f -delete                                            ## Remove files with zero bytes
 
-      ## Make summary file of the downloaded data
+        ## Make summary file of the downloaded data
         echo "Making $valUp map file for file name conversion..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
