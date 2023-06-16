@@ -5,7 +5,7 @@
 ## This script is to download all available *legionella* and
 ## *legionella*-associated genomes from NCBI using the NCBI datasets command
 ## line tools. The NCBI dataformat command line tool then summarizes the output
-## by species count. Addiitonally, it converts non-species descript file names
+## by species count. Additonally, it converts non-species descript file names
 ## (e.g., GCA_XXXX) to include genus and species in the file name. In theory,
 ## this tool should download data for any species located on NCBI by specifying
 ## the organism of interest through the -s flag. Though I have only tested the
@@ -13,7 +13,8 @@
 ## file conversion should be done when used for other species.
 
 ## species tested on
-## "legionella" "fluoribacter" "tatlockia micdadei"
+## "legionella" "fluoribacter" 
+## No longer necessary: "tatlockia micdadei"
 
 timestamp=$(date +%d-%m-%Y_%H-%M-%S)
 basefolder=$PWD
@@ -94,7 +95,7 @@ then
     then
         echo $nf
         echo 'The variable check to determine if next flow is running is empty.
-Activating your local conda environment. Continuing...'
+Activating your local conda environment. Assumes conda environment is called ncbi_datasets. Continuing...'
         eval "$(conda shell.bash hook)"
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
@@ -117,10 +118,10 @@ elif [[ $conda == @(False|false|F|f) && $species ]]
 then
   echo "Confirming both NCBI datasets/dataformat tools and Mash are available..."
 
-  ## Check that both tools are available. If not then exit
+  ## Check that both tools are available. If not then exit. 
+  ## Checking for mash will fail because we have not gotten to that module yet
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-  #command -v mash >/dev/null 2>&1 || { echo >&2 "Mash is not installed.  Exiting."; exit 1; }
 
       ## Inform user that the tools are accessible for when conda is false
   echo "Great tools available to access NCBI and run Mash. Continuing.."
@@ -189,14 +190,12 @@ fi
 
 error_handler()
 {
-  #echo 'This will exit from this isolate but test the others...'
   echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
   cd ..
   echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
   echo "Exiting from this isolate..."
   echo "----------------------------------------"
 }
-
 
 for val in "${species[@]}";
 do
@@ -210,7 +209,7 @@ do
         echo "Assembly level is not specified as the parameter is empty..."
 
   ## Changed complete_genome to complete and no longer required to specify which files to exclude
-  ## with version change 12.2.0 -> 15.2.0
+  ## with datasets version change 12.2.0 -> 15.2.0
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
@@ -257,18 +256,15 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 #     7z x $valup.zip -o*
 #fi
         datasets rehydrate --directory $valUp
-        
+
+        ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, if found
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> excluded_genomes.txt
         cp excluded_genomes.txt  $basefolder
 
         cd $valUp/ncbi_dataset/data
-  
-  ## Checking for genomes where NCBI taxonomy status is inconclusive
-        #cat assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' >> TEST_Inconclusive.txt
-        #cat assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> inConclusive${valUp}.txt
-        
+          
   ## Check for plasmids and remove
-        echo "Checking for plasmids..."
+        echo "Checking for plasmids. This can take a some time..."
         for i in */*.fna
         do
           awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
