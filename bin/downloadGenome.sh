@@ -259,11 +259,20 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 
         ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, if found
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> excluded_genomes.txt
-        cp excluded_genomes.txt  $basefolder
+        #cp excluded_genomes.txt  $basefolder
+        #xargs -I {} rm -r "{}" < excluded_genomes.txt
+        echo $PWD
+        ls -l         
+        TO_BE_DEL="excluded_genomes.txt"
+        while read -r file ; do
+          echo "$file"
+          rm -r $valUp/ncbi_dataset/data/"$file" 
+        done < "$TO_BE_DEL"
+        cp excluded_genomes.txt $basefolder
 
         cd $valUp/ncbi_dataset/data
           
-  ## Check for plasmids and remove
+     ## Check for plasmids and remove
         echo "Checking for plasmids. This can take a some time..."
         for i in */*.fna
         do
@@ -280,8 +289,10 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         echo "Making $valUp map file for file name conversion..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
+        
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp > downloaded-$valUp.tsv ## Remove duplicate header
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > downloaded-$valUp.tsv ## Remove duplicate header
         
         sed -i 's/\//-/g' downloaded-$valUp.tsv
 
@@ -337,9 +348,10 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## Output is a tsv file with species and genebank accession downloaded
 
         dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp >> temp1
 #--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp2    ## Remove duplicate header if doing multiple species
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2    ## Remove duplicate header if doing multiple species
 
         ## Exclude legionella that is not identified to species or is endosymbionts.
 
