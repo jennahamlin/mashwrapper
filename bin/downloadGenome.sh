@@ -72,7 +72,6 @@ if [[ $conda == "" && $species == "" ]]
 then
     echo 'Please supply both -c and -s flags along with their required request.
 Please look at the help menu, if you need additional information. Exiting.'
-    echo ""
     exit 1
 elif [[ $conda == "" ]]
 then
@@ -86,7 +85,6 @@ Please look at the help menu, if you need additional information. '
     exit 1
 fi
 }
-
 parse
 
 ## Determine what to do based on input from -c (conda) flag
@@ -128,7 +126,8 @@ then
   echo "Confirming both NCBI datasets/dataformat tools are available..."
 
   ## Check that both tools are available. If not then exit. 
-  ## Checking for mash will fail because we have not gotten to that module yet
+  ## Checking for mash will fail because we have not gotten to that module yet 
+  ## meaning that we have not downloaded the singularity image. 
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
 
@@ -205,7 +204,7 @@ error_handler()
 {
   echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
   cd ..
-  echo "There are no $assembly files avilable at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
+  echo "There are no $assembly files available at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
   echo "Exiting from this isolate..."
   echo "----------------------------------------"
 }
@@ -231,43 +230,17 @@ do
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
       fi
+      echo "Line 234, trying to find where it prints the excluded genomes to output"     
 
-## When running testGet or get_database with singularity, then unzip will complain. Error = Bad length
-## But process still runs to completion and is successful. As far as I can tell, it maybe an issue
-## with the unzip command which is in the BusyBox instance associated with singularity. When looking
-## at the unzip github (https://github.com/brgl/busybox/blob/master/archival/unzip.c), a comment is
-## included which says "Don't die. Who knows maybe len calculation was botched somewhere. After all,
-## crc matched!" This is associated with the validate comparsion if statement (Line 392). Using
-## `unzip -l` within the continue provides an estimate of length, but not in human readable form and
-## does not match if ls -lh after unzipping.
-
-## TO DO: check this on another hpc
-##if [[  -z "$CONDA_DEFAULT_ENV" ]]; then
-##   conda default env should be empty if using a container
-##   echo "This is when -c is False as in when a container is used. No conda environment should be listed:" $condaAct
+      ## Confirm zip file avaiable
       count=`ls -1 *.zip 2>/dev/null | wc -l`
-  #if [[ -f $valUp.zip ]]; then
       if [ $count != 0 ]; then
-        #echo $count
+
+        echo $count
         echo "Unzipping the associated files..."
         unzip $valUp.zip -d $valUp
         echo " "
-        echo 'NOTE TO USER: unzip: bad length is nothing to worry about. Tool runs
-to completion successfully. It might be with a len calculation with
-unzip in the BusyBox instance associated with the container.
-See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
-        echo " "
-#elif [[ $condaAct != "ncbi_datasets" ]]; then
-#     echo "This is when -c is False w/o config file. Assume running w/modules loaded. No conda env should be list:" $condaAct
-#     unzip $valUp.zip -d $valUp
-#elif ! [[ -x "$(command -v 7z)" ]]; then
-#     echo "Checking for the program 7z..."
-#     echo "7z installs with conda loaded from nf module"
-#     unzip $valUp.zip -d $valUp
-#else
-#     echo "This is when -c is True as the user specified using the conda environment:" $condaAct
-#     7z x $valup.zip -o*
-#fi
+
         datasets rehydrate --directory $valUp
 
         ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, 
@@ -276,11 +249,11 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
        
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
-          echo "$file"
+      #    echo "$file"
           rm -r $valUp/ncbi_dataset/data/"$file" 
         done < "$TO_BE_DEL"
        
-        cp excluded_genomes.txt $basefolder
+        #cp excluded_genomes.txt $basefolder
 
         cd $valUp/ncbi_dataset/data
           
@@ -298,53 +271,54 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         find . -size 0 -type f -delete                                            ## Remove files with zero bytes
 
         ## Make summary file of the downloaded data
-        echo "Making $valUp map file for file name conversion..."
+        echo "Making $valUp map file for file name conversion and converting file names..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
         
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
         
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > downloaded-$valUp.tsv ## Remove duplicate header
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' downloaded-$valUp.tsv
+        sed -i 's/\//-/g' temp3 # downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
-        sed 's/ /_/g' downloaded-$valUp.tsv > map1$valUp.txt
+        sed 's/ /_/g' temp3 # downloaded-$valUp.tsv
 
         ## Now combine column 1 with underscore and column 2
-        awk '{ print $1 "_" $2 }' map1$valUp.txt > map2$valUp.txt
+        awk '{ print $1 "_" $2 }' temp3 > temp4 #   downloaded-$valUp.tsv > map2$valUp.txt
 
         ## Remove headers
-        sed -i '1d' map1$valUp.txt
-        sed -i '1d' map2$valUp.txt
+        sed -i '1d' temp3#  downloaded-$valUp.tsv
+        sed -i '1d' temp4 #map2$valUp.txt
+        cp temp3  downloaded-$valUp.txt
 
         ## Make final map file
-        cut -f2 map1$valUp.txt | paste -d " " map2$valUp.txt - > mapFinal$valUp.txt
+        cut -f2 temp3 | paste -d " " temp4 - > temp5
 
         ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
         ## File names that are duplicated between isolates
         for d in */
         do
-          FILEPATH=$d*.fna
+          FILEPATH=$d*.fna 
           mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
         done
 
         ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1}' mapFinal$valUp.txt > mapFinal2$valUp.txt
+        awk '{ print $2 ".fna" " " $1}' temp5 > mapFinal$valUp.txt
 
         ## Move to common folder
         mkdir common
         cp */*.fna common
-        cp mapFinal2$valUp.txt common
+        cp mapFinal$valUp.txt common
 
         ## Rename files using mapfile
         cd common
-        awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal2$valUp.txt
+        awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
 
         ## Move all converted *.fna files from species common to alldownload
-        cp *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-       # rm temp map1* map2* mapFinal* map2Final* 
+        mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
+        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
         
         ## Move out of common folder
         cd ..
@@ -360,19 +334,13 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
 ## This uses NCBI command line tool dataformat on the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp >> temp1
-#--fields organism-name,assminfo-genbank-assm-accession,assminfo-refseq-assm-accession >> temp ##update due to version change from 12.20.1 to 14.26.0
+        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp1
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp1 >> temp2
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > downloadedData.tsv #temp2    ## Remove duplicate header if doing multiple species
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3    ## Remove duplicate header if doing multiple species
 
-        ## Exclude legionella that is not identified to species or is endosymbionts.
-
-        #grep -v 'Legionella endosymbiont' temp2 > temp3
-        #grep -v 'uncultured' temp3 > temp4
-        #grep -v 'Legionella sp\. ' temp4 > temp5 #must include space before or get rid of Lp subspecies
-        #grep -v 'genomosp.' temp5 > temp6
-        #grep -v 'Legionella sp\.' temp6 > downloadedData.tsv
+        grep -v 'Legionella sp\. ' temp3 > temp4
+        grep -v 'Legionella sp\.' temp4 > downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 
         ## Create a txt file of a count of all species downloaded
         cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
@@ -383,7 +351,7 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-        rm temp temp2 temp3 temp4 temp5 temp6
+        rm temp temp1 temp2 temp3 temp4 
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -391,20 +359,15 @@ See: https://github.com/brgl/busybox/blob/master/archival/unzip.c '
         cd allDownload
 
 ## Exclude legionella that is not identified to species and endosymbionts
-        if [[ "${species^}" == "Legionella" ]]; then
-#|| [[ "${species^}" == "Legionella genomosp. 1" ]]; then
-          echo "Removing Legionella endosymbiont files and files where the isolate is
-not identified to a recognized species..."
-          #rm Legionella_sp._*.fna
-          #rm Legionella_endosymbiont*.fna
-          rm uncultured_Legionella*.fna
-          #rm Legionella_genomosp.*
-        elif [[ "${species^}" == "Legionella genomosp. 1" ]]; then 
-          rm Legionella_genomosp.*
-        else
-          echo "This was not either Legionella endosymbiont or those identified to
-species (Legionella sp.). Thus, no extra files to remove..."
-        fi
+      #  if [[ "${species^}" == "Legionella" ]]; then
+      #    echo "Removing Legionella files where the isolate is not identified to a recognized species..."
+      #    rm Legionella_sp._*.fna
+      #    rm uncultured_Legionella*.fna
+      #  elif [[ "${species^}" == "Legionella genomosp. 1" ]]; then 
+      #    rm Legionella_genomosp.*
+      #  else
+      #    echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
+      #  fi
 
 ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
