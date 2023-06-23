@@ -230,7 +230,7 @@ do
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
       fi
-      echo "Line 234, trying to find where it prints the excluded genomes to output"     
+       
 
       ## Confirm zip file avaiable
       count=`ls -1 *.zip 2>/dev/null | wc -l`
@@ -249,11 +249,11 @@ do
        
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
-      #    echo "$file"
+
           rm -r $valUp/ncbi_dataset/data/"$file" 
         done < "$TO_BE_DEL"
        
-        #cp excluded_genomes.txt $basefolder
+        cp excluded_genomes.txt $basefolder
 
         cd $valUp/ncbi_dataset/data
           
@@ -280,18 +280,18 @@ do
         
         awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' temp3 # downloaded-$valUp.tsv
+        sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
-        sed 's/ /_/g' temp3 # downloaded-$valUp.tsv
+        sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
 
         ## Now combine column 1 with underscore and column 2
         awk '{ print $1 "_" $2 }' temp3 > temp4 #   downloaded-$valUp.tsv > map2$valUp.txt
 
         ## Remove headers
-        sed -i '1d' temp3#  downloaded-$valUp.tsv
-        sed -i '1d' temp4 #map2$valUp.txt
-        cp temp3  downloaded-$valUp.txt
+        sed -i '1d' temp3 ##downloaded-$valUp.tsv
+        sed -i '1d' temp4 ##map2$valUp.txt
+#        cp temp3  downloaded-$valUp.txt
 
         ## Make final map file
         cut -f2 temp3 | paste -d " " temp4 - > temp5
@@ -305,11 +305,13 @@ do
         done
 
         ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1}' temp5 > mapFinal$valUp.txt
+        awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
 
         ## Move to common folder
         mkdir common
+        
         cp */*.fna common
+        
         cp mapFinal$valUp.txt common
 
         ## Rename files using mapfile
@@ -318,12 +320,10 @@ do
 
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
+        cd ..
+        rm -r common 
         rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
         
-        ## Move out of common folder
-        cd ..
-        rm -r common
-
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
         echo "Summarizing the entire download..."
@@ -343,15 +343,15 @@ do
         grep -v 'Legionella sp\.' temp4 > downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 
         ## Create a txt file of a count of all species downloaded
-        cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort |uniq -c > speciesCount.txt
+        cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort | uniq -c > speciesCount.txt
 
         ## Get total number of isolates; store and compare to those in allDownload directory
-        countFile=$(awk '{SUM+=$1}END{print SUM }' speciesCount.txt)
+        countFile=$(awk '{ SUM+=$1}END{print SUM }' speciesCount.txt)
 
-        awk '{SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
+        awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
-        rm temp temp1 temp2 temp3 temp4 
+        rm temp1 temp2 temp3 temp4 
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
@@ -359,15 +359,12 @@ do
         cd allDownload
 
 ## Exclude legionella that is not identified to species and endosymbionts
-      #  if [[ "${species^}" == "Legionella" ]]; then
-      #    echo "Removing Legionella files where the isolate is not identified to a recognized species..."
-      #    rm Legionella_sp._*.fna
-      #    rm uncultured_Legionella*.fna
-      #  elif [[ "${species^}" == "Legionella genomosp. 1" ]]; then 
-      #    rm Legionella_genomosp.*
-      #  else
-      #    echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
-      #  fi
+        if [[ "${species^}" == "Legionella" ]]; then
+          echo "Removing Legionella files where the isolate is not identified to a recognized species..."
+          rm Legionella_sp._*.fna
+        else
+          echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
+        fi
 
 ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
@@ -378,8 +375,8 @@ number of files that were copied to the allDownload directory.";
         else
           echo "Hmm, the number of isolates in the speciesCount file does not match \
 the number of files that were copied to the allDownload directory. You \
-can either investigate the output/error files or just try running the script\
-again as sometimes there are communication issues between HPC and NCBI.";
+#can either investigate the output/error files or just try running the script\
+#again as sometimes there are communication issues between HPC and NCBI.";
         exit 1
         fi
 
