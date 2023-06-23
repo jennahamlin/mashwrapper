@@ -383,9 +383,8 @@ the number of files that were copied to the allDownload directory. You \
 ## Move files up to basefolder to all easier copying via nextflow process
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          mv *.fna $basefolder ## should be mv
+          mv *.fna $basefolder ## should be mv   
           
-          rm -rf $basefolder/genomesDownloaded_$timestamp/allDownload
           rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
            echo "There were no .fna files generated"
