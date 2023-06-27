@@ -243,10 +243,16 @@ do
 
         datasets rehydrate --directory $valUp
 
-        ## Checking for genomes where NCBI taxonomy is not okay, adding the genebank/refseq id to a list, 
+        ## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list, 
         ## if found and then deleting those folders via while loop that reads the created exclude_genomes file
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9].........." >> excluded_genomes.txt
-       
+        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9]{9}.[0-9]{1}" >> excluded_genomes.tmp
+        
+         # I am sure there is a better way to do this, but have not found it. I want to exclude genomes which have a lower level of completeness (< 93.00), but all fields in the assembly file are not consistent, meaninging that some do not have a contamiation estimate, so I get the data which does and then parse it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
+        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
+
+        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
+
+        cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
 
@@ -322,7 +328,7 @@ do
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
         rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt exclude_genomes.tmp
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
