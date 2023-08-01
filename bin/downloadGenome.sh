@@ -220,8 +220,8 @@ do
       if [[ -z "$assembly" ]] ; then
         echo "Assembly level is not specified as the parameter is empty..."
 
-  ## Changed complete_genome to complete and no longer required to specify which files to exclude
-  ## with datasets version change 12.2.0 -> 15.2.0
+        ## Changed complete_genome to complete and no longer required to specify which files to exclude
+        ## with datasets version change 12.2.0 -> 15.2.0
         datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
@@ -245,14 +245,18 @@ do
 
         ## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list, 
         ## if found and then deleting those folders via while loop that reads the created exclude_genomes file
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_[0-9]{9}.[0-9]{1}" >> excluded_genomes.tmp
+        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
         
-         # I am sure there is a better way to do this, but have not found it. I want to exclude genomes which have a lower level of completeness (< 93.00), but all fields in the assembly file are not consistent, meaninging that some do not have a contamiation estimate, so I get the data which does and then parse it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
+         ## I am sure there is a better way to do this, but have not found it. I want to exclude genomes which 
+         ## have a lower level of completeness (< 93.00), but all fields in the assembly file are not consistent, 
+         ## meaning that some do not have a contamiation estimate, so I get the data which does and then parse 
+         ## it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
-
+ 
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
 
         cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
+        
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
 
@@ -260,7 +264,8 @@ do
         done < "$TO_BE_DEL"
        
         cp excluded_genomes.txt $basefolder
-
+        rm excluded_genomes.tmp
+        
         cd $valUp/ncbi_dataset/data
           
         ## Check for plasmids and remove
@@ -297,7 +302,7 @@ do
         ## Remove headers
         sed -i '1d' temp3 ##downloaded-$valUp.tsv
         sed -i '1d' temp4 ##map2$valUp.txt
-#        cp temp3  downloaded-$valUp.txt
+        #cp temp3  downloaded-$valUp.txt
 
         ## Make final map file
         cut -f2 temp3 | paste -d " " temp4 - > temp5
@@ -328,7 +333,7 @@ do
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
         rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt exclude_genomes.tmp
+        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
@@ -364,7 +369,7 @@ do
 #################################
         cd allDownload
 
-## Exclude legionella that is not identified to species and endosymbionts
+        ## Exclude legionella that is not identified to species and endosymbionts
         if [[ "${species^}" == "Legionella" ]]; then
           echo "Removing Legionella files where the isolate is not identified to a recognized species..."
           rm Legionella_sp._*.fna
@@ -372,7 +377,7 @@ do
           echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
         fi
 
-## Count number of files in folder with those in speicesCount file for comparison
+        ## Count number of files in folder with those in speicesCount file for comparison
         countFolder=$(ls | wc -l)
 
         if [[ $countFile  -eq  $countFolder ]]; then
@@ -386,11 +391,10 @@ the number of files that were copied to the allDownload directory. You \
         exit 1
         fi
 
-## Move files up to basefolder to all easier copying via nextflow process
+        ## Move files up to basefolder to all easier copying via nextflow process
         count=`ls -1 *.fna 2>/dev/null | wc -l`
         if [ $count != 0 ]; then
-          mv *.fna $basefolder ## should be mv   
-          
+          mv *.fna $basefolder ## should be mv     
           rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
         else
            echo "There were no .fna files generated"

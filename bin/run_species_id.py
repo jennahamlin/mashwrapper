@@ -200,6 +200,7 @@ def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
  * Number of Threads: %s \n " %
  (inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads))
 
+##TO DO - do we want to check for corrupt gzip files?
 def check_files(inRead1, inRead2, inMash):
     """
     Checks if all the input files exists; exits if file not found or if file is
@@ -234,7 +235,7 @@ def check_files(inRead1, inRead2, inMash):
         logging.critical("Looks like you entered the same read file twice. \
  Exiting.")
         sys.exit(1)
-##TO DO:  - do i want to check if the beginning of the file name is a match between the two files?
+##TO DO - do i want to check if the beginning of the file name is a match between the two files?
 
 def check_program(program_name):
     """
@@ -272,7 +273,6 @@ def check_program(program_name):
         logging.critical("Program %s not found! Cannot continue; dependency\
 not fulfilled. Exiting." % program_name)
         sys.exit(1)
-
 
 def check_mash(): 
     
@@ -577,12 +577,6 @@ def parseResults(cmd, inMaxDis):
     bestGenusSort = dfSortOut[0]
     bestSpeciesSort = dfSortOut[1]
 
-    #pd.set_option('display.max_columns', 12)
-    #pd.set_option('display.float_format', str)
-    #use 7g to have it choose best viz or 7e to print scientific notation
-    #pd.options.display.float_format = '{:.7g}'.format
-    #print("Line 500", dfSorted)
-
     ## use column (axis = 1), to create minimal dataframe
     dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
     'sketchSize' ], axis=1)
@@ -593,12 +587,10 @@ def parseResults(cmd, inMaxDis):
     bestGenus = noMash[0]
     bestSpecies = noMash[1]
 
-    # change order
+    ## change order
     dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
     'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
     dfTop = dfSortedDropped[:5]
-
-##TO DO - scienfitic notation for P-value
 
     dfTop.reset_index(drop=True, inplace=True) #make index start at 0
     return bestGenus, bestSpecies, dfTop
