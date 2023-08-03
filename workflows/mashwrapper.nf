@@ -23,8 +23,8 @@ if (params.get_database) {
 
   if (params.use_database) {
 
-  ch_inDatabase = file(params.use_database)
-  ch_kmer = params.size_kmer
+   ch_inDatabase = file(params.use_database)
+   ch_kmer = params.size_kmer
 
     } else {
       exit("""
@@ -159,6 +159,11 @@ workflow MASHWRAPPER {
       //
       SPECIES_ID ( ch_inDatabase, INPUT_CHECK.out.reads, ch_kmer )
 
+      ch_incon = Channel.value( "This is using an already compiled  database, please see previous database creation runs to determine the genomes which were excluded from the database." )
+    
+      //my_header.collectFile( name: 'test.txt', newLine: true, sort: false )
+       
+
       ch_results = ch_results.mix(SPECIES_ID.out.txt)
       ch_log = ch_log.mix(SPECIES_ID.out.log)
       ch_versions = ch_versions.mix(SPECIES_ID.out.versions)
@@ -170,7 +175,7 @@ workflow MASHWRAPPER {
       COMBINED_OUTPUT ( ch_results.unique().collectFile(name: 'collated_species_id_results.txt'),
                         ch_log.unique().collectFile(name: 'collated_species_id.log'),
                         ch_info.collectFile(name: 'database.info'),
-                        ch_incon.unique().collectFile(name: 'collated_excluded_genomes.txt') )
+                        ch_incon.collectFile(name: 'collated_excluded_genomes.txt') )
 
       CUSTOM_DUMPSOFTWAREVERSIONS ( ch_versions.unique().collectFile(name: 'collated_versions.yml' )
       )
