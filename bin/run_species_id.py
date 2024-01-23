@@ -626,7 +626,7 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
         f.write("K-mer size used for sketching: " + inKSize + "\n" )
         f.write("Mash Database name: " + inMash + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
-        f.write("Top 5 hits:" + "\n")
+        f.write("Top 5 results:" + "\n")
         f.writelines(u'\u2500' * 100 + "\n")
         f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"), showindex=False)+ "\n")
 
