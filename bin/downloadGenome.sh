@@ -1,21 +1,18 @@
 #!/bin/bash 
 
-## adding -l makes the script run in an interactive shell, which allows the conda option to work. Dont like this need to fix
 ## Author J. Hamlin
 ## Date 01/05/2022
 ## This script is to download all available *legionella* and
 ## *legionella*-associated genomes from NCBI using the NCBI datasets command
 ## line tools. The NCBI dataformat command line tool then summarizes the output
-## by species count. Additonally, it converts non-species descript file names
+## by species count. Additonally, it converts non-species descriptive file names
 ## (e.g., GCA_XXXX) to include genus and species in the file name. In theory,
 ## this tool should download data for any species located on NCBI by specifying
 ## the organism of interest through the -s flag. Though I have only tested the
 ## tool for the species listed below so careful double checking of download and
 ## file conversion should be done when used for other species.
-
-## species tested on
+## *Species Tested:*
 ## "legionella" "fluoribacter" 
-## No longer necessary: "tatlockia micdadei"
 
 timestamp=$(date +%d-%m-%Y_%H-%M-%S)
 basefolder=$PWD
@@ -47,7 +44,7 @@ Example: -s \"legionella\" -s \"tatlockia micdadei\" "
 }
 
 ## Get the options
-while getopts ":a:c:s:h" option; do
+while getopts ":c:s:ah" option; do
    case $option in
       h) ## Display Help by calling help function
          Help
@@ -59,8 +56,15 @@ while getopts ":a:c:s:h" option; do
       s) ## Specifiy the organism to download. Can be multiple, seperated by a
          ## space. Using genus species, place in quotes ("tatlockia micdadei")
          species+=("$OPTARG");;
+      :) ## This uses the colon before the c
+         echo "You supplied a flag without an argument. Exiting." >&2
+         exit 1 ;;
+      \?) ## Handle invalid options
+         echo 'Invalid Option. Exiting.' >&2 
+         exit 1 ;;
    esac
 done
+
 
 ###################
 ##PARSE THE FLAGS##
@@ -71,16 +75,16 @@ parse() {
 if [[ $conda == "" && $species == "" ]]
 then
     echo 'Please supply both -c and -s flags along with their required request.
-Please look at the help menu, if you need additional information. Exiting.'
+Please look at the help menu via -h, if you need additional information. Exiting.'
     exit 1
 elif [[ $conda == "" ]]
 then
-    echo 'You did not provide any information after the -c flag (T/F).
+    echo 'You did not provide the -c flag (T/F).
 Please look at the help menu, if you need additional information. Exiting.'
     exit 1
 elif [[ $species == "" ]]
 then
-    echo 'You did not provide an organism to download for the -s flag. Exiting.
+    echo 'You did not provide the -s flag. Exiting.
 Please look at the help menu, if you need additional information. '
     exit 1
 fi
@@ -106,7 +110,7 @@ Activating your local conda environment. Assumes conda environment is called ncb
         source ~/miniconda3/etc/profile.d/conda.sh 
         conda activate ncbi_datasets
         condaAct=`echo $CONDA_DEFAULT_ENV`
-        echo "This is your local conda enviroment that is activated:" $condaAct
+ i       echo "This is your local conda enviroment that is activated:" $condaAct
 
         ## If conda == T is not from nextflow; then confirm name of environment
           if [[ $condaAct == 'ncbi_datasets' ]]
