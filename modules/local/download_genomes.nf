@@ -26,11 +26,11 @@ process DOWNLOAD_GENOMES {
       nf="This is script is running via NextFlow"
       export nf
 
-      if [[ "$assembly" != false ]]; then
-          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
-      else
+      #if [[ "$assembly" != false ]]; then
+      #    ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
+      #else
           ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
-      fi
+      #fi
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":

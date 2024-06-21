@@ -291,7 +291,7 @@ do
         ## Make summary file of the downloaded data
         echo "Making $valUp map file for file name conversion and converting file names..."
 
-        dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession >> temp
+        dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
         
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
@@ -339,8 +339,8 @@ do
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
-        rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+       # rm -r common 
+       # rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
@@ -352,7 +352,8 @@ do
 ## This uses NCBI command line tool dataformat on the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
 
-        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession >> temp1
+        
+        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp1
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp1 >> temp2
 
         awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3    ## Remove duplicate header if doing multiple species
@@ -370,6 +371,7 @@ do
 
         ## Remove temp file within base directory genomesDownloaded_timestamp
         rm temp1 temp2 temp3 temp4 
+        
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
