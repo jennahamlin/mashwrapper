@@ -60,11 +60,10 @@ while getopts ":c:s:ah" option; do
          echo "You supplied a flag without an argument. Exiting." >&2
          exit 1 ;;
       \?) ## Handle invalid options
-         echo 'Invalid Option. Exiting.' >&2 
+         echo 'Invalid Option. Please use the -h flag to display the help menu. Exiting.' >&2 
          exit 1 ;;
    esac
 done
-
 
 ###################
 ##PARSE THE FLAGS##
@@ -89,6 +88,8 @@ Please look at the help menu, if you need additional information. '
     exit 1
 fi
 }
+
+## Call the parse function for dealing with invalid flags
 parse
 
 ## Determine what to do based on input from -c (conda) flag
@@ -238,8 +239,10 @@ do
 
       ## Confirm zip file avaiable
       count=`ls -1 *.zip 2>/dev/null | wc -l`
-      if [ $count != 0 ]; then
-
+      if [ i$count != 0 ]; then
+        
+        echo "Checking to see if there are any zip files, which there should be after downloading data..."
+        echo "The number of zipped files is:"
         echo $count
         echo "Unzipping the associated files..."
         unzip $valUp.zip -d $valUp
@@ -247,27 +250,27 @@ do
 
         datasets rehydrate --directory $valUp
 
-        ## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list, 
-        ## if found and then deleting those folders via while loop that reads the created exclude_genomes file
+        ## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list (excluded_genomes)
+        ## Ultimately if genome GCA ID added to list, it will be deleted 
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
         
-        ## remove genomes without a completeness estimate
-        #cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{ if(!/"completeness"/) print $1 }' | grep -o "GCA_......." 
-        
-        ## get 'unculture' legionella species and remove those genomes
-        ## If files are already listed to be removed in a previous command than an error message gets printed, but this is not an error, it is just that it can not find the already deteled files.
+        ## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  awk '{if(/uncultured/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
         
-        ## I am sure there is a better way to do this, but have not found it. I want to exclude genomes which 
-        ## have a lower level of completeness (< 93.00), but all fields in the assembly file are not consistent, 
-        ## meaning that some do not have a contamiation estimate, so I get the data which does and then parse 
+        ## I want to exclude genomes which have a lower level of completeness (< 93.00), 
+        ## but all fields in the assembly file are not consistent between isolates. For example 
+        ## some do not have a contamiation estimate, so I get the data which does and then parse 
         ## it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
+        ## These genome GCA IDs get added to the excluded_genomes list
+        ## Value of 93.00 was chosen based on most isolates were higher than this value. 
+        ## TODO; Determine number of isolates with completeness estimate of 93.00 or higher
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
  
         cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
 
         cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
  
+        ## Now remove folders for genomes listed in exclusion file
         TO_BE_DEL="excluded_genomes.txt"
         while read -r file ; do
  
@@ -280,6 +283,9 @@ do
         cd $valUp/ncbi_dataset/data
           
         ## Check for plasmids and remove
+        ## Get fasta header /^>/ 
+        ## Assign header with plasmid to p
+        ## Remove plasmid from genome by specifying not P (!p)
         echo "Checking for plasmids. This can take a some time..."
         for i in */*.fna
         do
