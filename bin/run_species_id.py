@@ -53,57 +53,6 @@ class ParserWithErrors(argparse.ArgumentParser):
         except ValueError:
             parser.error(f'{arg} is not a valid integer.')
 
-######-Mine
-## TODO - docstring
-## create class of formatted error messages
-## input variable is argparse.ArgumentParser, which initializes the parser
-#class ParserWithErrors(argparse.ArgumentParser):
-#    def error(self, message):
-#        print('\n{0}\n\n'.format(message))
-#        self.print_help()
-#        sys.exit(2)
-#
-#    def is_valid_mash(self, parser, arg):
-#        base, ext = os.path.splitext(arg)
-#        if ext not in ('.msh') or ext in ('') :
-#            parser.error('This is not a file ending with .msh. \
-# Did you generate the mash sketch and specified that file to be used?')
-#        else:
-#            return arg
-#
-#    def is_valid_fastq(self, parser, arg):
-#        base, ext = os.path.splitext(arg)
-#        if ext not in ('.gz', '.fastq', '.fastq.gz'):
-#            parser.error('This is not a file ending with either .fastq or \
-#.fastq.gz. This flag requires the input of a fastq file.')
-#        else:
-#            return arg
-#
-#    def is_valid_distance(self, parser, arg):
-#        isFloat = True
-#        try:
-#            float(arg)
-#        except ValueError:
-#            isFloat = False
-#        if (isFloat == False) or (float(arg) < 0) :
-#            parser.error('%s is not a positive number (e.g., a float, aka a \
-# number with a decimal point)' % arg)
-#        else:
-#            return arg
-#
-#    def is_valid_int(self, parser, arg):
-#        isInt = True
-#        try:
-#            int(arg)
-#        except ValueError:
-#            isInt = False
-#        if isInt == False:
-#            parser.error("You input %s. This is NOT an integer." % arg)
-#        elif arg.isnumeric() == False:
-#            parser.error("You input %s. This is NOT a positive number." % arg)
-#        else:
-#            return arg
-
 #########################
 ## ArgParser Arguments ##
 #########################
@@ -148,10 +97,6 @@ def argparser():
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
 
-## TODO need to deal with this better
-inKSize = os.getenv('kSize')
-#print("The kmer size is exported from database using mash info: %s" % inKSize)
-
 ###############
 ## FUNCTIONS ##
 ###############
@@ -186,43 +131,13 @@ def make_output_log(log):
     # Log system information
     sys_info = os.uname()
     logging.info("System Information:")
-    logging.info("  * System: %s" % sys_info[0])
-    logging.info("  * Node Name: %s" % sys_info[1])
-    logging.info("  * Release: %s" % sys_info[2])
-    logging.info("  * Version: %s" % sys_info[3])
-    logging.info("  * Machine: %s" % sys_info[4])
+    logging.info("   System: %s" % sys_info[0])
+    logging.info("   Node Name: %s" % sys_info[1])
+    logging.info("   Release: %s" % sys_info[2])
+    logging.info("   Version: %s" % sys_info[3])
+    logging.info("   Machine: %s" % sys_info[4])
 
-#def fastq_name
-# def make_output_log(log):
-#     """
-#     Makes the output directory and the log file which can be appended too.
-#     Includes printing of operating system (os) information where script is being run.
-#     That os information is determined positioanlly (e.g., sysOutput[0]). Requires
-#     logging package. 
-
-#     Parameters
-#     ----------
-#     log (str) : Name of the log file.
-
-#     Returns
-#     -------
-#     None
-#         Exits the program if unable to make output directory.
-#     """
-#     logging.basicConfig(filename=log, filemode="a", level=logging.DEBUG,
-#     format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-#     logging.info("New log file created in output directory - %s... " % log)
-#     logging.info("Starting the tool...")
-#     sysOutput=(os.uname())
-#     logging.info("Returning information identifying the current operating system... \n \n \
-# * System: %s  \n \
-# * Node Name: %s  \n \
-# * Release: %s  \n \
-# * Version: %s  \n \
-# * Machine %s \n" %
-# (sysOutput[0], sysOutput[1], sysOutput[2], sysOutput[3], sysOutput[4]))
-
-def fastq_name(inRead1):
+def fastq_name(read1: str):
     """
     Gets stripped read name for appending to output files. 
     When running within NextFlow, allows for .gz files because files are
@@ -230,7 +145,7 @@ def fastq_name(inRead1):
 
     Parameters
     ----------
-    inRead1 (str) : Fastq files with the option of three different file endings.
+    read1 (str) : Fastq files with the option of three different file endings.
 
     Returns
     -------
@@ -239,92 +154,107 @@ def fastq_name(inRead1):
     # Define regex pattern to match any of the supported endings
     pattern = r'(_1|_R1_001|_R1)\.fastq(\.gz)?$'
 
-    match = re.search(pattern, inRead1)
+    match = re.search(pattern, read1)
     if match:
-        name = inRead1[:match.start()]  # Extract everything before the matched pattern
+        name = read1[:match.start()]  # Extract everything before the matched pattern
         return name
     else:
         logging.critical(" Please check your file endings, assumes either _1.fastq(.gz), _R1_001.fastq(.gz), or _R1.fastq(.gz)")
         sys.exit(1)
 
-######-Mine
-#def fastq_name(inRead1):
-#    """
-#    Gets stripped read name for appending to output files. 
-#    When running within NextFlow, allows for .gz files because files are
-#    gunzipped before running this script.
-#
-#    Parameters
-#    ----------
-#    inRead1 (str) : Fastq files with the option of three different file endings.
-#
-#    Returns
-#    -------
-#    name (str): File names with one of the three supported endings stripped.
-#    """
-#    if inRead1.endswith("_1.fastq"):
-#        name = inRead1.split("_1.fastq")[0]
-#        return(name)
-#    elif inRead1.endswith("_R1_001.fastq"):
-#        name = inRead1.split("_R1_001.fastq")[0]
-#        return(name)
-#    elif inRead1.endswith("_R1.fastq"):
-#        name = inRead1.split("_R1.fastq")[0]
-#        return(name)
-#    else:
-#        logging.critical("Please check your file endings, assumes either \
-#_1.fastq(.gz), _R1_001.fastq(.gz), or _R1.fastq(.gz)")
-#        sys.exit(1)
-
 ##TODO reduce the number of variables here. Split to two funcitons on for required varaibles and one for optional variables
-def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
+
+def get_input(read1: str, read2: str, mash_db: str, max_dis: str, min_kmer: str, k_size: str, threads: str) -> None:
     """
-    Prints the command line input to the log file
+    Logs the command line input parameters.
 
     Parameters
     ----------
-    inRead1 : str
-        XXX
-    inRead2 : str
-        XXX
-    inMash : str
-        XXX
-    inMaxDis : str
-        XXX
-    inKmer : str
-        XXX
-    inThreads : str
-        XXX
+    read1 : str
+        Path to the first input read.
+    read2 : str
+        Path to the second input read.
+    mash_db : str
+        Path to the Mash database.
+    max_dis : str
+        Maximum distance parameter.
+    min_kmer : str
+        Minimum k-mer count.
+    k_size : str
+        Size of the k-mer.
+    threads : str
+        Number of threads to use.
 
     Returns
     -------
     None
-        XXX
     """
-
-    logging.info("The input parameters... \n \n \
- * Read1: %s \n \
- * Read2: %s \n \
- * Mash Databse: %s \n \
- * Maximum Distance: %s \n \
- * Minimum Kmer Count: %s \n \
- * Size of Kmer: %s \n \
- * Number of Threads: %s \n " %
- (inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads))
+    
+    logging.info(
+        f"The input parameters:\n"
+        f" * Read1: {read1}\n"
+        f" * Read2: {read2}\n"
+        f" * Mash Database: {mash_db}\n"
+        f" * Maximum Distance: {max_dis}\n"
+        f" * Minimum Kmer Count: {min_kmer}\n"
+        f" * Size of Kmer: {k_size}\n"
+        f" * Number of Threads: {threads}\n"
+    )
 
 ##TO DO - do we want to check for corrupt gzip files?
 ##TO DO - do i want to check if the beginning of the file name is a match between the two files?
 
-def check_files(inRead1, inRead2, inMash):
+def get_k_size(mash_db: str) -> str:
+    """
+    Retrieves the k-size from the Mash database information.
+
+    Parameters
+    ----------
+    mash_db : str
+        Path to the Mash database.
+
+    Returns
+    -------
+    str
+        The k-size value extracted from the Mash info output.
+    """
+    try:
+        # Run the mash info command and capture its output
+        result = subprocess.run(
+            ['mash', 'info', mash_db],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Extract the k-size value using awk from the command's output
+        output = result.stdout
+        lines = output.splitlines()
+        
+        if len(lines) >= 3:
+            # Assuming the k-size is in the 3rd line and 3rd field
+            k_size = lines[2].split()[2]  
+            return k_size
+        else:
+            raise ValueError("Unexpected output format from mash info command.")
+    
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while running the command: {e}")
+        return ""
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return ""
+
+def check_files(read1, read2, inMash):
     """
     Checks if all the input files exist; exits if file not found or if file is
     a directory.
 
     Parameters
     ----------
-    inRead1 : str or None
+    read1 : str or None
         Path to input file 1.
-    inRead2 : str or None
+    read2 : str or None
         Path to input file 2.
     inMash : str or None
         Path to database file.
@@ -341,85 +271,49 @@ def check_files(inRead1, inRead2, inMash):
             sys.exit(1)
 
     check_file(inMash, "The database file")
-    check_file(inRead1, "Read file 1")
-    check_file(inRead2, "Read file 2")
+    check_file(read1, "Read file 1")
+    check_file(read2, "Read file 2")
 
-    if inRead1 == inRead2:
-        logging.critical("Read1 (%s) and Read2 (%s) are the same file. Exiting." % (inRead1, inRead2))
+    if read1 == read2:
+        logging.critical("Read1 (%s) and Read2 (%s) are the same file. Exiting." % (read1, read2))
         sys.exit(1)
 
-######-Mine
-# def check_files(inRead1, inRead2, inMash):
-#     """
-#     Checks if all the input files exists; exits if file not found or if file is
-#     a directory
-
-#     Parameters
-#     ----------
-#     inRead1 : XX
-#         XXX
-#     inRead2 : XX
-#         XXX
-#     inMash : XX
-#         XXX
-#     Returns
-#     -------
-#     None
-#         Exits the program if file doesn't exist
-#     """
-
-#     if inMash and not os.path.isfile(inMash):
-#         logging.critical("The database - %s - doesn't exist. Exiting." % inMash)
-#         sys.exit(1)
-#     if inRead1 and not os.path.isfile(inRead1):
-#         logging.critical("Read file 1: %s doesn't exist. Exiting." % inRead1)
-#         sys.exit(1)
-#     if inRead2 and not os.path.isfile(inRead2):
-#         logging.critical("Read file 2: %s doesn't exist. Exiting." % inRead2)
-#         sys.exit(1)
-#     if inRead1 == inRead2:
-#         logging.critical("Read1 - %s" % inRead1)
-#         logging.critical("Read2 - %s" % inRead2)
-#         logging.critical("Looks like you entered the same read file twice. \
-#  Exiting.")
-#         sys.exit(1)
-
-def check_program(program_name):
+def check_program(program_name: str) -> None:
     """
-    Checks if the supplied program_name exists
+    Checks if the supplied program_name exists and if it's an appropriate version of Python.
 
     Parameters
     ----------
     program_name : str
-        Name of the program to check if it exists
+        Name of the program to check if it exists.
 
     Returns
     -------
     None
-        Exits the program if a dependency doesn't exist
+        Exits the program if a dependency doesn't exist.
     """
-    ##assumes that program name is lower case
-    logging.info("Checking for program %s..." % program_name)
-    path = shutil.which(program_name)
-    ver = sys.version_info[0:3]
-    ver  = ''.join(str(ver))
-    ver = ver.replace(",", ".")
-    ver = ver.replace('(','').replace(')','')
+    logging.info(f"Checking for program {program_name}...")
 
-    if path != None:
-        if program_name == 'python' and sys.version_info >= (3,7):
-            logging.info("Great, the program %s is loaded ..." % program_name)
-            logging.info("The version of python is: %s..." % ver)
-        elif program_name != 'python':
-            logging.info("Great, the program %s is loaded..." % program_name)
+    # Check if the program exists
+    path = shutil.which(program_name)
+    
+    if path is None:
+        logging.critical(f"Program {program_name} not found! Cannot continue; dependency not fulfilled. Exiting.")
+        sys.exit(1)
+
+    # If the program is Python, check the version
+    if program_name == 'python':
+        python_version = '.'.join(map(str, sys.version_info[:3]))
+        if sys.version_info >= (3, 7):
+            logging.info(f"Great, the program {program_name} is loaded.")
+            logging.info(f"The version of python is: {python_version}.")
         else:
-            logging.info("You do not have an appropriate version of python. \
- Requires Python version >= 3.7. Exiting.")
+            logging.critical("You do not have an appropriate version of Python. Requires Python version >= 3.7. Exiting.")
             sys.exit(1)
     else:
-        logging.critical("Program %s not found! Cannot continue; dependency\
-not fulfilled. Exiting." % program_name)
-        sys.exit(1)
+        logging.info(f"Great, the program {program_name} is loaded.")
+
+
 
 def check_mash(): 
     
@@ -460,15 +354,15 @@ def check_mash():
         logging.critical("The unit test to confirm species and mash value return a different answer than expected. Exiting")
         sys.exit(1)
 
-def cat_files(inRead1, inRead2):
+def cat_files(read1, read2):
     """
     XXXX
 
     Parameters
     ----------
-    inRead1 : XX
+    read1 : XX
         XXX
-    inRead2 : XX
+    read2 : XX
         XXX
 
     Returns
@@ -476,14 +370,14 @@ def cat_files(inRead1, inRead2):
     None
         XXX
     """
-    if inRead1 and inRead2 != None and inRead1.endswith('.gz'):
+    if read1 and read2 != None and read1.endswith('.gz'):
         logging.critical("The files are still gzipped. Exiting")
         sys.exit(1)
     else:
         logging.info("The files have been gunzipped ...")
-        with open(inRead1) as readFile:
+        with open(read1) as readFile:
             read1 = readFile.read()
-        with open(inRead2) as readFile:
+        with open(read2) as readFile:
             read2 = readFile.read()
             read1 += read2
         with open('myCatFile', 'w') as readFile:
@@ -742,7 +636,7 @@ def parseResults(cmd, inMaxDis):
     dfTop.reset_index(drop=True, inplace=True) #make index start at 0
     return bestGenus, bestSpecies, dfTop
 
-def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
+def makeTable(dateTime, name, read1, read2, inMaxDist, results, mFlag):
     """
     Parse results into text output and include relavant variables
 
@@ -764,13 +658,13 @@ def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
     with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
         f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
         f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
-        f.write("Input query file 1: " + inRead1 + "\n")
-        f.write("Input query file 2: " + inRead2 + "\n")
+        f.write("Input query file 1: " + read1 + "\n")
+        f.write("Input query file 2: " + read2 + "\n")
         f.write("Genome size estimate for fastq files with using the -m flag: " + scData[0] + " " +"(bp)" +"\n") #make into variable
         f.write("Genome coverage estimate for fastq files with using the -m flag: " + scData[1]  + "\n") #make into variables
         f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
         f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
-        f.write("K-mer size used for sketching: " + inKSize + "\n" )
+        f.write("K-mer size used for sketching: " + k_size + "\n" )
         f.write("Mash Database name: " + inMash + "\n" + "\n")
         f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
         f.write("Top 5 results:" + "\n")
@@ -787,26 +681,27 @@ inMash = args.database
 inMaxDis = args.max_dist
 inKmer = args.kmer_min
 inThreads = args.num_threads
-inRead1 = args.read1
-inRead2 = args.read2
+read1 = args.read1
+read2 = args.read2
 
 now = datetime.now()
 dtString = now.strftime("%B %d, %Y %H:%M:%S")
 dateString = now.strftime("%Y-%m-%d")
 
 #unique name for log file based on read name
-name = fastq_name(inRead1)
+name = fastq_name(read1)
 log = name + "_run"  + ".log"
 
 req_programs=['mash', 'python']
 
 make_output_log(log)
-get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads)
+k_size = get_k_size(inMash)
+get_input(read1, read2, inMash, inMaxDis, inKmer, k_size, inThreads)
 
 #check_mash()
 
 logging.info("Checking if all the required input files exist...")
-check_files(inRead1, inRead2, inMash)
+check_files(read1, read2, inMash)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
@@ -819,7 +714,7 @@ check_mash()
 logging.info("Great, internal system checks passed...")
 
 logging.info("Begin concatenation of the fastq files...")
-cat_files(inRead1, inRead2)
+cat_files(read1, read2)
 logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Calculating estimated genome size and coverage...")
@@ -841,7 +736,7 @@ results = parseResults(outputFastq2, inMaxDis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-makeTable(dtString, name, inRead1, inRead2, inMaxDis, results, mFlag)
+makeTable(dtString, name, read1, read2, inMaxDis, results, mFlag)
 logging.info("Completed analysis for the sample: %s..." % name )
 logging.info("Exiting.")
 logging.info(" ")
