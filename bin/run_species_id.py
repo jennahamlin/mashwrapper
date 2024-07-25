@@ -313,46 +313,52 @@ def check_program(program_name: str) -> None:
     else:
         logging.info(f"Great, the program {program_name} is loaded.")
 
+def check_mash() -> None:
+    """
+    Checks the output of the Mash command and verifies the results.
 
+    Returns
+    -------
+    None
+        Exits the program if the results do not match the expected values.
+    """
+    # Define paths
+    dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test-data'))
+    file_path1 = os.path.join(dirpath, 'myCatFile')
+    file_path2 = os.path.join(dirpath, 'myMashDatabase.msh')
 
-def check_mash(): 
+    # Define Mash command
+    mash_check = ['mash', 'dist', '-k', '25', '-s', '100000', file_path1, file_path2]
+
+    # Run the Mash command
+    result = subprocess.run(mash_check, capture_output=True, check=True, text=True)
     
-    dirpath2 = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test-data/'))
-
-    filePath1 = os.path.join(dirpath2, 'myCatFile')
-    filePath2 = os.path.join(dirpath2, 'myMashDatabase.msh')
-
-    ## open(filepath)  # or whatever you use to open the file
-    f1 = open(filePath1, 'r')
-    f2 = open(filePath2, 'r')
-    mashCheck = ['mash', 'dist', '-k', '25', '-s', '100000', filePath1, filePath2]
+    # Read and process the output
+    df = pd.read_csv(StringIO(result.stdout), sep='\t', names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'])
+    df_dropped = df.drop(columns=['Ref ID', 'P-value', 'Kmer'])
     
-    result = subprocess.run(mashCheck, capture_output=True,\
-        check=True, text=True)
+    # Extract relevant information
+    df_check_species = df['Query ID'].str.split('/').str[0].iloc[0]
+    df_check_dist = df_dropped['Mash Dist'].iloc[0]
     
-    df = pd.read_csv(StringIO(result.stdout), sep='\t',
-    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
-    index_col=False)
-
-    dfDropped = df.drop(['Ref ID', 'P-value', 'Kmer' ], axis=1)
-    dfCheckSpecies = df['Query ID'].str.split('/')
-    dfCheckSpecies = dfCheckSpecies[0] ##should be feeli
-    dfCheckDist = dfDropped['Mash Dist'][0]
-    dfCheckSpecies =(''.join(dfCheckSpecies))
-    #logging.info("This is the sorted df from test: %s " % dfCheck2)
-    if dfCheckSpecies == 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna' and int(dfCheckDist) == int(0.0185156) :
-        logging.info("Great, the test to confirm Mash is running properly and returned our expected answers...")
-        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
-        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
-        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
-        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist) 
+    expected_species = 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna'
+    expected_dist = 0.0185
+    
+    # Log and validate the results
+    if df_check_species == expected_species and float(round(df_check_dist, 4)) == expected_dist:
+        logging.info("Great, the test confirms Mash is running properly and returned expected results.")
+        logging.info(f"Expected species: {expected_species}")
+        logging.info(f"Returned species: {df_check_species}")
+        logging.info(f"Expected distance: {expected_dist}")
+        logging.info(f"Returned distance: {round(df_check_dist, 4)}")
     else:
-        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
-        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
-        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
-        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist)
-        logging.critical("The unit test to confirm species and mash value return a different answer than expected. Exiting")
+        logging.info(f"Expected species: {expected_species}")
+        logging.info(f"Returned species: {df_check_species}")
+        logging.info(f"Expected distance: {expected_dist}")
+        logging.info(f"Returned distance: {df_check_dist}")
+        logging.critical("The unit test to confirm species and mash value did not return expected results. Exiting.")
         sys.exit(1)
+
 
 def cat_files(read1, read2):
     """
