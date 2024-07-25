@@ -359,36 +359,46 @@ def check_mash() -> None:
         logging.critical("The unit test to confirm species and mash value did not return expected results. Exiting.")
         sys.exit(1)
 
-
-def cat_files(read1, read2):
+def cat_files(read1: str, read2: str) -> None:
     """
-    XXXX
+    Concatenates the contents of two files and writes the result to 'myCatFile'.
 
     Parameters
     ----------
-    read1 : XX
-        XXX
-    read2 : XX
-        XXX
+    read1 : str
+        Path to the first file to be concatenated.
+    read2 : str
+        Path to the second file to be concatenated.
 
     Returns
     -------
     None
-        XXX
+        Exits the program if the files are gzipped.
     """
-    if read1 and read2 != None and read1.endswith('.gz'):
-        logging.critical("The files are still gzipped. Exiting")
+    # Check if files are gzipped
+    if (read1.endswith('.gz') or read2.endswith('.gz')):
+        logging.critical("One or both files are gzipped. Exiting.")
         sys.exit(1)
-    else:
-        logging.info("The files have been gunzipped ...")
-        with open(read1) as readFile:
-            read1 = readFile.read()
-        with open(read2) as readFile:
-            read2 = readFile.read()
-            read1 += read2
-        with open('myCatFile', 'w') as readFile:
-            readFile.write(read1)
-            readFile.close()
+
+    logging.info("The files are not gzipped. Proceeding with concatenation...")
+
+    # Concatenate the contents of the files
+    try:
+        with open(read1, 'r') as file1, open(read2, 'r') as file2:
+            combined_content = file1.read() + file2.read()
+
+        # Write the concatenated content to 'myCatFile'
+        with open('myCatFile', 'w') as output_file:
+            output_file.write(combined_content)
+
+        logging.info("Files have been successfully concatenated and written to 'myCatFile'.")
+
+    except FileNotFoundError as e:
+        logging.critical(f"Error: {e}")
+        sys.exit(1)
+    except IOError as e:
+        logging.critical(f"IO Error: {e}")
+        sys.exit(1)
 
 def minKmer(calculatedKmer, inKmer):
     """
