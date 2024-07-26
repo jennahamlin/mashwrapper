@@ -528,8 +528,7 @@ def get_SC(outputFastq2):
 	gCoverageRun2 = gCoverageRun2[23:]
 	return gSizeRun2, gCoverageRun2
 
-
-def isTie(df):
+def is_tie(df):
     """
     Determine if the kmers count value is a tie with the second top isolate; if
     so then indicate a tie was found in the results
@@ -566,141 +565,142 @@ kmers, indicating a tie... ")
         logging.info("There was not a tie of kmers for the top two species...")
         return bestGenus, bestSpecies
 
-def noResult(inFile, inMaxDis, bestG, bestS):
+def no_result(in_file, in_max_dis, best_g, best_s):
     """
-    Determine if top hit mash distances are >= user specified mash distance
+    Determine if the top hit mash distances are >= user-specified mash distance.
 
     Parameters
     ----------
-    inFile : pandas core frame data frame
-        Parsed results from running mash
-    inDist : int
-        User specified maximum mash distance as a cut-off
+    in_file : pandas.DataFrame
+        Parsed results from running mash.
+    in_max_dis : float
+        User-specified maximum mash distance as a cut-off.
+    best_g : str
+        Current best species message.
+    best_s : str
+        Current best species placeholder.
 
     Returns
     ----------
-        Message to log file and replacement of best species with message
+    tuple
+        Updated best species message and placeholder.
     """
-    inMaxDis = float(inMaxDis)
-    logging.info("Confirming that best match is less than user specfied distance...")
+    in_max_dis = float(in_max_dis)
+    logging.info("Confirming that best match is less than user-specified distance...")
 
-    if (inFile['Mash Dist'].values[0] < inMaxDis):
-        logging.info("Great, a best species match was found with mash distance \
-less than %s..." % inMaxDis)
+    if in_file['Mash Dist'].values[0] < in_max_dis:
+        logging.info(f"Great, a best species match was found with mash distance less than {in_max_dis}...")
     else:
-        bestG = "No matches found with mash distances < %s..." % inMaxDis
-        bestS = " "
-        logging.info("No matches found with mash distances < %s..." % inMaxDis)
-    return bestG, bestS
+        best_g = f"No matches found with mash distances < {in_max_dis}..."
+        best_s = " "
+        logging.info(f"No matches found with mash distances < {in_max_dis}...")
 
-def parseResults(cmd, inMaxDis):
+    return best_g, best_s
+
+def parse_results(cmd, in_max_dis):
     """
-    run initial command and parse the results from mash
+    Run the initial command and parse the results from mash.
 
     Parameters
     ----------
-    cmd : list
-        Initial command to run for either fasta or fastq
-    inMaxDis : XXX
-        XXX
+    cmd : subprocess.CompletedProcess
+        The completed process object from running the mash command.
+    in_max_dis : float
+        User-specified maximum mash distance for filtering results.
+
     Returns
     ----------
-    bestGenus
-        The most likely genus of the isolate tested
-    bestSpecies
-        The most likely species of the isolate tested
-    dfTop
-        The top five results from sorting Mash output
+    tuple
+        - best_genus: str
+            The most likely genus of the isolate tested.
+        - best_species: str
+            The most likely species of the isolate tested.
+        - df_top: pandas.DataFrame
+            The top five results from sorting Mash output.
     """
-
-    ## convert with StringIO and added headers (for development)
+    # Read the mash output into a DataFrame
     df = pd.read_csv(StringIO(cmd.stdout), sep='\t',
-    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
-    index_col=False)
+                     names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
+                     index_col=False)
 
-    dfGenus = df['Ref ID'].str.split('_', 1, expand=True)
-    tmpDF = pd.DataFrame(columns=['Genus', 'Species', 'GeneBank Identifier', '% Seq Sim'])
-    tmpDF['Genus'] = dfGenus[0]
+    # Extract Genus, Species, and GeneBank Identifier
+    df[['Genus', 'Species']] = df['Ref ID'].str.split('_', 1, expand=True)
+    df[['Species', 'GeneBank Identifier']] = df['Species'].str.split('_', 1, expand=True)
+    df['GeneBank Identifier'] = 'GCA' + df['GeneBank Identifier'].str.split('GCA', expand=True).iloc[:, -1]
 
-    dfSpecies = dfGenus.iloc[:, -1].str.split('_', 1, expand=True)
-    tmpDF['Species'] = dfSpecies[0]
+    # Split Kmers and convert to integer
+    df[['KmersCount', 'sketchSize']] = df['Kmer'].str.split("/", expand=True)
+    df['KmersCount'] = df['KmersCount'].astype(int)
 
-    dfGB = dfSpecies.iloc[:, -1].str.split('GCA', expand=True)
-    dfGB = 'GCA' + dfGB.iloc[:,-1]
-    tmpDF['GeneBank Identifier'] = dfGB
+    # Calculate % sequence similarity
+    df['% Seq Sim'] = (1 - df['Mash Dist']) * 100
 
-    df = df.join(tmpDF)
+    # Sort by KmersCount and handle ties
+    df_sorted = df.sort_values('KmersCount', ascending=False)
+    df_sorted_dropped = df_sorted.drop(['Ref ID', 'Query ID', 'KmersCount', 'sketchSize'], axis=1)
 
-    ## split the kmers for sorting because xx/xxxx
-    df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)	
-    df['KmersCount'] = df.KmersCount.astype(int)
+    # Determine the best genus and species
+    best_genus_sort, best_species_sort = is_tie(df_sorted)
+    best_genus, best_species = no_result(df_sorted_dropped, in_max_dis, best_genus_sort, best_species_sort)
 
-    #df['Mash Dist'] = df['Mash Dist'].apply(lambda x: round(x,8)) 
+    # Prepare the top five results
+    df_top = df_sorted_dropped[['Genus', 'Species', 'GeneBank Identifier', 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']].head(5)
+    df_top.reset_index(drop=True, inplace=True)  # Reset index to start at 0
 
-    ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
-    df['% Seq Sim'] =  1 - df['Mash Dist'] # multiplying by 100 gives strange result 
-    df['% Seq Sim'] = df['% Seq Sim'] * 100    
+    return best_genus, best_species, df_top
 
-
-    #logging.info("Should give dtype after adding to seq sim: %s" % df.dtypes)
-    ## now sort and get top species; test for a tie in kmerscount value
-    dfSorted = df.sort_values('KmersCount', ascending=False)
-    dfSortOut = isTie(dfSorted)
-    bestGenusSort = dfSortOut[0]
-    bestSpeciesSort = dfSortOut[1]
-
-    ## use column (axis = 1), to create minimal dataframe
-    dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
-    'sketchSize' ], axis=1)
-
-    ## noResult function - confirm mash distance is < than user specified
-    ## even if mash distance !< user specified, return the top five hits
-    noMash = noResult(dfSortedDropped, inMaxDis, bestGenusSort, bestSpeciesSort)
-    bestGenus = noMash[0]
-    bestSpecies = noMash[1]
-
-    ## change order
-    dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
-    'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
-    dfTop = dfSortedDropped[:5]
-
-    dfTop.reset_index(drop=True, inplace=True) #make index start at 0
-    return bestGenus, bestSpecies, dfTop
-
-def makeTable(dateTime, name, read1, read2, inMaxDist, results, mFlag):
+def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
     """
-    Parse results into text output and include relavant variables
+    Parse results into a text output file including relevant variables.
 
     Parameters
     ----------
-    dataTime : str
-        get current date and time for when analysis is run
-    maxDist : float, optional
-        optional input to specify the value of maximum mash distance
+    date_time : str
+        Current date and time for when analysis is run.
+    name : str
+        Base name for the output file.
+    read1 : str
+        Path to the first query file.
+    read2 : str
+        Path to the second query file.
+    max_dist : float
+        User-specified maximum mash distance.
     results : tuple
-        output from running and parsing mash commands
+        Output from running and parsing mash commands, where:
+        - results[0] is the best genus.
+        - results[1] is the best species.
+        - results[2] is a pandas DataFrame of the top results.
+    m_flag : list
+        Contains the minimum k-mer copy number and k-mer size.
 
     Returns
     ----------
-    txt file
-        text file with each isolates results appended that were run through
+    None
+        Writes the results to a text file.
     """
+    # Define file name
+    file_name = f"{name}_results_{date_time}.txt"
 
-    with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
-        f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
-        f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
-        f.write("Input query file 1: " + read1 + "\n")
-        f.write("Input query file 2: " + read2 + "\n")
-        f.write("Genome size estimate for fastq files with using the -m flag: " + scData[0] + " " +"(bp)" +"\n") #make into variable
-        f.write("Genome coverage estimate for fastq files with using the -m flag: " + scData[1]  + "\n") #make into variables
-        f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
-        f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
-        f.write("K-mer size used for sketching: " + k_size + "\n" )
-        f.write("Mash Database name: " + inMash + "\n" + "\n")
-        f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
-        f.write("Top 5 results:" + "\n")
-        f.writelines(u'\u2500' * 100 + "\n")
-        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"), showindex=False)+ "\n")
+    # Open file in append mode
+    with open(file_name, 'a+') as f:
+        # Write headers and variable values
+        f.write(f"\nLegionella Species ID Tool using Mash\n")
+        f.write(f"Date and Time = {date_time}\n")
+        f.write(f"Input query file 1: {read1}\n")
+        f.write(f"Input query file 2: {read2}\n")
+        f.write(f"Maximum mash distance (-d): {max_dist}\n")
+        f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
+        f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
+        f.write(f"Mash Database name: {m_flag[2]}\n\n")
+        f.write(f"Best species match: {results[0]} {results[1]}\n\n")
+        
+        # Write top results with table formatting
+        f.write("Top 5 results:\n")
+        f.write(u'\u2500' * 100 + "\n")
+        f.write(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center",
+                         stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"),
+                         showindex=False) + "\n")
+
 
 if __name__ == '__main__':
     ## parser is created from the function argparser
@@ -763,11 +763,11 @@ logging.info("Successfully, added estimated genome size and coverage to \
 output...")
 
 logging.info("Beginning to parse the output results from mash dist...")
-results = parseResults(outputFastq2, inMaxDis)
+results = parse_results(outputFastq2, inMaxDis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-makeTable(dtString, name, read1, read2, inMaxDis, results, mFlag)
+make_table(dtString, name, read1, read2, inMaxDis, results, mFlag)
 logging.info("Completed analysis for the sample: %s..." % name )
 logging.info("Exiting.")
 logging.info(" ")
