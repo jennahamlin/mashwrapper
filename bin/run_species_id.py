@@ -485,24 +485,27 @@ def cal_kmer():
     fastqCmd1 = ['mash', 'dist', str(inMash), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
-   
-    # ## get genome size and coverage; will provide as ouput for user
-    # gSize = outputFastq1.stderr.splitlines()[0]
-    # gSize = gSize[23:]
-    # logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
-    # gCoverage = outputFastq1.stderr.splitlines()[1]
-    # gCoverage = gCoverage[23:]
-    # logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
 
-    # minKmers = float(int(gCoverage))/3
-    # minKmers = int(float(minKmers))
+    ## get genome size and coverage; will provide as ouput for user
+    ## currently gets message at postion 0 but this is some error aboutr lang locale
+    ## so it errors out if I can change the two split lines to be on 3 and 4 
+    ## than the value can be calcuated
+    gSize = outputFastq1.stderr.splitlines()[3]
+    gSize = gSize[23:]
+    logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
+    gCoverage = outputFastq1.stderr.splitlines()[4]
+    gCoverage = gCoverage[23:]
+    logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
 
-    # ## this is used the calucate the minimum kmer copies to use (-m flag)
-    # mFlag = minKmer(minKmers, inKmer) # returned as an integer
-    # return mFlag, gSize, gCoverage
+    minKmers = int(float(gCoverage))/3
+    minKmers = int(float(minKmers))
+
+    ## this is used the calucate the minimum kmer copies to use (-m flag)
+    mFlag = minKmer(minKmers, inKmer) # returned as an integer
+    return mFlag, gSize, gCoverage
 
 def get_results(mFlag, inThreads):
-    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
+    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(inMash), 'myCatFile', '-p', str(inThreads), '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
     
     ## get genome size and coverage; will provide as ouput for user
