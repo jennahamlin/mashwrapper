@@ -201,8 +201,8 @@ def get_input(read1: str, read2: str, mash_db: str, max_dis: str, min_kmer: str,
         f" * Number of Threads: {threads}\n"
     )
 
-##TO DO - check for corrupt gzip files
-##TO DO - check if the beginning of the file name is a match between the two files
+##TODO - check for corrupt gzip files
+##TODO - check if the beginning of the file name is a match between the two files
 
 def get_k_size(mash_db: str) -> str:
     """
@@ -245,7 +245,7 @@ def get_k_size(mash_db: str) -> str:
         print(f"An error occurred: {e}")
         return ""
 
-def check_files(read1, read2, inMash):
+def check_files(read1, read2, mash_db):
     """
     Checks if all the input files exist; exits if file not found or if file is
     a directory.
@@ -256,7 +256,7 @@ def check_files(read1, read2, inMash):
         Path to input file 1.
     read2 : str or None
         Path to input file 2.
-    inMash : str or None
+    mash_db : str or None
         Path to database file.
 
     Returns
@@ -270,7 +270,7 @@ def check_files(read1, read2, inMash):
             logging.critical("%s doesn't exist or is not a file: %s. Exiting." % (description, path))
             sys.exit(1)
 
-    check_file(inMash, "The database file")
+    check_file(mash_db, "The database file")
     check_file(read1, "Read file 1")
     check_file(read2, "Read file 2")
 
@@ -400,7 +400,7 @@ def cat_files(read1: str, read2: str) -> None:
         logging.critical(f"IO Error: {e}")
         sys.exit(1)
 
-def minKmer(calculatedKmer, inKmer=2):
+def minKmer(calculatedKmer, min_kmer=2):
     """
     Determine the minimum kmer value. If less than 2, set to 2.
 
@@ -408,7 +408,7 @@ def minKmer(calculatedKmer, inKmer=2):
     ----------
     calculatedKmer : int
         Value that is calculated based on genomeCoverage/3
-    inKmer : int, optional, default is 2
+    min_kmer : int, optional, default is 2
         Input kmer value specified by the user; used instead of calculatedKmer if greater than 2
 
     Returns
@@ -416,12 +416,12 @@ def minKmer(calculatedKmer, inKmer=2):
     int
         Integer value used for min_kmer with paired-end reads
     """
-    inKmer = int(inKmer)  # Ensure inKmer is an integer
+    min_kmer = int(min_kmer)  # Ensure min_kmer is an integer
 
     # Check if user-specified kmer is greater than 2
-    if inKmer > 2:
-        logging.info(f"User specified a value for minimum kmer: {inKmer} ...")
-        return inKmer
+    if min_kmer > 2:
+        logging.info(f"User specified a value for minimum kmer: {min_kmer} ...")
+        return min_kmer
 
     # Log information about default behavior
     logging.info("Should kmer value be different than default (2)...")
@@ -482,7 +482,7 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', str(inMash), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
+    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
 
@@ -501,11 +501,11 @@ def cal_kmer():
     minKmers = int(float(minKmers))
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, inKmer) # returned as an integer
+    mFlag = minKmer(minKmers, min_kmer) # returned as an integer
     return mFlag, gSize, gCoverage
 
 def get_results(mFlag, inThreads):
-    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(inMash), 'myCatFile', '-p', str(inThreads), '-S', '123456']
+    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(inThreads), '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
     
     ## get genome size and coverage; will provide as ouput for user
@@ -701,16 +701,15 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
                          stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"),
                          showindex=False) + "\n")
 
-
 if __name__ == '__main__':
-    ## parser is created from the function argparser
-    ## parse the arguments
+
+## Argument parsing 
     parser = argparser()
     args = parser.parse_args()
 
-inMash = args.database
-inMaxDis = args.max_dist
-inKmer = args.kmer_min
+mash_db = args.database
+max_dis = args.max_dist
+min_kmer = args.kmer_min
 inThreads = args.num_threads
 read1 = args.read1
 read2 = args.read2
@@ -726,13 +725,13 @@ log = name + "_run"  + ".log"
 req_programs=['mash', 'python']
 
 make_output_log(log)
-k_size = get_k_size(inMash)
-get_input(read1, read2, inMash, inMaxDis, inKmer, k_size, inThreads)
+k_size = get_k_size(mash_db)
+get_input(read1, read2, mash_db, max_dis, min_kmer, k_size, inThreads)
 
 #check_mash()
 
 logging.info("Checking if all the required input files exist...")
-check_files(read1, read2, inMash)
+check_files(read1, read2, mash_db)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
@@ -763,11 +762,10 @@ logging.info("Successfully, added estimated genome size and coverage to \
 output...")
 
 logging.info("Beginning to parse the output results from mash dist...")
-results = parse_results(outputFastq2, inMaxDis)
+results = parse_results(outputFastq2, max_dis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-make_table(dtString, name, read1, read2, inMaxDis, results, mFlag)
+make_table(dtString, name, read1, read2, max_dis, results, mFlag)
 logging.info("Completed analysis for the sample: %s..." % name )
-logging.info("Exiting.")
-logging.info(" ")
+logging.info("EXITING!")
