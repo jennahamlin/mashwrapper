@@ -201,8 +201,8 @@ def get_input(read1: str, read2: str, mash_db: str, max_dis: str, min_kmer: str,
         f" * Number of Threads: {threads}\n"
     )
 
-##TO DO - do we want to check for corrupt gzip files?
-##TO DO - do i want to check if the beginning of the file name is a match between the two files?
+##TO DO - check for corrupt gzip files
+##TO DO - check if the beginning of the file name is a match between the two files
 
 def get_k_size(mash_db: str) -> str:
     """
@@ -400,58 +400,70 @@ def cat_files(read1: str, read2: str) -> None:
         logging.critical(f"IO Error: {e}")
         sys.exit(1)
 
-def minKmer(calculatedKmer, inKmer):
+def minKmer(calculatedKmer, inKmer=2):
     """
-    Determine the value of the kmers (-m flag); if less than 2, set as 2
+    Determine the minimum kmer value. If less than 2, set to 2.
 
     Parameters
     ----------
     calculatedKmer : int
         Value that is calculated based on genomeCoverage/3
     inKmer : int, optional, default is 2
-        Input kmer value specified by user; to be used instead of calucated
+        Input kmer value specified by the user; used instead of calculatedKmer if greater than 2
 
     Returns
     ----------
     int
-        integer value used for min_kmer (-m flag) with paired-end reads
+        Integer value used for min_kmer with paired-end reads
     """
-    if int(inKmer) == 2:
-        logging.info("Should kmer value be different than default (2)...")
-        logging.info("Min. kmer = genome coverage divided by 3..." )
-        #return calculatedKmer
-        if (calculatedKmer < 2 or int(inKmer) < 2):
-            logging.info("The calucated kmer is less than 2, so will use 2...")
-            calculatedKmer = 2
-        return calculatedKmer
-    elif (int(inKmer) > 2):
-        logging.info("User specified a value for minimum kmer: %s ..." % inKmer)
-        return int(inKmer)
+    inKmer = int(inKmer)  # Ensure inKmer is an integer
+
+    # Check if user-specified kmer is greater than 2
+    if inKmer > 2:
+        logging.info(f"User specified a value for minimum kmer: {inKmer} ...")
+        return inKmer
+
+    # Log information about default behavior
+    logging.info("Should kmer value be different than default (2)...")
+    logging.info("Min. kmer = genome coverage divided by 3...")
+
+    # Determine minimum kmer value
+    if calculatedKmer < 2:
+        logging.info("The calculated kmer is less than 2, so will use 2...")
+        return 2
+    return calculatedKmer
 
 def run_cmd(command):
     """
-    XXXX
+    Executes a shell command and logs its output. Exits the program on error.
 
     Parameters
     ----------
-    XX : XX
-        XXXcd
+    command : list of str
+        The command to be executed, provided as a list of arguments.
 
     Returns
     -------
-    XXX : XXX
-        XXX
+    subprocess.CompletedProcess
+        The result of the executed command, including stdout, stderr, and return code.
     """
 
     try:
-        result = subprocess.run(command, capture_output=True,\
-        check=True, text=True)
-        new_cmd=(' '.join(command))
-        logging.info("This is the command... \n %s " % new_cmd)
-    except subprocess.CalledProcessError:
-        logging.critical("CRITICAL ERROR. The following command had an improper\
- error: \n %s ." % command)
+        # Execute the command
+        result = subprocess.run(
+            command, 
+            capture_output=True,
+            check=True,
+            text=True
+        )
+        # Log the command executed
+        new_cmd = ' '.join(command)
+        logging.info(f"This is the command...\n{new_cmd}")
+    except subprocess.CalledProcessError as e:
+        # Log critical error and exit if the command fails
+        logging.critical(f"CRITICAL ERROR. The following command had an error:\n{e}")
         sys.exit(1)
+    
     return result
 
 def cal_kmer():
@@ -470,24 +482,24 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '42']
+    fastqCmd1 = ['mash', 'dist', str(inMash), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
+   
+    # ## get genome size and coverage; will provide as ouput for user
+    # gSize = outputFastq1.stderr.splitlines()[0]
+    # gSize = gSize[23:]
+    # logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
+    # gCoverage = outputFastq1.stderr.splitlines()[1]
+    # gCoverage = gCoverage[23:]
+    # logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
 
-    ## get genome size and coverage; will provide as ouput for user
-    gSize = outputFastq1.stderr.splitlines()[0]
-    gSize = gSize[23:]
-    logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
-    gCoverage = outputFastq1.stderr.splitlines()[1]
-    gCoverage = gCoverage[23:]
-    logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
+    # minKmers = float(int(gCoverage))/3
+    # minKmers = int(float(minKmers))
 
-    minKmers = int(float(gCoverage))/3
-    minKmers = int(float(minKmers))
-
-    ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, inKmer) # returned as an integer
-    return mFlag, gSize, gCoverage
+    # ## this is used the calucate the minimum kmer copies to use (-m flag)
+    # mFlag = minKmer(minKmers, inKmer) # returned as an integer
+    # return mFlag, gSize, gCoverage
 
 def get_results(mFlag, inThreads):
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
