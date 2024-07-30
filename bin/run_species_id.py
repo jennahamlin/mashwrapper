@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import pandas as pd
 from io import StringIO
+from typing import Tuple
 from datetime import datetime
 from tabulate import tabulate
 
@@ -490,6 +491,7 @@ def cal_kmer():
     ## currently gets message at postion 0 but this is some error aboutr lang locale
     ## so it errors out if I can change the two split lines to be on 3 and 4 
     ## than the value can be calcuated
+
     gSize = outputFastq1.stderr.splitlines()[3]
     gSize = gSize[23:]
     logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
@@ -520,13 +522,33 @@ def get_results(mFlag, inThreads):
 
     return outputFastq2
 
-def get_SC(outputFastq2):
-	
-	gSizeRun2 = outputFastq2.stderr.splitlines()[0]
-	gSizeRun2 = gSizeRun2[23:]
-	gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
-	gCoverageRun2 = gCoverageRun2[23:]
-	return gSizeRun2, gCoverageRun2
+def get_SC(outputFastq2) -> Tuple[str, str]:        
+# Add from typing import Tuple as tuple[str,str] is with python v 3.9 or higher
+    """
+    Extract the genome size and coverage from the stderr output of the Fastq2 process.
+
+    Parameters
+    ----------
+    outputFastq2 : subprocess.CompletedProcess
+        The process output containing stderr with the desired information.
+
+    Returns
+    -------
+    tuple[str, str]
+        A tuple containing the genome size and coverage as strings.
+    """
+    # Extract lines from stderr
+    lines = outputFastq2.stderr.splitlines()
+
+    # Check if there are at least two lines
+    if len(lines) < 2:
+        raise ValueError("Expected at least two lines in stderr output")
+
+    # Extract and strip the desired substrings
+    gSizeRun2 = lines[0][23:].strip()
+    gCoverageRun2 = lines[1][23:].strip()
+
+    return gSizeRun2, gCoverageRun2
 
 def is_tie(df):
     """
@@ -727,8 +749,6 @@ req_programs=['mash', 'python']
 make_output_log(log)
 k_size = get_k_size(mash_db)
 get_input(read1, read2, mash_db, max_dis, min_kmer, k_size, inThreads)
-
-#check_mash()
 
 logging.info("Checking if all the required input files exist...")
 check_files(read1, read2, mash_db)
