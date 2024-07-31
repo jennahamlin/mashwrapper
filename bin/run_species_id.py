@@ -65,7 +65,9 @@ def argparser():
     Returns argument parser for the script with messages for how to use tool.
     """
 
-    description = "A script to run and parse the output from Mash into a table listing the top five matches from the user specified pre-built Mash Database."
+    description = (
+        "A script to run and parse the output from Mash into a table listing" 
+        " the top five matches from the user specified pre-built Mash Database.")
 
     ## use class to parse the arguments with formatted error message
     parser = ParserWithErrors(description = description)
@@ -105,7 +107,7 @@ def argparser():
 ###############
 def make_output_log(log: str) -> None:
     """
-    Creates the output directory and the log file which can be appended to.
+    Creates the log file which can be appended to.
     Logs operating system (OS) information where the script is being run.
     Requires the logging package and uses traditional '%' -style formating as 
     is standard with logging module. 
@@ -118,7 +120,7 @@ def make_output_log(log: str) -> None:
     Returns
     -------
     None
-        Exits the program if unable to make output directory.
+        Logs an error message if unable to get system information.
     """
     # Configure logging
     logging.basicConfig(filename=log,
@@ -141,7 +143,7 @@ def make_output_log(log: str) -> None:
         logging.info("   Version: %s" % sys_info.version)
         logging.info("   Machine: %s\n" % sys_info.machine)
     except AttributeError:
-        # Handle cases where `os.uname` is not available (e.g., on Windows)
+        # Handle cases where `os.uname` is not available 
         logging.warning("System information is not available on this platform")
         
 def fastq_name(read1: str) -> str:
@@ -230,7 +232,7 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
 ##TODO - check for corrupt gzip files
 ##TODO - check if the beginning of the file name is a match between the two files
 
-def get_k_size(mash_db: str) -> Optional[str]:
+def get_k_size(mash_db: str) -> str:
     """
     Retrieves the k-size from the Mash database information.
 
@@ -245,6 +247,7 @@ def get_k_size(mash_db: str) -> Optional[str]:
         The k-size value extracted from the Mash info output.
         Returns None if an error occurs or the output format is unexpected
     """
+    # TODO some of these except calls seem not necessary
     try:
         # Run the mash info command and capture its output
         result = subprocess.run(
@@ -255,8 +258,7 @@ def get_k_size(mash_db: str) -> Optional[str]:
         )
 
         # Extract the k-size value from the command's output
-        output = result.stdout
-        lines = output.splitlines()
+        lines = result.stdout.splitlines()
         
         if len(lines) >= 3:
             # Assuming the k-size is in the 3rd line and 3rd field
@@ -278,38 +280,44 @@ def get_k_size(mash_db: str) -> Optional[str]:
         logging.error("An unexpected error occurred: %s", e)
         return None
 
-def check_files(read1: str, read2: str, mash_db:str ):
+def check_files(read1: str, read2: str, mash_db: str) -> None:
     """
-    Checks if all the input files exist; exits if file not found or if file is
+    Checks if all the input files exist; raises an exception if file not found or if file is
     a directory.
 
     Parameters
     ----------
-    read1 : str or None
+    read1 : str
         Path to input file 1.
-    read2 : str or None
+    read2 : str
         Path to input file 2.
-    mash_db : str or None
+    mash_db : str
         Path to database file.
 
-    Returns
-    -------
-    None
-        Exits the program if any file doesn't exist.
+    Raises
+    ------
+    FileNotFoundError
+        If any file doesn't exist or is a directory.
+    ValueError
+        If read1 and read2 are the same file.
     """
+    
+    def check_file(path: Optional[str], description: str):
+        if path:
+            if not os.path.isfile(path):
+                raise FileNotFoundError(f"{description} doesn't exist or is not a file: {path}")
+    
+    try:
+        check_file(mash_db, "The database file")
+        check_file(read1, "Read file 1")
+        check_file(read2, "Read file 2")
 
-    def check_file(path, description):
-        if path and not os.path.isfile(path):
-            logging.critical("%s doesn't exist or is not a file: %s. Exiting." % (description, path))
-            sys.exit(1)
-
-    check_file(mash_db, "The database file")
-    check_file(read1, "Read file 1")
-    check_file(read2, "Read file 2")
-
-    if read1 == read2:
-        logging.critical("Read1 (%s) and Read2 (%s) are the same file. Exiting." % (read1, read2))
-        sys.exit(1)
+        if read1 == read2:
+            raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
+    
+    except (FileNotFoundError, ValueError) as e:
+        logging.critical(e)
+        raise  # Re-raise the exception to be handled by the caller
 
 def check_program(program_name: str) -> None:
     """
@@ -320,10 +328,10 @@ def check_program(program_name: str) -> None:
     program_name : str
         Name of the program to check if it exists.
 
-    Returns
-    -------
-    None
-        Exits the program if a dependency doesn't exist.
+    Raises
+    ------
+    SystemExit
+        If the program is not found or if the Python version is insufficient.
     """
     logging.info(f"Checking for program {program_name}...")
 
@@ -331,8 +339,8 @@ def check_program(program_name: str) -> None:
     path = shutil.which(program_name)
     
     if path is None:
-        logging.critical(f"Program {program_name} not found! Cannot continue; dependency not fulfilled. Exiting.")
-        sys.exit(1)
+        logging.critical(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
+        raise SystemExit(1)
 
     # If the program is Python, check the version
     if program_name == 'python':
@@ -342,7 +350,7 @@ def check_program(program_name: str) -> None:
             logging.info(f"The version of python is: {python_version}.")
         else:
             logging.critical("You do not have an appropriate version of Python. Requires Python version >= 3.7. Exiting.")
-            sys.exit(1)
+            raise SystemExit(1)
     else:
         logging.info(f"Great, the program {program_name} is loaded.")
 
