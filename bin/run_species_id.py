@@ -2,10 +2,13 @@
 
 import argparse, sys, os
 import logging
+import re
 import shutil
 import subprocess
 import pandas as pd
 from io import StringIO
+from typing import Tuple
+from typing import Optional
 from datetime import datetime
 from tabulate import tabulate
 
@@ -16,54 +19,41 @@ from tabulate import tabulate
 ## Argument Error Messages ##
 #############################
 
-## create class of formatted error messages
-## input variable is argparse.ArgumentParser, which initializes the parser
 class ParserWithErrors(argparse.ArgumentParser):
     def error(self, message):
-        print('\n{0}\n\n'.format(message))
+        print(f'\nError: {message}\n')
         self.print_help()
         sys.exit(2)
 
     def is_valid_mash(self, parser, arg):
         base, ext = os.path.splitext(arg)
-        if ext not in ('.msh') or ext in ('') :
-            parser.error('This is not a file ending with .msh.\
- Did you generate the mash sketch and specified that file to be uploaded?')
-        else:
-            return arg
+        if ext != '.msh':
+            parser.error(f'File {arg} does not have a .msh extension. Did you generate the mash sketch and specify this file?')
+        return arg
 
     def is_valid_fastq(self, parser, arg):
         base, ext = os.path.splitext(arg)
-        if ext not in ('.gz', '.fastq', '.fastq.gz'):
-            parser.error('This is not a file ending with either .fastq or \
-.fastq.gz. This flag requires the input of a fastq file.')
-        else:
-            return arg
+        if ext not in ('.gz', '.fastq', '.fq', '.fastq.gz'):
+            parser.error(f'File {arg} does not have a valid fastq extension (.fq, .gz, .fastq, .fastq.gz).')
+        return arg
 
     def is_valid_distance(self, parser, arg):
-        isFloat = True
         try:
-            float(arg)
-        except ValueError:
-            isFloat = False
-        if (isFloat == False) or (float(arg) < 0) :
-            parser.error('%s is not a positive number (e.g., a float, aka a \
- number with a decimal point)' % arg)
-        else:
+            distance = float(arg)
+            if distance < 0:
+                raise argparse.ArgumentTypeError(f'Distance must be a positive number. Received: {distance}')
             return arg
+        except ValueError:
+            parser.error(f'{arg} is not a valid float number (e.g., 0.1).')
 
     def is_valid_int(self, parser, arg):
-        isInt = True
         try:
-            int(arg)
-        except ValueError:
-            isInt = False
-        if isInt == False:
-            parser.error("You input %s. This is NOT an integer." % arg)
-        elif arg.isnumeric() == False:
-            parser.error("You input %s. This is NOT a positive number." % arg)
-        else:
+            value = int(arg)
+            if value <= 0:
+                raise argparse.ArgumentTypeError(f'Integer must be a positive number. Received: {value}')
             return arg
+        except ValueError:
+            parser.error(f'{arg} is not a valid integer.')
 
 #########################
 ## ArgParser Arguments ##
@@ -71,11 +61,10 @@ class ParserWithErrors(argparse.ArgumentParser):
 
 def argparser():
     """
-    Returns an argument parser for this script
+    Returns argument parser for the script with messages for how to use tool.
     """
-    description = """ A script to parse the output from Mash into a table \
-    listing the top five matches from the user specified pre-built Mash Database.
-    """
+
+    description = "A script to run and parse the output from Mash into a table listing the top five matches from the user specified pre-built Mash Database."
 
     ## use class to parse the arguments with formatted error message
     parser = ParserWithErrors(description = description)
@@ -88,313 +77,425 @@ def argparser():
     required.add_argument("--database", "-b", required=True,
                         help="Pre-built Mash Sketch",
                         type=lambda x: parser.is_valid_mash(parser, x))
+    
     required.add_argument("--read1", "-r1", required=True,
                         help="Input Read 1 (forward) file",
                         type=lambda x: parser.is_valid_fastq(parser, x))
+    
     required.add_argument("--read2", "-r2", required=True,
                         help="Input Read 2 (reverse) file",
                         type=lambda x: parser.is_valid_fastq(parser, x))
+    
     optional.add_argument("--max_dist", "-d", default=0.05,
                         help="User specified mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
+    
     optional.add_argument("--kmer_min", "-m", default=2,
                         help="Minimum copies of kmer count (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
+    
     optional.add_argument("--num_threads", "-p", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     return parser
 
-inKSize = os.getenv('kSize')
-print("The kmer size is exported from database using mash info: %s" % inKSize)
-
 ###############
 ## FUNCTIONS ##
 ###############
-def fastq_name(inRead1):
+def make_output_log(log: str) -> None:
     """
-    Gets stripped read name for appending to output files
-
-    Parameters
-    ----------
-    inRead1 : xx
-
-    Returns
-    -------
-    xxx
-        xxx
-    """
-    if inRead1.endswith("_1.fastq"):
-        name = inRead1.split("_1.fastq")[0]
-        return(name)
-    elif inRead1.endswith("_R1_001.fastq"):
-        name = inRead1.split("_R1_001.fastq")[0]
-        return(name)
-    elif inRead1.endswith("_R1.fastq"):
-        name = inRead1.split("_R1.fastq")[0]
-        return(name)
-    else:
-        logging.critical("Please check your file endings, assumes either \
-_1.fastq(.gz), _R1_001.fastq(.gz), or _R1.fastq(.gz)")
-        sys.exit(1)
-
-def make_output_log(log):
-    """
-    Makes the output directory and the log file
+    Creates the output directory and the log file which can be appended to.
+    Logs operating system (OS) information where the script is being run.
+    Requires the logging package and uses traditional '%' -style formating as 
+    is standard with logging module. 
 
     Parameters
     ----------
     log : str
-        Name of the log file
+        Name of the log file.
 
     Returns
     -------
     None
-        Exits the program if unable to make output directory
+        Exits the program if unable to make output directory.
     """
-    logging.basicConfig(filename=log, filemode="a", level=logging.DEBUG,
-    format="%(asctime)s - %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-    logging.info("New log file created in output directory - %s... " % log)
+    # Configure logging
+    logging.basicConfig(filename=log,
+                        filemode="a",
+                        level=logging.DEBUG,
+                        format="%(asctime)s - %(levelname)s - %(message)s",
+                        datefmt="%m/%d/%Y %I:%M:%S %p")
+
+    # Log file creation message
+    logging.info("New log file created in output directory - %s" % log)
     logging.info("Starting the tool...")
-    sysOutput=(os.uname())
-    logging.info("Returning information identifying the current operating system... \n \n \
-* System: %s  \n \
-* Node Name: %s  \n \
-* Release: %s  \n \
-* Version: %s  \n \
-* Machine %s \n" %
-(sysOutput[0], sysOutput[1], sysOutput[2], sysOutput[3], sysOutput[4]))
 
-def get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads):
+    # Log system information
+    try:
+        sys_info = os.uname()
+        logging.info("System Information:")
+        logging.info("   System: %s" % sys_info.sysname)
+        logging.info("   Node Name: %s" % sys_info.nodename)
+        logging.info("   Release: %s" % sys_info.release)
+        logging.info("   Version: %s" % sys_info.version)
+        logging.info("   Machine: %s\n" % sys_info.machine)
+    except AttributeError:
+        # Handle cases where `os.uname` is not available (e.g., on Windows)
+        logging.warning("System information is not available on this platform")
+        
+def fastq_name(read1: str) -> str:
     """
-    Prints the command line input to the log file
+    Gets stripped read name for appending to output files. 
+    Handles .gz files if running within NextFlow, as files are
+    gunzipped before this script is run.
 
     Parameters
     ----------
-    inRead1 : str
-        XXX
-    inRead2 : str
-        XXX
-    inMash : str
-        XXX
-    inMaxDis : str
-        XXX
-    inKmer : str
-        XXX
-    inThreads : str
-        XXX
+    read1 : str 
+        Fastq files with the option of three different file endings.
+
+    Returns
+    -------
+    name :str
+        File names with one of the three supported endings stripped.
+    """
+    # Define regex pattern to match any of the supported endings
+    pattern = r'(_1|_R1_001|_R1)\.fastq(\.gz)?$'
+
+    match = re.search(pattern, read1)
+    if match:
+        name = read1[:match.start()]  # Extract everything before the matched pattern
+        return name
+    else:
+        error_message = (
+            "Please check your file endings. Expected formats are "
+            "'_1.fastq(.gz)', '_R1_001.fastq(.gz)', or '_R1.fastq(.gz)'."
+        )
+        logging.error(error_message)
+        raise ValueError(error_message)    
+
+def get_input_required(read1: str, read2: str, mash_db: str) -> None:
+    """
+    Logs the command line input parameters.
+
+    Parameters
+    ----------
+    read1 : str
+        Path to the first input read.
+    read2 : str
+        Path to the second input read.
+    mash_db : str
+        Path to the Mash database.
+    Returns
+    -------
+    None
+    """
+    
+    logging.info(
+        f"The user-specified required parameters:\n"
+        f" * Read1: {read1}\n"
+        f" * Read2: {read2}\n"
+        f" * Mash Database: {mash_db}\n"
+    )
+
+def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -> None:
+    """
+    Logs the command line input parameters.
+
+    Parameters
+    ----------
+    max_dis : str
+        Maximum distance parameter.
+    min_kmer : str
+        Minimum k-mer count.
+    k_size : str
+        Size of the k-mer.
+    threads : str
+        Number of threads to use.
 
     Returns
     -------
     None
-        XXX
     """
+    
+    logging.info(
+        f"The default or user specified parameters:\n"
+        f" * Maximum Distance: {max_dis}\n"
+        f" * Minimum Kmer Count: {min_kmer}\n"
+        f" * Size of Kmer: {k_size}\n"
+        f" * Number of Threads: {threads}\n"
+    )    
 
-    logging.info("The input parameters... \n \n \
- * Read1: %s \n \
- * Read2: %s \n \
- * Mash Databse: %s \n \
- * Maximum Distance: %s \n \
- * Minimum Kmer Count: %s \n \
- * Size of Kmer: %s \n \
- * Number of Threads: %s \n " %
- (inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads))
+##TODO - check for corrupt gzip files
+##TODO - check if the beginning of the file name is a match between the two files
 
-##TO DO - do we want to check for corrupt gzip files?
-def check_files(inRead1, inRead2, inMash):
+def get_k_size(mash_db: str) -> Optional[str]:
     """
-    Checks if all the input files exists; exits if file not found or if file is
-    a directory
+    Retrieves the k-size from the Mash database information.
 
     Parameters
     ----------
-    inRead1 : XX
-        XXX
-    inRead2 : XX
-        XXX
-    inMash : XX
-        XXX
+    mash_db : str
+        Path to the Mash database.
+
+    Returns
+    -------
+    Optional[str]
+        The k-size value extracted from the Mash info output.
+        Returns None if an error occurs or the output format is unexpected
+    """
+    try:
+        # Run the mash info command and capture its output
+        result = subprocess.run(
+            ['mash', 'info', mash_db],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        # Extract the k-size value from the command's output
+        output = result.stdout
+        lines = output.splitlines()
+        
+        if len(lines) >= 3:
+            # Assuming the k-size is in the 3rd line and 3rd field
+            fields = lines[2].split()
+            if len(fields) >= 3:
+                k_size = fields[2]
+                return k_size
+            else:
+                logging.error("Unexpected format in output line: %s", lines[2])
+                return None
+        else:
+            logging.error("Unexpected output format from mash info command.")
+            return None
+
+    except subprocess.CalledProcessError as e:
+        logging.error("Error occurred while running the command: %s", e)
+        return None
+    except Exception as e:
+        logging.error("An unexpected error occurred: %s", e)
+        return None
+
+def check_files(read1: str, read2: str, mash_db:str ):
+    """
+    Checks if all the input files exist; exits if file not found or if file is
+    a directory.
+
+    Parameters
+    ----------
+    read1 : str or None
+        Path to input file 1.
+    read2 : str or None
+        Path to input file 2.
+    mash_db : str or None
+        Path to database file.
+
     Returns
     -------
     None
-        Exits the program if file doesn't exist
+        Exits the program if any file doesn't exist.
     """
 
-    if inMash and not os.path.isfile(inMash):
-        logging.critical("The database - %s - doesn't exist. Exiting." % inMash)
-        sys.exit(1)
-    if inRead1 and not os.path.isfile(inRead1):
-        logging.critical("Read file 1: %s doesn't exist. Exiting." % inRead1)
-        sys.exit(1)
-    if inRead2 and not os.path.isfile(inRead2):
-        logging.critical("Read file 2: %s doesn't exist. Exiting." % inRead2)
-        sys.exit(1)
-    if inRead1 == inRead2:
-        logging.critical("Read1 - %s" % inRead1)
-        logging.critical("Read2 - %s" % inRead2)
-        logging.critical("Looks like you entered the same read file twice. \
- Exiting.")
-        sys.exit(1)
-##TO DO - do i want to check if the beginning of the file name is a match between the two files?
+    def check_file(path, description):
+        if path and not os.path.isfile(path):
+            logging.critical("%s doesn't exist or is not a file: %s. Exiting." % (description, path))
+            sys.exit(1)
 
-def check_program(program_name):
+    check_file(mash_db, "The database file")
+    check_file(read1, "Read file 1")
+    check_file(read2, "Read file 2")
+
+    if read1 == read2:
+        logging.critical("Read1 (%s) and Read2 (%s) are the same file. Exiting." % (read1, read2))
+        sys.exit(1)
+
+def check_program(program_name: str) -> None:
     """
-    Checks if the supplied program_name exists
+    Checks if the supplied program_name exists and if it's an appropriate version of Python.
 
     Parameters
     ----------
     program_name : str
-        Name of the program to check if it exists
+        Name of the program to check if it exists.
 
     Returns
     -------
     None
-        Exits the program if a dependency doesn't exist
+        Exits the program if a dependency doesn't exist.
     """
-    ##assumes that program name is lower case
-    logging.info("Checking for program %s..." % program_name)
-    path = shutil.which(program_name)
-    ver = sys.version_info[0:3]
-    ver  = ''.join(str(ver))
-    ver = ver.replace(",", ".")
-    ver = ver.replace('(','').replace(')','')
+    logging.info(f"Checking for program {program_name}...")
 
-    if path != None:
-        if program_name == 'python' and sys.version_info >= (3,7):
-            logging.info("Great, the program %s is loaded ..." % program_name)
-            logging.info("The version of python is: %s..." % ver)
-        elif program_name != 'python':
-            logging.info("Great, the program %s is loaded..." % program_name)
+    # Check if the program exists
+    path = shutil.which(program_name)
+    
+    if path is None:
+        logging.critical(f"Program {program_name} not found! Cannot continue; dependency not fulfilled. Exiting.")
+        sys.exit(1)
+
+    # If the program is Python, check the version
+    if program_name == 'python':
+        python_version = '.'.join(map(str, sys.version_info[:3]))
+        if sys.version_info >= (3, 7):
+            logging.info(f"Great, the program {program_name} is loaded.")
+            logging.info(f"The version of python is: {python_version}.")
         else:
-            logging.info("You do not have an appropriate version of python. \
- Requires Python version >= 3.7. Exiting.")
+            logging.critical("You do not have an appropriate version of Python. Requires Python version >= 3.7. Exiting.")
             sys.exit(1)
     else:
-        logging.critical("Program %s not found! Cannot continue; dependency\
-not fulfilled. Exiting." % program_name)
-        sys.exit(1)
+        logging.info(f"Great, the program {program_name} is loaded.")
 
-def check_mash(): 
-    
-    dirpath2 = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'test-data/'))
-
-    filePath1 = os.path.join(dirpath2, 'myCatFile')
-    filePath2 = os.path.join(dirpath2, 'myMashDatabase.msh')
-
-    ## open(filepath)  # or whatever you use to open the file
-    f1 = open(filePath1, 'r')
-    f2 = open(filePath2, 'r')
-    mashCheck = ['mash', 'dist', '-k', '25', '-s', '100000', filePath1, filePath2]
-    
-    result = subprocess.run(mashCheck, capture_output=True,\
-        check=True, text=True)
-    
-    df = pd.read_csv(StringIO(result.stdout), sep='\t',
-    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
-    index_col=False)
-
-    dfDropped = df.drop(['Ref ID', 'P-value', 'Kmer' ], axis=1)
-    dfCheckSpecies = df['Query ID'].str.split('/')
-    dfCheckSpecies = dfCheckSpecies[0] ##should be feeli
-    dfCheckDist = dfDropped['Mash Dist'][0]
-    dfCheckSpecies =(''.join(dfCheckSpecies))
-    #logging.info("This is the sorted df from test: %s " % dfCheck2)
-    if dfCheckSpecies == 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna' and int(dfCheckDist) == int(0.0185156) :
-        logging.info("Great, the test to confirm Mash is running properly and returned our expected answers...")
-        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
-        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
-        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
-        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist) 
-    else:
-        logging.info("This is what dfCheckSpecies is supposed to be: Legionella_fallonii_LLAP-10_GCA_000953135.1.fna")
-        logging.info("This is what dfCheckSpecies returned: %s" % dfCheckSpecies)
-        logging.info("This is what dfCheckDist is supposed to be: 0.0185156")
-        logging.info("This is what dfCheckDist returned: %s" %dfCheckDist)
-        logging.critical("The unit test to confirm species and mash value return a different answer than expected. Exiting")
-        sys.exit(1)
-
-def cat_files(inRead1, inRead2):
+def check_mash() -> None:
     """
-    XXXX
+    Checks the output of the Mash command and verifies the results.
+
+    Returns
+    -------
+    None
+        Exits the program if the results do not match the expected values.
+    """
+    # Define paths
+    dirpath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'test-data'))
+    file_path1 = os.path.join(dirpath, 'myCatFile')
+    file_path2 = os.path.join(dirpath, 'myMashDatabase.msh')
+
+    # Define Mash command
+    mash_check = ['mash', 'dist', '-k', '25', '-s', '100000', file_path1, file_path2]
+
+    # Run the Mash command
+    result = subprocess.run(mash_check, capture_output=True, check=True, text=True)
+    
+    # Read and process the output
+    df = pd.read_csv(StringIO(result.stdout), sep='\t', names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'])
+    df_dropped = df.drop(columns=['Ref ID', 'P-value', 'Kmer'])
+    
+    # Extract relevant information
+    df_check_species = df['Query ID'].str.split('/').str[0].iloc[0]
+    df_check_dist = df_dropped['Mash Dist'].iloc[0]
+    
+    expected_species = 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna'
+    expected_dist = 0.0185
+    
+    # Log and validate the results
+    if df_check_species == expected_species and float(round(df_check_dist, 4)) == expected_dist:
+        logging.info("Great, the test confirms Mash is running properly and returned expected results.")
+        logging.info(f"Expected species: {expected_species}")
+        logging.info(f"Returned species: {df_check_species}")
+        logging.info(f"Expected distance: {expected_dist}")
+        logging.info(f"Returned distance: {round(df_check_dist, 4)}")
+    else:
+        logging.info(f"Expected species: {expected_species}")
+        logging.info(f"Returned species: {df_check_species}")
+        logging.info(f"Expected distance: {expected_dist}")
+        logging.info(f"Returned distance: {df_check_dist}")
+        logging.critical("The unit test to confirm species and mash value did not return expected results. Exiting.")
+        sys.exit(1)
+
+def cat_files(read1: str, read2: str) -> None:
+    """
+    Concatenates the contents of two files and writes the result to 'myCatFile'.
 
     Parameters
     ----------
-    inRead1 : XX
-        XXX
-    inRead2 : XX
-        XXX
+    read1 : str
+        Path to the first file to be concatenated.
+    read2 : str
+        Path to the second file to be concatenated.
 
     Returns
     -------
     None
-        XXX
+        Exits the program if the files are gzipped.
     """
-    if inRead1 and inRead2 != None and inRead1.endswith('.gz'):
-        logging.critical("The files are still gzipped. Exiting")
+    # Check if files are gzipped
+    if (read1.endswith('.gz') or read2.endswith('.gz')):
+        logging.critical("One or both files are gzipped. Exiting.")
         sys.exit(1)
-    else:
-        logging.info("The files have been gunzipped ...")
-        with open(inRead1) as readFile:
-            read1 = readFile.read()
-        with open(inRead2) as readFile:
-            read2 = readFile.read()
-            read1 += read2
-        with open('myCatFile', 'w') as readFile:
-            readFile.write(read1)
-            readFile.close()
 
-def minKmer(calculatedKmer, inKmer):
+    logging.info("The files are not gzipped. Proceeding with concatenation...")
+
+    # Concatenate the contents of the files
+    try:
+        with open(read1, 'r') as file1, open(read2, 'r') as file2:
+            combined_content = file1.read() + file2.read()
+
+        # Write the concatenated content to 'myCatFile'
+        with open('myCatFile', 'w') as output_file:
+            output_file.write(combined_content)
+
+        logging.info("Files have been successfully concatenated and written to 'myCatFile'.")
+
+    except FileNotFoundError as e:
+        logging.critical(f"Error: {e}")
+        sys.exit(1)
+    except IOError as e:
+        logging.critical(f"IO Error: {e}")
+        sys.exit(1)
+
+def minKmer(calculatedKmer, min_kmer=2):
     """
-    Determine the value of the kmers (-m flag); if less than 2, set as 2
+    Determine the minimum kmer value. If less than 2, set to 2.
 
     Parameters
     ----------
     calculatedKmer : int
         Value that is calculated based on genomeCoverage/3
-    inKmer : int, optional, default is 2
-        Input kmer value specified by user; to be used instead of calucated
+    min_kmer : int, optional, default is 2
+        Input kmer value specified by the user; used instead of calculatedKmer if greater than 2
 
     Returns
     ----------
     int
-        integer value used for min_kmer (-m flag) with paired-end reads
+        Integer value used for min_kmer with paired-end reads
     """
-    if int(inKmer) == 2:
-        logging.info("Should kmer value be different than default (2)...")
-        logging.info("Min. kmer = genome coverage divided by 3..." )
-        #return calculatedKmer
-        if (calculatedKmer < 2 or int(inKmer) < 2):
-            logging.info("The calucated kmer is less than 2, so will use 2...")
-            calculatedKmer = 2
-        return calculatedKmer
-    elif (int(inKmer) > 2):
-        logging.info("User specified a value for minimum kmer: %s ..." % inKmer)
-        return int(inKmer)
+    min_kmer = int(min_kmer)  # Ensure min_kmer is an integer
+
+    # Check if user-specified kmer is greater than 2
+    if min_kmer > 2:
+        logging.info(f"User specified a value for minimum kmer: {min_kmer} ...")
+        return min_kmer
+
+    # Log information about default behavior
+    logging.info("Should kmer value be different than default (2)...")
+    logging.info("Min. kmer = genome coverage divided by 3...")
+
+    # Determine minimum kmer value
+    if calculatedKmer < 2:
+        logging.info("The calculated kmer is less than 2, so will use 2...")
+        return 2
+    return calculatedKmer
 
 def run_cmd(command):
     """
-    XXXX
+    Executes a shell command and logs its output. Exits the program on error.
 
     Parameters
     ----------
-    XX : XX
-        XXXcd
+    command : list of str
+        The command to be executed, provided as a list of arguments.
 
     Returns
     -------
-    XXX : XXX
-        XXX
+    subprocess.CompletedProcess
+        The result of the executed command, including stdout, stderr, and return code.
     """
 
     try:
-        result = subprocess.run(command, capture_output=True,\
-        check=True, text=True)
-        new_cmd=(' '.join(command))
-        logging.info("This is the command... \n %s " % new_cmd)
-    except subprocess.CalledProcessError:
-        logging.critical("CRITICAL ERROR. The following command had an improper\
- error: \n %s ." % command)
+        # Execute the command
+        result = subprocess.run(
+            command, 
+            capture_output=True,
+            check=True,
+            text=True
+        )
+        # Log the command executed
+        new_cmd = ' '.join(command)
+        logging.info(f"This is the command...\n{new_cmd}")
+    except subprocess.CalledProcessError as e:
+        # Log critical error and exit if the command fails
+        logging.critical(f"CRITICAL ERROR. The following command had an error:\n{e}")
         sys.exit(1)
+    
     return result
 
 def cal_kmer():
@@ -413,15 +514,19 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', inMash, '-r', 'myCatFile', '-p', inThreads, '-S', '42']
+    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
 
     ## get genome size and coverage; will provide as ouput for user
-    gSize = outputFastq1.stderr.splitlines()[0]
+    ## currently gets message at postion 0 but this is some error aboutr lang locale
+    ## so it errors out if I can change the two split lines to be on 3 and 4 
+    ## than the value can be calcuated
+
+    gSize = outputFastq1.stderr.splitlines()[3]
     gSize = gSize[23:]
     logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
-    gCoverage = outputFastq1.stderr.splitlines()[1]
+    gCoverage = outputFastq1.stderr.splitlines()[4]
     gCoverage = gCoverage[23:]
     logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
 
@@ -429,237 +534,254 @@ def cal_kmer():
     minKmers = int(float(minKmers))
 
     ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, inKmer) # returned as an integer
+    mFlag = minKmer(minKmers, min_kmer) # returned as an integer
     return mFlag, gSize, gCoverage
 
 def get_results(mFlag, inThreads):
-    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), inMash, 'myCatFile', '-p', inThreads, '-S', '123456']
+    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(inThreads), '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
     
     ## get genome size and coverage; will provide as ouput for user
     gSizeRun2 = outputFastq2.stderr.splitlines()[0]
     gSizeRun2 = gSizeRun2[23:]
-    logging.info("Estimated Genome Size with the added -m flag: %s " % gSizeRun2)
+    logging.info("Estimated Genome size using the calculated with the -m flag: %s " % gSizeRun2)
     gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
     gCoverageRun2 = gCoverageRun2[23:]
-    logging.info("Estimated Genome coverage with the added -m flag: %s "% gCoverageRun2)
+    logging.info("Estimated Genome coverage using the calculated with the -m flag: %s "% gCoverageRun2)
     #print(type(outputFastq2))
     #print(outputFastq2)
 
     return outputFastq2
 
-def get_SC(outputFastq2):
-	
-	gSizeRun2 = outputFastq2.stderr.splitlines()[0]
-	gSizeRun2 = gSizeRun2[23:]
-	gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
-	gCoverageRun2 = gCoverageRun2[23:]
-	return gSizeRun2, gCoverageRun2
-
-
-def isTie(df):
+def get_SC(outputFastq2) -> Tuple[str, str]:        
+# Add from typing import Tuple as tuple[str,str] is with python v 3.9 or higher
     """
-    Determine if the kmers count value is a tie with the second top isolate; if
-    so then indicate a tie was found in the results
+    Extract the genome size and coverage from the stderr output of the Fastq2 process.
 
     Parameters
     ----------
-    df : pandas data frame
+    outputFastq2 : subprocess.CompletedProcess
+        The process output containing stderr with the desired information.
 
     Returns
-    ----------
-    str
-        string of best genus either genus or a sentence
-    str
-        string of best species either species or a blank string
-
+    -------
+    tuple[str, str]
+        A tuple containing the genome size and coverage as strings.
     """
-    dfSort = df.sort_values('KmersCount', ascending=False)
-    logging.info("Checking if matching kmers count is tied for top 2 results...")
+    # Extract lines from stderr
+    lines = outputFastq2.stderr.splitlines()
 
-    ## assumes based on position the first and second value are always
-    ## column 11; row 1 and 2
-    if dfSort.iloc[0:1, 10:11].equals(dfSort.iloc[1:2, 10:11]):
-        bestGenus = "This was a tie, see the top 5 results below"
-        bestSpecies = " "
-        logging.info("The top two isolates have the same number of matching\
-kmers, indicating a tie... ")
-        return bestGenus, bestSpecies
+    # Check if there are at least two lines
+    if len(lines) < 2:
+        raise ValueError("Expected at least two lines in stderr output")
+
+    # Extract and strip the desired substrings
+    gSizeRun2 = lines[0][23:].strip()
+    gCoverageRun2 = lines[1][23:].strip()
+
+    return gSizeRun2, gCoverageRun2
+
+def is_tie(df):
+    """
+    Determine if the k-mers count value is a tie with the second top isolate;
+    if so, indicate a tie was found in the results.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing k-mers count, genus, and species information.
+
+    Returns
+    -------
+    tuple of str
+        - A string indicating the best genus, either a specific genus or a tie message.
+        - A string indicating the best species, either a specific species or a blank string if tied.
+    """
+    # Sort DataFrame by 'KmersCount' in descending order
+    df_sort = df.sort_values('KmersCount', ascending=False)
+    
+    logging.info("Checking if k-mers count is tied for top 2 results...")
+
+    # Check if the top two entries have the same 'KmersCount'
+    if df_sort.iloc[0]['KmersCount'] == df_sort.iloc[1]['KmersCount']:
+        best_genus = "This was a tie, see the top 5 results below"
+        best_species = ""
+        logging.info("The top two isolates have the same number of matching k-mers, indicating a tie.")
     else:
-        best = dfSort.head(1)
-        bestGenus = best['Genus']
-        bestGenus = bestGenus.str.cat(sep='\n')
-        bestSpecies = best['Species']
-        bestSpecies = bestSpecies.str.cat(sep='\n')
-        logging.info("There was not a tie of kmers for the top two species...")
-        return bestGenus, bestSpecies
+        # Extract the best genus and species
+        best = df_sort.head(1)
+        best_genus = best['Genus'].iloc[0]
+        best_species = best['Species'].iloc[0]
+        logging.info("There was no tie for k-mers count in the top two species.")
 
-def noResult(inFile, inMaxDis, bestG, bestS):
+    return best_genus, best_species
+
+def no_result(in_file, in_max_dis, best_g, best_s):
     """
-    Determine if top hit mash distances are >= user specified mash distance
+    Determine if the top hit mash distances are >= user-specified mash distance.
 
     Parameters
     ----------
-    inFile : pandas core frame data frame
-        Parsed results from running mash
-    inDist : int
-        User specified maximum mash distance as a cut-off
+    in_file : pandas.DataFrame
+        Parsed results from running mash.
+    in_max_dis : float
+        User-specified maximum mash distance as a cut-off.
+    best_g : str
+        Current best species message.
+    best_s : str
+        Current best species placeholder.
 
     Returns
     ----------
-        Message to log file and replacement of best species with message
+    tuple
+        Updated best species message and placeholder.
     """
-    inMaxDis = float(inMaxDis)
-    logging.info("Confirming that best match is less than user specfied distance...")
+    in_max_dis = float(in_max_dis)
+    logging.info("Confirming that best match is less than user-specified distance...")
 
-    if (inFile['Mash Dist'].values[0] < inMaxDis):
-        logging.info("Great, a best species match was found with mash distance \
-less than %s..." % inMaxDis)
+    if in_file['Mash Dist'].values[0] < in_max_dis:
+        logging.info(f"Great, a best species match was found with mash distance less than {in_max_dis}...")
     else:
-        bestG = "No matches found with mash distances < %s..." % inMaxDis
-        bestS = " "
-        logging.info("No matches found with mash distances < %s..." % inMaxDis)
-    return bestG, bestS
+        best_g = f"No matches found with mash distances < {in_max_dis}..."
+        best_s = " "
+        logging.info(f"No matches found with mash distances < {in_max_dis}...")
 
-def parseResults(cmd, inMaxDis):
+    return best_g, best_s
+
+def parse_results(cmd, in_max_dis):
     """
-    run initial command and parse the results from mash
+    Run the initial command and parse the results from mash.
 
     Parameters
     ----------
-    cmd : list
-        Initial command to run for either fasta or fastq
-    inMaxDis : XXX
-        XXX
+    cmd : subprocess.CompletedProcess
+        The completed process object from running the mash command.
+    in_max_dis : float
+        User-specified maximum mash distance for filtering results.
+
     Returns
     ----------
-    bestGenus
-        The most likely genus of the isolate tested
-    bestSpecies
-        The most likely species of the isolate tested
-    dfTop
-        The top five results from sorting Mash output
+    tuple
+        - best_genus: str
+            The most likely genus of the isolate tested.
+        - best_species: str
+            The most likely species of the isolate tested.
+        - df_top: pandas.DataFrame
+            The top five results from sorting Mash output.
     """
-
-    ## convert with StringIO and added headers (for development)
+    # Read the mash output into a DataFrame
     df = pd.read_csv(StringIO(cmd.stdout), sep='\t',
-    names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
-    index_col=False)
+                     names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
+                     index_col=False)
 
-    dfGenus = df['Ref ID'].str.split('_', 1, expand=True)
-    tmpDF = pd.DataFrame(columns=['Genus', 'Species', 'GeneBank Identifier', '% Seq Sim'])
-    tmpDF['Genus'] = dfGenus[0]
+    # Extract Genus, Species, and GeneBank Identifier
+    df[['Genus', 'Species']] = df['Ref ID'].str.split('_', 1, expand=True)
+    df[['Species', 'GeneBank Identifier']] = df['Species'].str.split('_', 1, expand=True)
+    df['GeneBank Identifier'] = 'GCA' + df['GeneBank Identifier'].str.split('GCA', expand=True).iloc[:, -1]
 
-    dfSpecies = dfGenus.iloc[:, -1].str.split('_', 1, expand=True)
-    tmpDF['Species'] = dfSpecies[0]
+    # Split Kmers and convert to integer
+    df[['KmersCount', 'sketchSize']] = df['Kmer'].str.split("/", expand=True)
+    df['KmersCount'] = df['KmersCount'].astype(int)
 
-    dfGB = dfSpecies.iloc[:, -1].str.split('GCA', expand=True)
-    dfGB = 'GCA' + dfGB.iloc[:,-1]
-    tmpDF['GeneBank Identifier'] = dfGB
+    # Calculate % sequence similarity
+    df['% Seq Sim'] = (1 - df['Mash Dist']) * 100
 
-    df = df.join(tmpDF)
+    # Sort by KmersCount and handle ties
+    df_sorted = df.sort_values('KmersCount', ascending=False)
+    df_sorted_dropped = df_sorted.drop(['Ref ID', 'Query ID', 'KmersCount', 'sketchSize'], axis=1)
 
-    ## split the kmers for sorting because xx/xxxx
-    df[['KmersCount','sketchSize']] = df.Kmer.str.split("/", expand=True,)	
-    df['KmersCount'] = df.KmersCount.astype(int)
+    # Determine the best genus and species
+    best_genus_sort, best_species_sort = is_tie(df_sorted)
+    best_genus, best_species = no_result(df_sorted_dropped, in_max_dis, best_genus_sort, best_species_sort)
 
-    #df['Mash Dist'] = df['Mash Dist'].apply(lambda x: round(x,8)) 
+    # Prepare the top five results
+    df_top = df_sorted_dropped[['Genus', 'Species', 'GeneBank Identifier', 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']].head(5)
+    df_top.reset_index(drop=True, inplace=True)  # Reset index to start at 0
 
-    ## add column that is (1 - Mash Distance) * 100, which is % sequence similarity
-    df['% Seq Sim'] =  1 - df['Mash Dist'] # multiplying by 100 gives strange result 
-    df['% Seq Sim'] = df['% Seq Sim'] * 100    
+    return best_genus, best_species, df_top
 
-
-    #logging.info("Should give dtype after adding to seq sim: %s" % df.dtypes)
-    ## now sort and get top species; test for a tie in kmerscount value
-    dfSorted = df.sort_values('KmersCount', ascending=False)
-    dfSortOut = isTie(dfSorted)
-    bestGenusSort = dfSortOut[0]
-    bestSpeciesSort = dfSortOut[1]
-
-    ## use column (axis = 1), to create minimal dataframe
-    dfSortedDropped = dfSorted.drop(['Ref ID', 'Query ID', 'KmersCount',
-    'sketchSize' ], axis=1)
-
-    ## noResult function - confirm mash distance is < than user specified
-    ## even if mash distance !< user specified, return the top five hits
-    noMash = noResult(dfSortedDropped, inMaxDis, bestGenusSort, bestSpeciesSort)
-    bestGenus = noMash[0]
-    bestSpecies = noMash[1]
-
-    ## change order
-    dfSortedDropped = dfSortedDropped[['Genus', 'Species', 'GeneBank Identifier',
-    'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']]
-    dfTop = dfSortedDropped[:5]
-
-    dfTop.reset_index(drop=True, inplace=True) #make index start at 0
-    return bestGenus, bestSpecies, dfTop
-
-def makeTable(dateTime, name, inRead1, inRead2, inMaxDist, results, mFlag):
+def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
     """
-    Parse results into text output and include relavant variables
+    Parse results into a text output file including relevant variables.
 
     Parameters
     ----------
-    dataTime : str
-        get current date and time for when analysis is run
-    maxDist : float, optional
-        optional input to specify the value of maximum mash distance
+    date_time : str
+        Current date and time for when analysis is run.
+    name : str
+        Base name for the output file.
+    read1 : str
+        Path to the first query file.
+    read2 : str
+        Path to the second query file.
+    max_dist : float
+        User-specified maximum mash distance.
     results : tuple
-        output from running and parsing mash commands
+        Output from running and parsing mash commands, where:
+        - results[0] is the best genus.
+        - results[1] is the best species.
+        - results[2] is a pandas DataFrame of the top results.
+    m_flag : list
+        Contains the minimum k-mer copy number and k-mer size.
 
     Returns
     ----------
-    txt file
-        text file with each isolates results appended that were run through
+    None
+        Writes the results to a text file.
     """
+    # Define file name
+    file_name = f"{name}_results_{date_time}.txt"
 
-    with open(f"{name}_results_{dateString}.txt" ,'a+') as f:
-        f.writelines("\n" + "Legionella Species ID Tool using Mash" + "\n")
-        f.writelines("Date and Time = " + dtString + "\n") #+str(variable)
-        f.write("Input query file 1: " + inRead1 + "\n")
-        f.write("Input query file 2: " + inRead2 + "\n")
-        f.write("Genome size estimate for fastq files with using the -m flag: " + scData[0] + " " +"(bp)" +"\n") #make into variable
-        f.write("Genome coverage estimate for fastq files with using the -m flag: " + scData[1]  + "\n") #make into variables
-        f.write("Maximum mash distance (-d): " + str(inMaxDis) + "\n")
-        f.write("Minimum K-mer copy number (-m) to be included in the sketch: " + str(mFlag[0]) + "\n" )
-        f.write("K-mer size used for sketching: " + inKSize + "\n" )
-        f.write("Mash Database name: " + inMash + "\n" + "\n")
-        f.write("Best species match: " + results[0] + " " + results[1] + "\n" + "\n")
-        f.write("Top 5 results:" + "\n")
-        f.writelines(u'\u2500' * 100 + "\n")
-        f.writelines(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center", stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"), showindex=False)+ "\n")
+    # Open file in append mode
+    with open(file_name, 'a+') as f:
+        # Write headers and variable values
+        f.write(f"\nLegionella Species ID Tool using Mash\n")
+        f.write(f"Date and Time = {date_time}\n")
+        f.write(f"Input query file 1: {read1}\n")
+        f.write(f"Input query file 2: {read2}\n")
+        f.write(f"Maximum mash distance (-d): {max_dist}\n")
+        f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
+        f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
+        f.write(f"Mash Database name: {m_flag[2]}\n\n")
+        f.write(f"Best species match: {results[0]} {results[1]}\n\n")
+        
+        # Write top results with table formatting
+        f.write("Top 5 results:\n")
+        f.write(u'\u2500' * 100 + "\n")
+        f.write(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center",
+                         stralign="center", floatfmt=(None, None, None, ".5f", ".3f", ".8e"),
+                         showindex=False) + "\n")
 
 if __name__ == '__main__':
-    ## parser is created from the function argparser
-    ## parse the arguments
+
+## Argument parsing 
     parser = argparser()
     args = parser.parse_args()
 
-inMash = args.database
-inMaxDis = args.max_dist
-inKmer = args.kmer_min
+mash_db = args.database
+max_dis = args.max_dist
+min_kmer = args.kmer_min
 inThreads = args.num_threads
-inRead1 = args.read1
-inRead2 = args.read2
+read1 = args.read1
+read2 = args.read2
 
 now = datetime.now()
-dtString = now.strftime("%B %d, %Y %H:%M:%S")
-dateString = now.strftime("%Y-%m-%d")
+date_time = now.strftime("%Y-%m-%d")
 
 #unique name for log file based on read name
-name = fastq_name(inRead1)
+name = fastq_name(read1)
 log = name + "_run"  + ".log"
 
 req_programs=['mash', 'python']
 
 make_output_log(log)
-get_input(inRead1, inRead2, inMash, inMaxDis, inKmer, inKSize, inThreads)
+k_size = get_k_size(mash_db)
 
-#check_mash()
+get_input_required(read1, read2, mash_db)
+get_input_optional(max_dis, min_kmer, k_size, inThreads)
 
 logging.info("Checking if all the required input files exist...")
-check_files(inRead1, inRead2, inMash)
+check_files(read1, read2, mash_db)
 logging.info("Input files are present...")
 
 logging.info("Checking if all the prerequisite programs are installed...")
@@ -672,7 +794,7 @@ check_mash()
 logging.info("Great, internal system checks passed...")
 
 logging.info("Begin concatenation of the fastq files...")
-cat_files(inRead1, inRead2)
+cat_files(read1, read2)
 logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Calculating estimated genome size and coverage...")
@@ -690,11 +812,10 @@ logging.info("Successfully, added estimated genome size and coverage to \
 output...")
 
 logging.info("Beginning to parse the output results from mash dist...")
-results = parseResults(outputFastq2, inMaxDis)
+results = parse_results(outputFastq2, max_dis)
 logging.info("Okay, completed parsing of the results...")
 
 logging.info("Generating table of results as a text file...")
-makeTable(dtString, name, inRead1, inRead2, inMaxDis, results, mFlag)
+make_table(date_time, name, read1, read2, max_dis, results, mFlag)
 logging.info("Completed analysis for the sample: %s..." % name )
-logging.info("Exiting.")
-logging.info(" ")
+logging.info("EXITING!")
