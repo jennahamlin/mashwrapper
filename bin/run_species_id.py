@@ -20,40 +20,41 @@ from tabulate import tabulate
 #############################
 
 class ParserWithErrors(argparse.ArgumentParser):
-    def error(self, message):
-        print(f'\nError: {message}\n')
+    def error(self, message: str) -> None:
+        """Override the error method to print the message and show help."""
+        print(f'\n{message}\n')
         self.print_help()
         sys.exit(2)
 
-    def is_valid_mash(self, parser, arg):
-        base, ext = os.path.splitext(arg)
+    def is_valid_mash(self, parser: argparse.ArgumentParser, arg: str) -> str:
+        """Validate that the argument is a .msh file."""
+        _, ext = os.path.splitext(arg)
         if ext != '.msh':
-            parser.error(f'File {arg} does not have a .msh extension. Did you generate the mash sketch and specify this file?')
+            parser.error(f'ERROR: This is not a file ending with .msh. Did you generate the mash sketch and specify that file to be uploaded?')
         return arg
 
-    def is_valid_fastq(self, parser, arg):
-        base, ext = os.path.splitext(arg)
-        if ext not in ('.gz', '.fastq', '.fq', '.fastq.gz'):
-            parser.error(f'File {arg} does not have a valid fastq extension (.fq, .gz, .fastq, .fastq.gz).')
+    def is_valid_fastq(self, parser: argparse.ArgumentParser, arg: str) -> str:
+        """Validate that the argument is a .fastq or .fastq.gz file."""
+        _, ext = os.path.splitext(arg)
+        if ext not in ('.gz', '.fastq') and not arg.endswith('.fastq.gz'):
+            parser.error(f'ERROR: This is not a file ending with either .fastq or .fastq.gz. This flag requires the input of a fastq file.')
         return arg
 
-    def is_valid_distance(self, parser, arg):
+    def is_valid_distance(self, parser: argparse.ArgumentParser, arg: str) -> str:
+        """Validate that the argument is a positive float."""
         try:
-            distance = float(arg)
-            if distance < 0:
-                raise argparse.ArgumentTypeError(f'Distance must be a positive number. Received: {distance}')
-            return arg
+            value = float(arg)
+            if value < 0:
+                raise ValueError
         except ValueError:
-            parser.error(f'{arg} is not a valid float number (e.g., 0.1).')
+            parser.error(f'ERROR: {arg} is not a positive float, aka a number with a decimal point.')
+        return arg
 
-    def is_valid_int(self, parser, arg):
-        try:
-            value = int(arg)
-            if value <= 0:
-                raise argparse.ArgumentTypeError(f'Integer must be a positive number. Received: {value}')
-            return arg
-        except ValueError:
-            parser.error(f'{arg} is not a valid integer.')
+    def is_valid_int(self, parser: argparse.ArgumentParser, arg: str) -> str:
+        """Validate that the argument is a positive integer."""
+        if not arg.isdigit():
+            parser.error(f'ERROR: You input {arg}. This is NOT a positive integer.')
+        return arg
 
 #########################
 ## ArgParser Arguments ##
