@@ -12,9 +12,6 @@ from typing import Optional
 from datetime import datetime
 from tabulate import tabulate
 
-#inKSize = os.getenv('kSize')
-#print("The kmer size is exported from database using mash info: %s" % inKSize)
-
 #############################
 ## Argument Error Messages ##
 #############################
@@ -52,7 +49,7 @@ class ParserWithErrors(argparse.ArgumentParser):
 
     def is_valid_int(self, parser: argparse.ArgumentParser, arg: str) -> str:
         """Validate that the argument is a positive integer."""
-        if not arg.isdigit():
+        if not arg.isdigit() or int(arg) <= 0:
             parser.error(f'ERROR: You input {arg}. This is NOT a positive integer.')
         return arg
 
@@ -163,7 +160,7 @@ def fastq_name(read1: str) -> str:
         File names with one of the three supported endings stripped.
     """
     # Define regex pattern to match any of the supported endings
-    pattern = r'(_1|_R1_001|_R1)\.fastq(\.gz)?$'
+    pattern = r'(_1|_R1_001|_R1)(\.fastq|\.fastq\.gz)?$'
 
     match = re.search(pattern, read1)
     if match:
@@ -193,13 +190,14 @@ def get_input_required(read1: str, read2: str, mash_db: str) -> None:
     -------
     None
     """
-    
+
     logging.info(
-        f"The user-specified required parameters:\n"
-        f" * Read1: {read1}\n"
-        f" * Read2: {read2}\n"
-        f" * Mash Database: {mash_db}\n"
-    )
+    "The user-specified required parameters:\n"
+    " * Read1: %s\n" 
+    " * Read2: %s\n" 
+    " * Mash Database: %s\n", 
+    read1, read2, mash_db
+)
 
 def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -> None:
     """
@@ -222,11 +220,12 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
     """
     
     logging.info(
-        f"The default or user specified parameters:\n"
-        f" * Maximum Distance: {max_dis}\n"
-        f" * Minimum Kmer Count: {min_kmer}\n"
-        f" * Size of Kmer: {k_size}\n"
-        f" * Number of Threads: {threads}\n"
+        "The default or user specified parameters:\n"
+        " * Maximum Distance: %s\n"
+        " * Minimum Kmer Count: %s\n"
+        " * Size of Kmer: %s\n"
+        " * Number of Threads: %s\n",
+        max_dis, min_kmer, k_size, threads
     )    
 
 ##TODO - check for corrupt gzip files
@@ -267,7 +266,7 @@ def get_k_size(mash_db: str) -> str:
                 k_size = fields[2]
                 return k_size
             else:
-                logging.error("Unexpected format in output line: %s", lines[2])
+                logging.error("Unexpected format or missing k-size information.")
                 return None
         else:
             logging.error("Unexpected output format from mash info command.")
@@ -333,26 +332,27 @@ def check_program(program_name: str) -> None:
     SystemExit
         If the program is not found or if the Python version is insufficient.
     """
-    logging.info(f"Checking for program {program_name}...")
+    logging.info("Checking for program %s..." % program_name)
 
     # Check if the program exists
     path = shutil.which(program_name)
     
     if path is None:
-        logging.critical(f"Program {program_name} not found! Cannot continue; dependency not fulfilled.")
+        logging.critical("Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
         raise SystemExit(1)
 
     # If the program is Python, check the version
     if program_name == 'python':
         python_version = '.'.join(map(str, sys.version_info[:3]))
         if sys.version_info >= (3, 7):
-            logging.info(f"Great, the program {program_name} is loaded.")
-            logging.info(f"The version of python is: {python_version}.")
+            logging.info("Great, the program %s is loaded." % program_name)
+            logging.info("The version of python is: %s." % python_version)
         else:
             logging.critical("You do not have an appropriate version of Python. Requires Python version >= 3.7. Exiting.")
             raise SystemExit(1)
+
     else:
-        logging.info(f"Great, the program {program_name} is loaded.")
+        logging.info("Great, the program %s is loaded." % program_name)
 
 def check_mash() -> None:
     """
@@ -523,7 +523,7 @@ def cal_kmer():
     """
 
     f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(inThreads), '-S', '42']
+    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
 
     outputFastq1 = run_cmd(fastqCmd1)
 
@@ -546,8 +546,8 @@ def cal_kmer():
     mFlag = minKmer(minKmers, min_kmer) # returned as an integer
     return mFlag, gSize, gCoverage
 
-def get_results(mFlag, inThreads):
-    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(inThreads), '-S', '123456']
+def get_results(mFlag, threads):
+    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456']
     outputFastq2 = run_cmd(fastqCmd2)
     
     ## get genome size and coverage; will provide as ouput for user
@@ -770,7 +770,7 @@ if __name__ == '__main__':
 mash_db = args.database
 max_dis = args.max_dist
 min_kmer = args.kmer_min
-inThreads = args.num_threads
+threads = args.num_threads
 read1 = args.read1
 read2 = args.read2
 
@@ -787,7 +787,7 @@ make_output_log(log)
 k_size = get_k_size(mash_db)
 
 get_input_required(read1, read2, mash_db)
-get_input_optional(max_dis, min_kmer, k_size, inThreads)
+get_input_optional(max_dis, min_kmer, k_size, threads)
 
 logging.info("Checking if all the required input files exist...")
 check_files(read1, read2, mash_db)
@@ -812,7 +812,7 @@ logging.info("Minimum copies of each kmer required to pass noise filter \
 identified ...")
 
 logging.info("Running Mash Dist command with -m flag...")
-outputFastq2 = get_results(mFlag[0], inThreads)
+outputFastq2 = get_results(mFlag[0], threads)
 logging.info("Completed running mash dist command...")
 
 logging.info("Copying over estimated genome size and coverage to results...")
