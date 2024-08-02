@@ -10,7 +10,7 @@ from io import StringIO
 from typing import Tuple
 from typing import Optional
 from datetime import datetime
-from tabulate import tabulate
+from tabulate import tabulate 
 
 #############################
 ## Argument Error Messages ##
@@ -228,7 +228,7 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
         max_dis, min_kmer, k_size, threads
     )    
 
-##TODO - check for corrupt gzip files
+##TODO - check for corrupt gzip files or empty
 ##TODO - check if the beginning of the file name is a match between the two files
 
 def get_k_size(mash_db: str) -> str:
@@ -387,16 +387,17 @@ def check_mash() -> None:
     
     # Log and validate the results
     if df_check_species == expected_species and float(round(df_check_dist, 4)) == expected_dist:
+        rounded_distance = round(df_check_dist, 4)
         logging.info("Great, the test confirms Mash is running properly and returned expected results.")
-        logging.info(f"Expected species: {expected_species}")
-        logging.info(f"Returned species: {df_check_species}")
-        logging.info(f"Expected distance: {expected_dist}")
-        logging.info(f"Returned distance: {round(df_check_dist, 4)}")
+        logging.info("Expected species: %s", expected_species)
+        logging.info("Returned species: %s", df_check_species)
+        logging.info("Expected distance: %s", expected_dist)
+        logging.info("Returned distance: %s", rounded_distance)
     else:
-        logging.info(f"Expected species: {expected_species}")
-        logging.info(f"Returned species: {df_check_species}")
-        logging.info(f"Expected distance: {expected_dist}")
-        logging.info(f"Returned distance: {df_check_dist}")
+        logging.info("Expected species: %s", expected_species)
+        logging.info("Returned species: %s", df_check_species)
+        logging.info("Expected distance: %s", expected_dist)
+        logging.info("Returned distance: %s", rounded_distance)
         logging.critical("The unit test to confirm species and mash value did not return expected results. Exiting.")
         sys.exit(1)
 
@@ -435,13 +436,13 @@ def cat_files(read1: str, read2: str) -> None:
         logging.info("Files have been successfully concatenated and written to 'myCatFile'.")
 
     except FileNotFoundError as e:
-        logging.critical(f"Error: {e}")
+        logging.critical("Error: %s", e)
         sys.exit(1)
     except IOError as e:
-        logging.critical(f"IO Error: {e}")
+        logging.critical("IO Error: %s", e)
         sys.exit(1)
 
-def minKmer(calculatedKmer, min_kmer=2):
+def update_min_kmer(calculatedKmer, min_kmer=2):
     """
     Determine the minimum kmer value. If less than 2, set to 2.
 
@@ -461,7 +462,7 @@ def minKmer(calculatedKmer, min_kmer=2):
 
     # Check if user-specified kmer is greater than 2
     if min_kmer > 2:
-        logging.info(f"User specified a value for minimum kmer: {min_kmer} ...")
+        logging.info("User specified a value for minimum kmer: %s ...", min_kmer)
         return min_kmer
 
     # Log information about default behavior
@@ -499,52 +500,69 @@ def run_cmd(command):
         )
         # Log the command executed
         new_cmd = ' '.join(command)
-        logging.info(f"This is the command...\n{new_cmd}")
+        logging.info("This is the command...\n %s", new_cmd)
     except subprocess.CalledProcessError as e:
         # Log critical error and exit if the command fails
-        logging.critical(f"CRITICAL ERROR. The following command had an error:\n{e}")
+        logging.critical("CRITICAL ERROR. The following command had an error:\n %s", e)
         sys.exit(1)
     
     return result
 
-def cal_kmer():
+
+def cal_kmer(mash_db, threads, min_kmer, run_cmd):
     """
-    XXXX
+    Calculate the minimum k-mer value and genome statistics from mash dist output.
 
     Parameters
     ----------
-    XX : XX
-        XXX
+    mash_db : str
+        The path to the mash database.
+    threads : int
+        The number of threads to use.
+    min_kmer : int
+        The minimum k-mer value.
+    run_cmd : callable
+        A function to run commands and return output.
 
     Returns
     -------
-    mFlag : tuple, position 0
-        XXX
+    tuple
+        A tuple containing:
+        - mFlag : int
+            The minimum k-mer copies to use (-m flag).
+        - gSize : str
+            Estimated genome size.
+        - gCoverage : str
+            Estimated genome coverage.
     """
+    try:
+        # Run the command
+        fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
+        outputFastq1 = run_cmd(fastqCmd1)
 
-    f = open('myCatFile', 'r')
-    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
+        # Parse the output
+        stderr_lines = outputFastq1.stderr.splitlines()
 
-    outputFastq1 = run_cmd(fastqCmd1)
+        # Ensure there are enough lines to avoid index errors
+        if len(stderr_lines) < 5:
+            raise ValueError("Unexpected output format from the command.")
 
-    ## get genome size and coverage; will provide as ouput for user
-    ## currently gets message at postion 0 but this is some error aboutr lang locale
-    ## so it errors out if I can change the two split lines to be on 3 and 4 
-    ## than the value can be calcuated
+        gSize = stderr_lines[3][23:]
+        gCoverage = stderr_lines[4][23:]
 
-    gSize = outputFastq1.stderr.splitlines()[3]
-    gSize = gSize[23:]
-    logging.info("Estimated Genome Size to determine -m flag: %s " % gSize)
-    gCoverage = outputFastq1.stderr.splitlines()[4]
-    gCoverage = gCoverage[23:]
-    logging.info("Estimated Genome coverage to determine -m flag: %s " % gCoverage)
+        logging.info("Estimated Genome Size to determine -m flag: %s", gSize)
+        logging.info("Estimated Genome coverage to determine -m flag: %s", gCoverage)
 
-    minKmers = int(float(gCoverage))/3
-    minKmers = int(float(minKmers))
+        # Calculate minimum k-mer value
+        minKmers = int(float(gCoverage) / 3)
+        mFlag = update_min_kmer(minKmers, min_kmer)
 
-    ## this is used the calucate the minimum kmer copies to use (-m flag)
-    mFlag = minKmer(minKmers, min_kmer) # returned as an integer
-    return mFlag, gSize, gCoverage
+        return mFlag, gSize, gCoverage
+
+    except Exception as e:
+        logging.error("An error occurred: %s", e)
+        raise
+
 
 def get_results(mFlag, threads):
     fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456']
@@ -649,11 +667,11 @@ def no_result(in_file, in_max_dis, best_g, best_s):
     logging.info("Confirming that best match is less than user-specified distance...")
 
     if in_file['Mash Dist'].values[0] < in_max_dis:
-        logging.info(f"Great, a best species match was found with mash distance less than {in_max_dis}...")
+        logging.info("Great, a best species match was found with mash distance less than %s...", in_max_dis)
     else:
         best_g = f"No matches found with mash distances < {in_max_dis}..."
         best_s = " "
-        logging.info(f"No matches found with mash distances < {in_max_dis}...")
+        logging.info("No matches found with mash distances < %s...", in_max_dis)
 
     return best_g, best_s
 
@@ -807,7 +825,7 @@ cat_files(read1, read2)
 logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Calculating estimated genome size and coverage...")
-mFlag = cal_kmer()
+mFlag = cal_kmer(mash_db, threads, min_kmer, run_cmd)
 logging.info("Minimum copies of each kmer required to pass noise filter \
 identified ...")
 
