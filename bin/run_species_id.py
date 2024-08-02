@@ -87,11 +87,11 @@ def argparser():
                         type=lambda x: parser.is_valid_fastq(parser, x))
     
     optional.add_argument("--max_dist", "-d", default=0.05,
-                        help="User specified mash distance (default: 0.05)",
+                        help="User-specified Mash distance (default: 0.05)",
                         type=lambda x: parser.is_valid_distance(parser, x))
     
     optional.add_argument("--kmer_min", "-m", default=2,
-                        help="Minimum copies of kmer count (default: 2)",
+                        help="Min. k-mer copies to pass noise filter  (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
     
     optional.add_argument("--num_threads", "-p", default=2,
@@ -210,7 +210,7 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
     min_kmer : str
         Minimum k-mer count.
     k_size : str
-        Size of the k-mer.
+        Size of the K-mer.
     threads : str
         Number of threads to use.
 
@@ -222,8 +222,8 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
     logging.info(
         "The default or user specified parameters:\n"
         " * Maximum Distance: %s\n"
-        " * Minimum Kmer Count: %s\n"
-        " * Size of Kmer: %s\n"
+        " * Minimum K-mer Count: %s\n"
+        " * Size of K-mer: %s\n"
         " * Number of Threads: %s\n",
         max_dis, min_kmer, k_size, threads
     )    
@@ -451,7 +451,7 @@ def update_min_kmer(calculatedKmer, min_kmer=2):
     calculatedKmer : int
         Value that is calculated based on genomeCoverage/3
     min_kmer : int, optional, default is 2
-        Input kmer value specified by the user; used instead of calculatedKmer if greater than 2
+        Input K-mer value specified by the user; used instead of calculatedKmer if greater than 2
 
     Returns
     ----------
@@ -460,18 +460,18 @@ def update_min_kmer(calculatedKmer, min_kmer=2):
     """
     min_kmer = int(min_kmer)  # Ensure min_kmer is an integer
 
-    # Check if user-specified kmer is greater than 2
+    # Check if user-specified K-mer is greater than 2
     if min_kmer > 2:
-        logging.info("User specified a value for minimum kmer: %s ...", min_kmer)
+        logging.info("User specified a value for minimum K-mer: %s ...", min_kmer)
         return min_kmer
 
     # Log information about default behavior
-    logging.info("Should kmer value be different than default (2)...")
-    logging.info("Min. kmer = genome coverage divided by 3...")
+    logging.info("Should K-mer value be different than default (2)...")
+    logging.info("Min. K-mer = genome coverage divided by 3...")
 
-    # Determine minimum kmer value
+    # Determine minimum K-mer value
     if calculatedKmer < 2:
-        logging.info("The calculated kmer is less than 2, so will use 2...")
+        logging.info("The calculated K-mer is less than 2, so will use 2...")
         return 2
     return calculatedKmer
 
@@ -508,7 +508,6 @@ def run_cmd(command):
     
     return result
 
-
 def cal_kmer(mash_db, threads, min_kmer, run_cmd):
     """
     Calculate the minimum k-mer value and genome statistics from mash dist output.
@@ -520,7 +519,7 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
     threads : int
         The number of threads to use.
     min_kmer : int
-        The minimum k-mer value.
+        The minimum K-mer value.
     run_cmd : callable
         A function to run commands and return output.
 
@@ -563,25 +562,44 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
         logging.error("An error occurred: %s", e)
         raise
 
+def get_results(mFlag, threads, mash_db):
+    """
+    Runs the mash distance command using value from cal_kmer and extracts genome size and coverage from the command output.
 
-def get_results(mFlag, threads):
-    fastqCmd2 = ['mash', 'dist', '-r', '-m', str(mFlag), str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456']
-    outputFastq2 = run_cmd(fastqCmd2)
+    Parameters:
+        mFlag (int): The -m flag value for the mash command.
+        threads (int): Number of threads to use with the mash command.
+        mash_db (str): Path to the mash database.
+
+    Returns:
+        subprocess.CompletedProcess: The result of the mash command.
+    """
+    # Build the mash command
+    fastq_cmd = [
+        'mash', 'dist', '-r', '-m', str(mFlag),
+        str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456'
+    ]
     
-    ## get genome size and coverage; will provide as ouput for user
-    gSizeRun2 = outputFastq2.stderr.splitlines()[0]
-    gSizeRun2 = gSizeRun2[23:]
-    logging.info("Estimated Genome size using the calculated with the -m flag: %s " % gSizeRun2)
-    gCoverageRun2 = outputFastq2.stderr.splitlines()[1]
-    gCoverageRun2 = gCoverageRun2[23:]
-    logging.info("Estimated Genome coverage using the calculated with the -m flag: %s "% gCoverageRun2)
-    #print(type(outputFastq2))
-    #print(outputFastq2)
+    # Run the command and get the output
+    output = run_cmd(fastq_cmd)
+    
+    # Extract and log genome size and coverage from the stderr
+    stderr_lines = output.stderr.splitlines()
+    
+    if len(stderr_lines) >= 2:
+        genome_size = stderr_lines[0][23:]
+        genome_coverage = stderr_lines[1][23:]
 
-    return outputFastq2
+        logging.info("Estimated Genome size using the calculated with the -m flag: %s", genome_size)
+        logging.info("Estimated Genome coverage using the calculated with the -m flag: %s", genome_coverage)
+    else:
+        logging.warning("Unexpected output format from mash command.")
 
-def get_SC(outputFastq2) -> Tuple[str, str]:        
+    return output
+
+def get_size_cov(outputFastq2) -> Tuple[str, str]:        
 # Add from typing import Tuple as tuple[str,str] is with python v 3.9 or higher
+
     """
     Extract the genome size and coverage from the stderr output of the Fastq2 process.
 
@@ -766,10 +784,10 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
         f.write(f"Date and Time = {date_time}\n")
         f.write(f"Input query file 1: {read1}\n")
         f.write(f"Input query file 2: {read2}\n")
-        f.write(f"Maximum mash distance (-d): {max_dist}\n")
+        f.write(f"Maximum Mash distance (-d): {max_dist}\n")
         f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
-        f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
-        f.write(f"Mash Database name: {m_flag[2]}\n\n")
+        f.write(f"K-mer size used for sketching: {k_size}\n")
+        f.write(f"Mash Database name: {mash_db}\n\n")
         f.write(f"Best species match: {results[0]} {results[1]}\n\n")
         
         # Write top results with table formatting
@@ -826,15 +844,15 @@ logging.info("Great, I was able to concatenate the files...")
 
 logging.info("Calculating estimated genome size and coverage...")
 mFlag = cal_kmer(mash_db, threads, min_kmer, run_cmd)
-logging.info("Minimum copies of each kmer required to pass noise filter \
+logging.info("Minimum copies of each K-mer required to pass noise filter \
 identified ...")
 
 logging.info("Running Mash Dist command with -m flag...")
-outputFastq2 = get_results(mFlag[0], threads)
+outputFastq2 = get_results(mFlag[0], threads, mash_db)
 logging.info("Completed running mash dist command...")
 
 logging.info("Copying over estimated genome size and coverage to results...")
-scData = get_SC(outputFastq2)
+get_size_cov(outputFastq2)
 logging.info("Successfully, added estimated genome size and coverage to \
 output...")
 
