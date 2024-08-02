@@ -506,7 +506,7 @@ def run_cmd(command: List[str]) -> subprocess.CompletedProcess:
 ## IMPORTANT
 ## Must switch to [0] and [1] instead of [3] [4] to get to run with nextflow
 ## if len(stderr_lines) < 5: to if len(stderr_lines) < 1:
-## But does not work when just testing this script 
+## But does not work when just testing this script without context of nextflow 
 
 def cal_kmer(mash_db, threads, min_kmer, run_cmd):
     """
@@ -798,6 +798,7 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
                          showindex=False) + "\n")
 
 if __name__ == '__main__':
+
     # Argument parsing
     parser = argparser()
     args = parser.parse_args()
