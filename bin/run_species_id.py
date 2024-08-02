@@ -1,16 +1,17 @@
 #!/usr/bin/env python3.7
 
-import argparse, sys, os
-import logging
-import re
+import argparse
+import os
+import sys
 import shutil
 import subprocess
-import pandas as pd
+import logging
+import re
 from io import StringIO
-from typing import Tuple
-from typing import Optional
 from datetime import datetime
-from tabulate import tabulate 
+from typing import Tuple, Optional, List
+import pandas as pd
+from tabulate import tabulate
 
 #############################
 ## Argument Error Messages ##
@@ -69,7 +70,7 @@ def argparser():
     ## use class to parse the arguments with formatted error message
     parser = ParserWithErrors(description = description)
 
-    ## Define required and optional groups
+    ## Define required and optional groups; uses lambda (anonymous) function
     parser._action_groups.pop()
     required = parser.add_argument_group('Required Arguments')
     optional = parser.add_argument_group('Optional Arguments')
@@ -302,11 +303,9 @@ def check_files(read1: str, read2: str, mash_db: str) -> None:
     """
     
     def check_file(path: Optional[str], description: str):
-        if path:
-            if not os.path.isfile(path):
+        if path and not os.path.isfile(path):
                 raise FileNotFoundError(f"{description} doesn't exist or is not a file: {path}")
     
-    try:
         check_file(mash_db, "The database file")
         check_file(read1, "Read file 1")
         check_file(read2, "Read file 2")
@@ -314,10 +313,6 @@ def check_files(read1: str, read2: str, mash_db: str) -> None:
         if read1 == read2:
             raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
     
-    except (FileNotFoundError, ValueError) as e:
-        logging.critical(e)
-        raise  # Re-raise the exception to be handled by the caller
-
 def check_program(program_name: str) -> None:
     """
     Checks if the supplied program_name exists and if it's an appropriate version of Python.
@@ -475,7 +470,7 @@ def update_min_kmer(calculatedKmer, min_kmer=2):
         return 2
     return calculatedKmer
 
-def run_cmd(command):
+def run_cmd(command: List[str]) -> subprocess.CompletedProcess:
     """
     Executes a shell command and logs its output. Exits the program on error.
 
@@ -507,6 +502,11 @@ def run_cmd(command):
         sys.exit(1)
     
     return result
+
+## IMPORTANT
+## Must switch to [0] and [1] instead of [3] [4] to get to run with nextflow
+## if len(stderr_lines) < 5: to if len(stderr_lines) < 1:
+## But does not work when just testing this script 
 
 def cal_kmer(mash_db, threads, min_kmer, run_cmd):
     """
@@ -546,10 +546,6 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
         if len(stderr_lines) < 5:
             raise ValueError("Unexpected output format from the command.")
         
-        ## IMPORTANT
-        ## Must switch to [0] and [1] instead of [3] [4] to get to run with nextflow
-        ## But does not work when just testing this script 
-
         gSize = stderr_lines[3][23:]
         gCoverage = stderr_lines[4][23:]
 
@@ -802,69 +798,66 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
                          showindex=False) + "\n")
 
 if __name__ == '__main__':
-
-## Argument parsing 
+    # Argument parsing
     parser = argparser()
     args = parser.parse_args()
 
-mash_db = args.database
-max_dis = args.max_dist
-min_kmer = args.kmer_min
-threads = args.num_threads
-read1 = args.read1
-read2 = args.read2
+    mash_db = args.database
+    max_dis = args.max_dist
+    min_kmer = args.kmer_min
+    threads = args.num_threads
+    read1 = args.read1
+    read2 = args.read2
 
-now = datetime.now()
-date_time = now.strftime("%Y-%m-%d")
+    now = datetime.now()
+    date_time = now.strftime("%Y-%m-%d")
 
-#unique name for log file based on read name
-name = fastq_name(read1)
-log = name + "_run"  + ".log"
+    # Unique name for log file based on read name
+    name = fastq_name(read1)
+    log = f"{name}_run.log"
 
-req_programs=['mash', 'python']
+    req_programs = ['mash', 'python']
 
-make_output_log(log)
-k_size = get_k_size(mash_db)
+    make_output_log(log)
+    k_size = get_k_size(mash_db)
 
-get_input_required(read1, read2, mash_db)
-get_input_optional(max_dis, min_kmer, k_size, threads)
+    get_input_required(read1, read2, mash_db)
+    get_input_optional(max_dis, min_kmer, k_size, threads)
 
-logging.info("Checking if all the required input files exist...")
-check_files(read1, read2, mash_db)
-logging.info("Input files are present...")
+    logging.info("Checking if all the required input files exist...")
+    check_files(read1, read2, mash_db)
+    logging.info("Input files are present...")
 
-logging.info("Checking if all the prerequisite programs are installed...")
-for program in req_programs:
-    check_program(program)
-logging.info("All prerequisite programs are accessible...")
+    logging.info("Checking if all the prerequisite programs are installed...")
+    for program in req_programs:
+        check_program(program)
+    logging.info("All prerequisite programs are accessible...")
 
-logging.info("Peforming internal system checks...")
-check_mash()
-logging.info("Great, internal system checks passed...")
+    logging.info("Performing internal system checks...")
+    check_mash()
+    logging.info("Great, internal system checks passed...")
 
-logging.info("Begin concatenation of the fastq files...")
-cat_files(read1, read2)
-logging.info("Great, I was able to concatenate the files...")
+    logging.info("Begin concatenation of the fastq files...")
+    cat_files(read1, read2)
+    logging.info("Great, I was able to concatenate the files...")
 
-logging.info("Calculating estimated genome size and coverage...")
-mFlag = cal_kmer(mash_db, threads, min_kmer, run_cmd)
-logging.info("Minimum copies of each K-mer required to pass noise filter \
-identified ...")
+    logging.info("Calculating estimated genome size and coverage...")
+    mFlag = cal_kmer(mash_db, threads, min_kmer, run_cmd)
+    logging.info("Minimum copies of each K-mer required to pass noise filter identified...")
 
-logging.info("Running Mash Dist command with -m flag...")
-outputFastq2 = get_results(mFlag[0], threads, mash_db)
-logging.info("Completed running mash dist command...")
+    logging.info("Running Mash Dist command with -m flag...")
+    outputFastq2 = get_results(mFlag[0], threads, mash_db)
+    logging.info("Completed running mash dist command...")
 
-logging.info("Copying over estimated genome size and coverage to results...")
-get_size_cov(outputFastq2)
-logging.info("Successfully, added estimated genome size and coverage to \
-output...")
+    logging.info("Copying over estimated genome size and coverage to results...")
+    get_size_cov(outputFastq2)
+    logging.info("Successfully, added estimated genome size and coverage to output...")
 
-logging.info("Beginning to parse the output results from mash dist...")
-results = parse_results(outputFastq2, max_dis)
-logging.info("Okay, completed parsing of the results...")
+    logging.info("Beginning to parse the output results from mash dist...")
+    results = parse_results(outputFastq2, max_dis)
+    logging.info("Okay, completed parsing of the results...")
 
-logging.info("Generating table of results as a text file...")
-make_table(date_time, name, read1, read2, max_dis, results, mFlag)
-logging.info("Completed analysis for the sample: %s..." % name )
-logging.info("EXITING!")
+    logging.info("Generating table of results as a text file...")
+    make_table(date_time, name, read1, read2, max_dis, results, mFlag)
+    logging.info("Completed analysis for the sample: %s..." % name)
+    logging.info("EXITING!")
