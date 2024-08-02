@@ -545,6 +545,10 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
         # Ensure there are enough lines to avoid index errors
         if len(stderr_lines) < 5:
             raise ValueError("Unexpected output format from the command.")
+        
+        ## IMPORTANT
+        ## Must switch to [0] and [1] instead of [3] [4] to get to run with nextflow
+        ## But does not work when just testing this script 
 
         gSize = stderr_lines[3][23:]
         gCoverage = stderr_lines[4][23:]
