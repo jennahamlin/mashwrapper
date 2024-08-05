@@ -18,6 +18,8 @@ from tabulate import tabulate
 #############################
 
 class ParserWithErrors(argparse.ArgumentParser):
+    """ My own error messages """
+
     def error(self, message: str) -> None:
         """Override the error method to print the message and show help."""
         print(f'\n{message}\n')
@@ -144,7 +146,7 @@ def make_output_log(log: str) -> None:
         # Handle cases where `os.uname` is not available 
         logging.warning("System information is not available on this platform")
         
-def fastq_name(read1: str) -> str:
+def fastq_name(read1: str, read2: str) -> str:
     """
     Gets stripped read name for appending to output files. 
     Handles .gz files if running within NextFlow, as files are
@@ -152,13 +154,20 @@ def fastq_name(read1: str) -> str:
 
     Parameters
     ----------
-    read1 : str 
-        Fastq files with the option of three different file endings.
+      read1 : str
+        Filename for the first read.
+    read2 : str
+        Filename for the second read.
 
     Returns
     -------
     name :str
-        File names with one of the three supported endings stripped.
+        Base name of the file with the suffixes stripped.
+    
+    Raises
+    ------
+    ValueError
+        If the filenames do not match or the format is incorrect.
     """
     # Define regex pattern to match any of the supported endings
     pattern = r'(_1|_R1_001|_R1)(\.fastq|\.fastq\.gz)?$'
@@ -166,6 +175,9 @@ def fastq_name(read1: str) -> str:
     match = re.search(pattern, read1)
     if match:
         name = read1[:match.start()]  # Extract everything before the matched pattern
+        name2= read2[:match.start()]
+        if name != name2:
+            raise ValueError(f"Read1 ({name}) and Read2 ({name2}) are NOT the same file.")
         return name
     else:
         error_message = (
@@ -229,6 +241,40 @@ def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -
         max_dis, min_kmer, k_size, threads
     )    
 
+def check_files(read1: str, read2: str, mash_db: str) -> None:
+    """
+    Checks if all the input files exist; raises an exception if file not found or if file is
+    a directory.
+
+    Parameters
+    ----------
+    read1 : str
+        Path to input file 1.
+    read2 : str
+        Path to input file 2.
+    mash_db : str
+        Path to database file.
+
+    Raises
+    ------
+    FileNotFoundError
+        If any file doesn't exist or is a directory.
+    ValueError
+        If read1 and read2 are the same file.
+    """
+    
+    def check_file(path: Optional[str], description: str):
+        if path and not os.path.isfile(path):
+                raise FileNotFoundError(f"{description} doesn't exist or is not a file: {path}")
+    
+    check_file(mash_db, "The database file")
+    check_file(read1, "Read file 1")
+    check_file(read2, "Read file 2")
+
+    # Check if read1 and read2 are the same file
+    if read1 == read2:
+        raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
+
 ##TODO - check for corrupt gzip files or empty
 ##TODO - check if the beginning of the file name is a match between the two files
 
@@ -279,40 +325,7 @@ def get_k_size(mash_db: str) -> str:
     except Exception as e:
         logging.error("An unexpected error occurred: %s", e)
         return None
-
-def check_files(read1: str, read2: str, mash_db: str) -> None:
-    """
-    Checks if all the input files exist; raises an exception if file not found or if file is
-    a directory.
-
-    Parameters
-    ----------
-    read1 : str
-        Path to input file 1.
-    read2 : str
-        Path to input file 2.
-    mash_db : str
-        Path to database file.
-
-    Raises
-    ------
-    FileNotFoundError
-        If any file doesn't exist or is a directory.
-    ValueError
-        If read1 and read2 are the same file.
-    """
-    
-    def check_file(path: Optional[str], description: str):
-        if path and not os.path.isfile(path):
-                raise FileNotFoundError(f"{description} doesn't exist or is not a file: {path}")
-    
-        check_file(mash_db, "The database file")
-        check_file(read1, "Read file 1")
-        check_file(read2, "Read file 2")
-
-        if read1 == read2:
-            raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
-    
+           
 def check_program(program_name: str) -> None:
     """
     Checks if the supplied program_name exists and if it's an appropriate version of Python.
@@ -543,11 +556,11 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
         stderr_lines = outputFastq1.stderr.splitlines()
 
         # Ensure there are enough lines to avoid index errors
-        if len(stderr_lines) < 5:
+        if len(stderr_lines) < 1:
             raise ValueError("Unexpected output format from the command.")
         
-        gSize = stderr_lines[3][23:]
-        gCoverage = stderr_lines[4][23:]
+        gSize = stderr_lines[0][23:]
+        gCoverage = stderr_lines[1][23:]
 
         logging.info("Estimated Genome Size to determine -m flag: %s", gSize)
         logging.info("Estimated Genome coverage to determine -m flag: %s", gCoverage)
@@ -814,7 +827,7 @@ if __name__ == '__main__':
     date_time = now.strftime("%Y-%m-%d")
 
     # Unique name for log file based on read name
-    name = fastq_name(read1)
+    name = fastq_name(read1, read2)
     log = f"{name}_run.log"
 
     req_programs = ['mash', 'python']
@@ -828,7 +841,7 @@ if __name__ == '__main__':
     logging.info("Checking if all the required input files exist...")
     check_files(read1, read2, mash_db)
     logging.info("Input files are present...")
-
+    
     logging.info("Checking if all the prerequisite programs are installed...")
     for program in req_programs:
         check_program(program)
