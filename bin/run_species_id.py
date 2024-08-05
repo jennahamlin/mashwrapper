@@ -1,5 +1,7 @@
 #!/usr/bin/env python3.7
 
+## Requires python 3.7 because that is what singularity container is 
+
 import argparse
 import os
 import sys
@@ -10,6 +12,7 @@ import re
 from io import StringIO
 from datetime import datetime
 from typing import Tuple, Optional, List
+
 import pandas as pd
 from tabulate import tabulate
 
@@ -145,49 +148,80 @@ def make_output_log(log: str) -> None:
     except AttributeError:
         # Handle cases where `os.uname` is not available 
         logging.warning("System information is not available on this platform")
-        
-def fastq_name(read1: str, read2: str) -> str:
+
+def extract_base_name(filename: str) -> str:
     """
-    Gets stripped read name for appending to output files. 
-    Handles .gz files if running within NextFlow, as files are
-    gunzipped before this script is run.
+    Extract the base name from a filename, stripping common read suffixes.
 
     Parameters
     ----------
-      read1 : str
+    filename : str
+        The filename from which to extract the base name.
+
+    Returns
+    -------
+    str
+        The base name without any read suffixes or extensions.
+    """
+    print(f"Extracting base name from: {filename}")  # Debug print
+    # Remove any leading directory path
+    basename = os.path.basename(filename)
+    
+    # Remove .gz extension if present
+    if basename.endswith('.gz'):
+        basename = basename[:-3]
+    
+    # Remove the .fastq or .fq extension
+    if basename.endswith('.fastq'):
+        basename = basename[:-6]
+        print("Line 177")
+        print(basename)
+    elif basename.endswith('.fq'):
+        basename = basename[:-3]
+
+    suffixes = ('_1', '_R1_001', '_R1', '_2', '_R2_001', '_R2')
+
+    # Remove common read suffixes
+    def remove_suffix(basename, suffixes):
+        for suffix in suffixes:
+            if basename.endswith(suffix):
+                return basename[:-len(suffix)]
+        return basename
+
+    basename = remove_suffix(basename, suffixes)
+    print(f"Base name after processing: {basename}")  # Debug print
+    return basename
+
+def fastq_name(read1: str, read2: str) -> str:
+    """
+    Gets stripped read name for appending to output files.
+
+    Parameters
+    ----------
+    read1 : str
         Filename for the first read.
     read2 : str
         Filename for the second read.
 
     Returns
     -------
-    name :str
+    str
         Base name of the file with the suffixes stripped.
-    
+
     Raises
     ------
     ValueError
-        If the filenames do not match or the format is incorrect.
+        If the base names from read1 and read2 do not match.
     """
-    # Define regex pattern to match any of the supported endings
-    pattern = r'(_1|_R1_001|_R1)(\.fastq|\.fastq\.gz)?$'
+    name1 = extract_base_name(read1)
+    name2 = extract_base_name(read2)
+    
+    if name1 != name2:
+        raise ValueError(f"Read1 base name ({name1}) and Read2 base name ({name2}) do not match.")
+    
+    return name1
 
-    match = re.search(pattern, read1)
-    if match:
-        name = read1[:match.start()]  # Extract everything before the matched pattern
-        name2= read2[:match.start()]
-        if name != name2:
-            raise ValueError(f"Read1 ({name}) and Read2 ({name2}) are NOT the same file.")
-        return name
-    else:
-        error_message = (
-            "Please check your file endings. Expected formats are "
-            "'_1.fastq(.gz)', '_R1_001.fastq(.gz)', or '_R1.fastq(.gz)'."
-        )
-        logging.error(error_message)
-        raise ValueError(error_message)    
-
-def get_input_required(read1: str, read2: str, mash_db: str) -> None:
+def log_required_inputs(read1: str, read2: str, mash_db: str) -> None:
     """
     Logs the command line input parameters.
 
@@ -212,7 +246,7 @@ def get_input_required(read1: str, read2: str, mash_db: str) -> None:
     read1, read2, mash_db
 )
 
-def get_input_optional(max_dis: str, min_kmer: str, k_size: str, threads: str) -> None:
+def log_optional_inputs(max_dis: str, min_kmer: str, k_size: str, threads: str) -> None:
     """
     Logs the command line input parameters.
 
@@ -275,10 +309,13 @@ def check_files(read1: str, read2: str, mash_db: str) -> None:
     if read1 == read2:
         raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
 
-##TODO - check for corrupt gzip files or empty
-##TODO - check if the beginning of the file name is a match between the two files
+##TODO - check for corrupt gzip files or empty?
 
 def get_k_size(mash_db: str) -> str:
+
+    # Ensure that exception handling is as specific as possible.
+    # For example, in get_k_size, catching a general Exception may hide 
+    # other issues. Consider handling specific exceptions where possible.
     """
     Retrieves the k-size from the Mash database information.
 
@@ -450,7 +487,7 @@ def cat_files(read1: str, read2: str) -> None:
         logging.critical("IO Error: %s", e)
         sys.exit(1)
 
-def update_min_kmer(calculatedKmer, min_kmer=2):
+def update_min_kmer(calculatedKmer, min_kmer=2) -> int:
     """
     Determine the minimum kmer value. If less than 2, set to 2.
 
@@ -517,11 +554,9 @@ def run_cmd(command: List[str]) -> subprocess.CompletedProcess:
     return result
 
 ## IMPORTANT
-## Must switch to [0] and [1] instead of [3] [4] to get to run with nextflow
-## if len(stderr_lines) < 5: to if len(stderr_lines) < 1:
-## But does not work when just testing this script without context of nextflow 
+## When just testing this script not in the NF context, must do module load Mash/2.0
 
-def cal_kmer(mash_db, threads, min_kmer, run_cmd):
+def cal_kmer(mash_db, threads, min_kmer, run_cmd) -> Tuple[int, str, str]:
     """
     Calculate the minimum k-mer value and genome statistics from mash dist output.
 
@@ -575,7 +610,7 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd):
         logging.error("An error occurred: %s", e)
         raise
 
-def get_results(mFlag, threads, mash_db):
+def get_results(mFlag, threads, mash_db) -> subprocess.CompletedProcess:
     """
     Runs the mash distance command using value from cal_kmer and extracts genome size and coverage from the command output.
 
@@ -639,7 +674,7 @@ def get_size_cov(outputFastq2) -> Tuple[str, str]:
 
     return gSizeRun2, gCoverageRun2
 
-def is_tie(df):
+def is_tie(df) -> Tuple[str, str]:
     """
     Determine if the k-mers count value is a tie with the second top isolate;
     if so, indicate a tie was found in the results.
@@ -674,7 +709,7 @@ def is_tie(df):
 
     return best_genus, best_species
 
-def no_result(in_file, in_max_dis, best_g, best_s):
+def no_result(in_file, in_max_dis, best_g, best_s) -> Tuple[str, str]:
     """
     Determine if the top hit mash distances are >= user-specified mash distance.
 
@@ -706,7 +741,7 @@ def no_result(in_file, in_max_dis, best_g, best_s):
 
     return best_g, best_s
 
-def parse_results(cmd, in_max_dis):
+def parse_results(cmd, in_max_dis) -> Tuple[str, str, pd.DataFrame ]:
     """
     Run the initial command and parse the results from mash.
 
@@ -758,7 +793,7 @@ def parse_results(cmd, in_max_dis):
 
     return best_genus, best_species, df_top
 
-def make_table(date_time, name, read1, read2, max_dist, results, m_flag):
+def make_table(date_time, name, read1, read2, max_dist, results, m_flag) -> None:
     """
     Parse results into a text output file including relevant variables.
 
@@ -835,8 +870,10 @@ if __name__ == '__main__':
     make_output_log(log)
     k_size = get_k_size(mash_db)
 
-    get_input_required(read1, read2, mash_db)
-    get_input_optional(max_dis, min_kmer, k_size, threads)
+    log_required_inputs(read1, read2, mash_db)
+    log_optional_inputs(max_dis, min_kmer, k_size, threads)
+
+    extract_base_name(read1)
 
     logging.info("Checking if all the required input files exist...")
     check_files(read1, read2, mash_db)
