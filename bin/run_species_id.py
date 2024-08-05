@@ -181,14 +181,9 @@ def extract_base_name(filename: str) -> str:
     suffixes = ('_1', '_R1_001', '_R1', '_2', '_R2_001', '_R2')
 
     # Remove common read suffixes
-    def remove_suffix(basename, suffixes):
-        for suffix in suffixes:
-            if basename.endswith(suffix):
-                return basename[:-len(suffix)]
-        return basename
-
-    basename = remove_suffix(basename, suffixes)
-
+    for suffix in suffixes:
+        if basename.endswith(suffix):
+            return basename[:-len(suffix)]
     return basename
 
 def fastq_name(read1: str, read2: str) -> str:
@@ -218,7 +213,6 @@ def fastq_name(read1: str, read2: str) -> str:
     
     if name1 != name2:
         raise ValueError(f"Read1 base name ({name1}) and Read2 base name ({name2}) do not match.")
-    
     return name1
 
 def log_required_inputs(read1: str, read2: str, mash_db: str) -> None:
@@ -344,21 +338,13 @@ def get_k_size(mash_db: str) -> str:
         lines = result.stdout.splitlines()
         
         if len(lines) >= 3:
-            # Assuming the k-size is in the 3rd line and 3rd field
             fields = lines[2].split()
             if len(fields) >= 3:
-                k_size = fields[2]
-                return k_size
-            else:
-                logging.error("Unexpected format or missing k-size information.")
-                return None
-        else:
-            logging.error("Unexpected output format from mash info command.")
-            return None
-
+                return fields[2]
+            logging.error("Unexpected format or missing k-size information.")
+        logging.error("Unexpected output format from mash info command.")
     except subprocess.CalledProcessError as e:
         logging.error("Error occurred while running the command: %s", e)
-        return None
     except Exception as e:
         logging.error("An unexpected error occurred: %s", e)
         return None
@@ -384,17 +370,12 @@ def check_program(program_name: str) -> None:
     
     if path is None:
         logging.critical("Program %s not found! Cannot continue; dependency not fulfilled. Exiting." % program_name)
-        raise SystemExit(1)
+        sys.exit(1)
 
     # If the program is Python, check the version
-    if program_name == 'python':
-        python_version = '.'.join(map(str, sys.version_info[:3]))
-        if sys.version_info >= (3, 7):
-            logging.info("Great, the program %s is loaded." % program_name)
-            logging.info("The version of python is: %s." % python_version)
-        else:
-            logging.critical("You do not have an appropriate version of Python. Requires Python version >= 3.7. Exiting.")
-            raise SystemExit(1)
+    if program_name == 'python' and sys.version_info < (3, 7):
+        logging.critical("Requires Python version >= 3.7. Exiting.")
+        sys.exit(1)
 
     else:
         logging.info("Great, the program %s is loaded." % program_name)
@@ -429,21 +410,13 @@ def check_mash() -> None:
     
     expected_species = 'Legionella_fallonii_LLAP-10_GCA_000953135.1.fna'
     expected_dist = 0.0185
-    
+    rounded_distance = round(df_check_dist, 4)
+
     # Log and validate the results
-    if df_check_species == expected_species and float(round(df_check_dist, 4)) == expected_dist:
-        rounded_distance = round(df_check_dist, 4)
-        logging.info("Great, the test confirms Mash is running properly and returned expected results.")
-        logging.info("Expected species: %s", expected_species)
-        logging.info("Returned species: %s", df_check_species)
-        logging.info("Expected distance: %s", expected_dist)
-        logging.info("Returned distance: %s", rounded_distance)
+    if df_check_species == expected_species and rounded_distance == expected_dist:
+        logging.info("Great, the test confirms Mash is running properly.\nExpected species: %s\nReturned species:%s \nExpected distance: %s\nReturned distance: %s", df_check_species, expected_species, expected_dist, rounded_distance)
     else:
-        logging.info("Expected species: %s", expected_species)
-        logging.info("Returned species: %s", df_check_species)
-        logging.info("Expected distance: %s", expected_dist)
-        logging.info("Returned distance: %s", rounded_distance)
-        logging.critical("The unit test to confirm species and mash value did not return expected results. Exiting.")
+        logging.critical(f"The unit test to confirm species and mash value did not return expected results. Exiting.")
         sys.exit(1)
 
 def cat_files(read1: str, read2: str) -> None:
@@ -483,83 +456,62 @@ def cat_files(read1: str, read2: str) -> None:
     except FileNotFoundError as e:
         logging.critical("Error: %s", e)
         sys.exit(1)
-    except IOError as e:
-        logging.critical("IO Error: %s", e)
-        sys.exit(1)
 
-def update_min_kmer(calculatedKmer, min_kmer=2) -> int:
+def update_min_kmer(calculatedKmer: int, min_kmer: int = 2) -> int:
     """
     Determine the minimum kmer value. If less than 2, set to 2.
-
+    
     Parameters
     ----------
     calculatedKmer : int
-        Value that is calculated based on genomeCoverage/3
+        Value calculated based on genomeCoverage/3
     min_kmer : int, optional, default is 2
-        Input K-mer value specified by the user; used instead of calculatedKmer if greater than 2
-
+        Input K-mer value specified by the user; used if greater than 2
+    
     Returns
-    ----------
+    -------
     int
         Integer value used for min_kmer with paired-end reads
     """
-    min_kmer = int(min_kmer)  # Ensure min_kmer is an integer
-
-    # Check if user-specified K-mer is greater than 2
+    min_kmer = max(min_kmer, 2)
     if min_kmer > 2:
-        logging.info("User specified a value for minimum K-mer: %s ...", min_kmer)
-        return min_kmer
-
-    # Log information about default behavior
-    logging.info("Should K-mer value be different than default (2)...")
-    logging.info("Min. K-mer = genome coverage divided by 3...")
-
-    # Determine minimum K-mer value
-    if calculatedKmer < 2:
-        logging.info("The calculated K-mer is less than 2, so will use 2...")
-        return 2
-    return calculatedKmer
+        logging.info("User specified a value for minimum K-mer: %s", min_kmer)
+    else:
+        logging.info("Min. K-mer = genome coverage divided by 3. Calculated K-mer = %s", calculatedKmer)
+    return max(calculatedKmer, 2)
 
 def run_cmd(command: List[str]) -> subprocess.CompletedProcess:
     """
     Executes a shell command and logs its output. Exits the program on error.
-
+    
     Parameters
     ----------
     command : list of str
         The command to be executed, provided as a list of arguments.
-
+    
     Returns
     -------
     subprocess.CompletedProcess
         The result of the executed command, including stdout, stderr, and return code.
     """
-
     try:
-        # Execute the command
         result = subprocess.run(
-            command, 
+            command,
             capture_output=True,
             check=True,
             text=True
         )
-        # Log the command executed
-        new_cmd = ' '.join(command)
-        logging.info("This is the command...\n %s", new_cmd)
+        logging.info("Executed command: %s", ' '.join(command))
     except subprocess.CalledProcessError as e:
-        # Log critical error and exit if the command fails
-        logging.critical("CRITICAL ERROR. The following command had an error:\n %s", e)
+        logging.critical("CRITICAL ERROR. The following command had an error:\n%s", e)
         sys.exit(1)
     
     return result
 
-## IMPORTANT
-## When just testing this script not in the NF context, must do module load Mash/2.0
-
-def cal_kmer(mash_db, threads, min_kmer, run_cmd) -> Tuple[int, str, str]:
+def cal_kmer(mash_db: str, threads: int, min_kmer: int) -> Tuple[int, str, str]:
     """
     Calculate the minimum k-mer value and genome statistics from mash dist output.
-
+    
     Parameters
     ----------
     mash_db : str
@@ -568,9 +520,7 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd) -> Tuple[int, str, str]:
         The number of threads to use.
     min_kmer : int
         The minimum K-mer value.
-    run_cmd : callable
-        A function to run commands and return output.
-
+    
     Returns
     -------
     tuple
@@ -582,137 +532,125 @@ def cal_kmer(mash_db, threads, min_kmer, run_cmd) -> Tuple[int, str, str]:
         - gCoverage : str
             Estimated genome coverage.
     """
-    try:
-        # Run the command
-        fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
-        outputFastq1 = run_cmd(fastqCmd1)
+    fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
+    outputFastq1 = run_cmd(fastqCmd1)
+    
+    stderr_lines = outputFastq1.stderr.splitlines()
+    if len(stderr_lines) < 2:
+        raise ValueError("Unexpected output format from the command.")
+    
+    gSize, gCoverage = stderr_lines[0][23:], stderr_lines[1][23:]
+    logging.info("Estimated Genome Size: %s", gSize)
+    logging.info("Estimated Genome Coverage: %s", gCoverage)
+    
+    minKmers = int(float(gCoverage) / 3)
+    mFlag = update_min_kmer(minKmers, min_kmer)
+    
+    return mFlag, gSize, gCoverage
 
-        # Parse the output
-        stderr_lines = outputFastq1.stderr.splitlines()
-
-        # Ensure there are enough lines to avoid index errors
-        if len(stderr_lines) < 1:
-            raise ValueError("Unexpected output format from the command.")
-        
-        gSize = stderr_lines[0][23:]
-        gCoverage = stderr_lines[1][23:]
-
-        logging.info("Estimated Genome Size to determine -m flag: %s", gSize)
-        logging.info("Estimated Genome coverage to determine -m flag: %s", gCoverage)
-
-        # Calculate minimum k-mer value
-        minKmers = int(float(gCoverage) / 3)
-        mFlag = update_min_kmer(minKmers, min_kmer)
-
-        return mFlag, gSize, gCoverage
-
-    except Exception as e:
-        logging.error("An error occurred: %s", e)
-        raise
-
-def get_results(mFlag, threads, mash_db) -> subprocess.CompletedProcess:
+def get_results(mFlag: int, threads: int, mash_db: str) -> subprocess.CompletedProcess:
     """
     Runs the mash distance command using value from cal_kmer and extracts genome size and coverage from the command output.
-
-    Parameters:
-        mFlag (int): The -m flag value for the mash command.
-        threads (int): Number of threads to use with the mash command.
-        mash_db (str): Path to the mash database.
-
-    Returns:
-        subprocess.CompletedProcess: The result of the mash command.
+    
+    Parameters
+    ----------
+    mFlag : int
+        The -m flag value for the mash command.
+    threads : int
+        Number of threads to use with the mash command.
+    mash_db : str
+        Path to the mash database.
+    
+    Returns
+    -------
+    subprocess.CompletedProcess
+        The result of the mash command.
     """
-    # Build the mash command
     fastq_cmd = [
         'mash', 'dist', '-r', '-m', str(mFlag),
         str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456'
     ]
     
-    # Run the command and get the output
     output = run_cmd(fastq_cmd)
-    
-    # Extract and log genome size and coverage from the stderr
     stderr_lines = output.stderr.splitlines()
     
     if len(stderr_lines) >= 2:
-        genome_size = stderr_lines[0][23:]
-        genome_coverage = stderr_lines[1][23:]
-
-        logging.info("Estimated Genome size using the calculated with the -m flag: %s", genome_size)
-        logging.info("Estimated Genome coverage using the calculated with the -m flag: %s", genome_coverage)
+        logging.info("Estimated Genome size: %s", stderr_lines[0][23:])
+        logging.info("Estimated Genome coverage: %s", stderr_lines[1][23:])
     else:
         logging.warning("Unexpected output format from mash command.")
-
+    
     return output
 
-def get_size_cov(outputFastq2) -> Tuple[str, str]:        
-# Add from typing import Tuple as tuple[str,str] is with python v 3.9 or higher
-
+def parse_results(cmd: subprocess.CompletedProcess, in_max_dis: float) -> Tuple[str, str, pd.DataFrame]:
     """
-    Extract the genome size and coverage from the stderr output of the Fastq2 process.
-
+    Run the initial command and parse the results from mash.
+    
     Parameters
     ----------
-    outputFastq2 : subprocess.CompletedProcess
-        The process output containing stderr with the desired information.
-
+    cmd : subprocess.CompletedProcess
+        The completed process object from running the mash command.
+    in_max_dis : float
+        User-specified maximum mash distance for filtering results.
+    
     Returns
     -------
-    tuple[str, str]
-        A tuple containing the genome size and coverage as strings.
+    tuple
+        - best_genus: str
+            The most likely genus of the isolate tested.
+        - best_species: str
+            The most likely species of the isolate tested.
+        - df_top: pandas.DataFrame
+            The top five results from sorting Mash output.
     """
-    # Extract lines from stderr
-    lines = outputFastq2.stderr.splitlines()
+    df = pd.read_csv(StringIO(cmd.stdout), sep='\t', names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'])
+    df[['Genus', 'Species']] = df['Ref ID'].str.split('_', 1, expand=True)
+    df[['Species', 'GeneBank Identifier']] = df['Species'].str.split('_', 1, expand=True)
+    df['GeneBank Identifier'] = 'GCA' + df['GeneBank Identifier'].str.split('GCA', expand=True).iloc[:, -1]
+    df[['KmersCount', 'sketchSize']] = df['Kmer'].str.split("/", expand=True)
+    df['KmersCount'] = df['KmersCount'].astype(int)
+    df['% Seq Sim'] = (1 - df['Mash Dist']) * 100
+    
+    df_sorted = df.sort_values('KmersCount', ascending=False).drop(['Ref ID', 'Query ID', 'KmersCount', 'sketchSize'], axis=1)
+    
+    best_genus_sort, best_species_sort = is_tie(df)
+    best_genus, best_species = no_result(df_sorted, in_max_dis, best_genus_sort, best_species_sort)
+    
+    df_top = df_sorted[['Genus', 'Species', 'GeneBank Identifier', 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']].head(5)
+    df_top.reset_index(drop=True, inplace=True)
+    
+    return best_genus, best_species, df_top
 
-    # Check if there are at least two lines
-    if len(lines) < 2:
-        raise ValueError("Expected at least two lines in stderr output")
-
-    # Extract and strip the desired substrings
-    gSizeRun2 = lines[0][23:].strip()
-    gCoverageRun2 = lines[1][23:].strip()
-
-    return gSizeRun2, gCoverageRun2
-
-def is_tie(df) -> Tuple[str, str]:
+def is_tie(df: pd.DataFrame) -> Tuple[str, str]:
     """
-    Determine if the k-mers count value is a tie with the second top isolate;
-    if so, indicate a tie was found in the results.
-
+    Determine if the k-mers count value is a tie with the second top isolate.
+    
     Parameters
     ----------
     df : pandas.DataFrame
         DataFrame containing k-mers count, genus, and species information.
-
+    
     Returns
     -------
     tuple of str
         - A string indicating the best genus, either a specific genus or a tie message.
         - A string indicating the best species, either a specific species or a blank string if tied.
     """
-    # Sort DataFrame by 'KmersCount' in descending order
     df_sort = df.sort_values('KmersCount', ascending=False)
-    
     logging.info("Checking if k-mers count is tied for top 2 results...")
-
-    # Check if the top two entries have the same 'KmersCount'
+    
     if df_sort.iloc[0]['KmersCount'] == df_sort.iloc[1]['KmersCount']:
-        best_genus = "This was a tie, see the top 5 results below"
-        best_species = ""
         logging.info("The top two isolates have the same number of matching k-mers, indicating a tie.")
-    else:
-        # Extract the best genus and species
-        best = df_sort.head(1)
-        best_genus = best['Genus'].iloc[0]
-        best_species = best['Species'].iloc[0]
-        logging.info("There was no tie for k-mers count in the top two species.")
+        return "This was a tie, see the top 5 results below", ""
+    
+    best = df_sort.iloc[0]
+    logging.info("There was no tie for k-mers count in the top two species.")
+    return best['Genus'], best['Species']
 
-    return best_genus, best_species
-
-def no_result(in_file, in_max_dis, best_g, best_s) -> Tuple[str, str]:
+def no_result(in_file: pd.DataFrame, in_max_dis: float, best_g: str, best_s: str) -> Tuple[str, str]:
     """
     Determine if the top hit mash distances are >= user-specified mash distance.
-
+    
     Parameters
     ----------
     in_file : pandas.DataFrame
@@ -723,80 +661,27 @@ def no_result(in_file, in_max_dis, best_g, best_s) -> Tuple[str, str]:
         Current best species message.
     best_s : str
         Current best species placeholder.
-
+    
     Returns
-    ----------
+    -------
     tuple
         Updated best species message and placeholder.
     """
-    in_max_dis = float(in_max_dis)
     logging.info("Confirming that best match is less than user-specified distance...")
-
-    if in_file['Mash Dist'].values[0] < in_max_dis:
-        logging.info("Great, a best species match was found with mash distance less than %s...", in_max_dis)
+    
+    if in_file['Mash Dist'].iloc[0] < in_max_dis:
+        logging.info("A best species match was found with mash distance less than %s", in_max_dis)
     else:
         best_g = f"No matches found with mash distances < {in_max_dis}..."
         best_s = " "
-        logging.info("No matches found with mash distances < %s...", in_max_dis)
-
+        logging.info("No matches found with mash distances < %s", in_max_dis)
+    
     return best_g, best_s
 
-def parse_results(cmd, in_max_dis) -> Tuple[str, str, pd.DataFrame ]:
-    """
-    Run the initial command and parse the results from mash.
-
-    Parameters
-    ----------
-    cmd : subprocess.CompletedProcess
-        The completed process object from running the mash command.
-    in_max_dis : float
-        User-specified maximum mash distance for filtering results.
-
-    Returns
-    ----------
-    tuple
-        - best_genus: str
-            The most likely genus of the isolate tested.
-        - best_species: str
-            The most likely species of the isolate tested.
-        - df_top: pandas.DataFrame
-            The top five results from sorting Mash output.
-    """
-    # Read the mash output into a DataFrame
-    df = pd.read_csv(StringIO(cmd.stdout), sep='\t',
-                     names=['Ref ID', 'Query ID', 'Mash Dist', 'P-value', 'Kmer'],
-                     index_col=False)
-
-    # Extract Genus, Species, and GeneBank Identifier
-    df[['Genus', 'Species']] = df['Ref ID'].str.split('_', 1, expand=True)
-    df[['Species', 'GeneBank Identifier']] = df['Species'].str.split('_', 1, expand=True)
-    df['GeneBank Identifier'] = 'GCA' + df['GeneBank Identifier'].str.split('GCA', expand=True).iloc[:, -1]
-
-    # Split Kmers and convert to integer
-    df[['KmersCount', 'sketchSize']] = df['Kmer'].str.split("/", expand=True)
-    df['KmersCount'] = df['KmersCount'].astype(int)
-
-    # Calculate % sequence similarity
-    df['% Seq Sim'] = (1 - df['Mash Dist']) * 100
-
-    # Sort by KmersCount and handle ties
-    df_sorted = df.sort_values('KmersCount', ascending=False)
-    df_sorted_dropped = df_sorted.drop(['Ref ID', 'Query ID', 'KmersCount', 'sketchSize'], axis=1)
-
-    # Determine the best genus and species
-    best_genus_sort, best_species_sort = is_tie(df_sorted)
-    best_genus, best_species = no_result(df_sorted_dropped, in_max_dis, best_genus_sort, best_species_sort)
-
-    # Prepare the top five results
-    df_top = df_sorted_dropped[['Genus', 'Species', 'GeneBank Identifier', 'Mash Dist', '% Seq Sim', 'P-value', 'Kmer']].head(5)
-    df_top.reset_index(drop=True, inplace=True)  # Reset index to start at 0
-
-    return best_genus, best_species, df_top
-
-def make_table(date_time, name, read1, read2, max_dist, results, m_flag) -> None:
+def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: float, results: Tuple[str, str, pd.DataFrame], m_flag: Tuple[int, int]) -> None:
     """
     Parse results into a text output file including relevant variables.
-
+    
     Parameters
     ----------
     date_time : str
@@ -814,31 +699,26 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag) -> None
         - results[0] is the best genus.
         - results[1] is the best species.
         - results[2] is a pandas DataFrame of the top results.
-    m_flag : list
+    m_flag : tuple
         Contains the minimum k-mer copy number and k-mer size.
-
+    
     Returns
-    ----------
+    -------
     None
         Writes the results to a text file.
     """
-    # Define file name
     file_name = f"{name}_results_{date_time}.txt"
-
-    # Open file in append mode
+    
     with open(file_name, 'a+') as f:
-        # Write headers and variable values
         f.write(f"\nLegionella Species ID Tool using Mash\n")
         f.write(f"Date and Time = {date_time}\n")
         f.write(f"Input query file 1: {read1}\n")
         f.write(f"Input query file 2: {read2}\n")
         f.write(f"Maximum Mash distance (-d): {max_dist}\n")
         f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
-        f.write(f"K-mer size used for sketching: {k_size}\n")
+        f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
         f.write(f"Mash Database name: {mash_db}\n\n")
         f.write(f"Best species match: {results[0]} {results[1]}\n\n")
-        
-        # Write top results with table formatting
         f.write("Top 5 results:\n")
         f.write(u'\u2500' * 100 + "\n")
         f.write(tabulate(results[2], headers='keys', tablefmt='pqsl', numalign="center",
@@ -846,7 +726,6 @@ def make_table(date_time, name, read1, read2, max_dist, results, m_flag) -> None
                          showindex=False) + "\n")
 
 if __name__ == '__main__':
-
     # Argument parsing
     parser = argparser()
     args = parser.parse_args()
@@ -861,53 +740,38 @@ if __name__ == '__main__':
     now = datetime.now()
     date_time = now.strftime("%Y-%m-%d")
 
-    # Unique name for log file based on read name
     name = fastq_name(read1, read2)
     log = f"{name}_run.log"
 
     req_programs = ['mash', 'python']
 
     make_output_log(log)
-    k_size = get_k_size(mash_db)
-
     log_required_inputs(read1, read2, mash_db)
-    log_optional_inputs(max_dis, min_kmer, k_size, threads)
-    logging.info("This is the base name for the files: %s", name)
+    log_optional_inputs(max_dis, min_kmer, get_k_size(mash_db), threads)
+    logging.info("Base name for the files: %s", name)
 
-    logging.info("Checking if all the required input files exist...")
     check_files(read1, read2, mash_db)
     logging.info("Input files are present...")
-    
-    logging.info("Checking if all the prerequisite programs are installed...")
+
     for program in req_programs:
         check_program(program)
     logging.info("All prerequisite programs are accessible...")
 
-    logging.info("Performing internal system checks...")
     check_mash()
-    logging.info("Great, internal system checks passed...")
+    logging.info("Internal system checks passed...")
 
-    logging.info("Begin concatenation of the fastq files...")
     cat_files(read1, read2)
-    logging.info("Great, I was able to concatenate the files...")
+    logging.info("Files concatenated successfully...")
 
-    logging.info("Calculating estimated genome size and coverage...")
-    mFlag = cal_kmer(mash_db, threads, min_kmer, run_cmd)
-    logging.info("Minimum copies of each K-mer required to pass noise filter identified...")
+    mFlag = cal_kmer(mash_db, threads, min_kmer)
+    logging.info("Minimum copies of each K-mer identified...")
 
-    logging.info("Running Mash Dist command with -m flag...")
     outputFastq2 = get_results(mFlag[0], threads, mash_db)
-    logging.info("Completed running mash dist command...")
+    logging.info("Mash dist command completed...")
 
-    logging.info("Copying over estimated genome size and coverage to results...")
-    get_size_cov(outputFastq2)
-    logging.info("Successfully, added estimated genome size and coverage to output...")
-
-    logging.info("Beginning to parse the output results from mash dist...")
     results = parse_results(outputFastq2, max_dis)
-    logging.info("Okay, completed parsing of the results...")
+    logging.info("Results parsed successfully...")
 
-    logging.info("Generating table of results as a text file...")
     make_table(date_time, name, read1, read2, max_dis, results, mFlag)
-    logging.info("Completed analysis for the sample: %s..." % name)
+    logging.info("Analysis completed for sample: %s", name)
     logging.info("EXITING!")
