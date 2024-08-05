@@ -149,6 +149,7 @@ def make_output_log(log: str) -> None:
         # Handle cases where `os.uname` is not available 
         logging.warning("System information is not available on this platform")
 
+## TODO Cant add to log file because it has not created 
 def extract_base_name(filename: str) -> str:
     """
     Extract the base name from a filename, stripping common read suffixes.
@@ -163,7 +164,7 @@ def extract_base_name(filename: str) -> str:
     str
         The base name without any read suffixes or extensions.
     """
-    print(f"Extracting base name from: {filename}")  # Debug print
+    
     # Remove any leading directory path
     basename = os.path.basename(filename)
     
@@ -174,8 +175,6 @@ def extract_base_name(filename: str) -> str:
     # Remove the .fastq or .fq extension
     if basename.endswith('.fastq'):
         basename = basename[:-6]
-        print("Line 177")
-        print(basename)
     elif basename.endswith('.fq'):
         basename = basename[:-3]
 
@@ -189,7 +188,7 @@ def extract_base_name(filename: str) -> str:
         return basename
 
     basename = remove_suffix(basename, suffixes)
-    print(f"Base name after processing: {basename}")  # Debug print
+
     return basename
 
 def fastq_name(read1: str, read2: str) -> str:
@@ -213,6 +212,7 @@ def fastq_name(read1: str, read2: str) -> str:
     ValueError
         If the base names from read1 and read2 do not match.
     """
+
     name1 = extract_base_name(read1)
     name2 = extract_base_name(read2)
     
@@ -872,8 +872,7 @@ if __name__ == '__main__':
 
     log_required_inputs(read1, read2, mash_db)
     log_optional_inputs(max_dis, min_kmer, k_size, threads)
-
-    extract_base_name(read1)
+    logging.info("This is the base name for the files: %s", name)
 
     logging.info("Checking if all the required input files exist...")
     check_files(read1, read2, mash_db)
