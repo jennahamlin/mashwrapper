@@ -1,6 +1,9 @@
 #!/usr/bin/env python3.7
 
 ## Requires python 3.7 because that is what singularity container is 
+## IMPORTANT
+## When just testing this script not in the NF context, must do module load Mash/2.0
+## when doing qlogin on rosalind
 
 import argparse
 import os
@@ -261,7 +264,7 @@ def log_optional_inputs(max_dis: str, min_kmer: str, k_size: str, threads: str) 
     """
     
     logging.info(
-        "The default or user specified parameters:\n"
+        "The default or user-specified parameters:\n"
         " * Maximum Distance: %s\n"
         " * Minimum K-mer Count: %s\n"
         " * Size of K-mer: %s\n"
@@ -324,7 +327,6 @@ def get_k_size(mash_db: str) -> str:
         The k-size value extracted from the Mash info output.
         Returns None if an error occurs or the output format is unexpected
     """
-    # TODO some of these except calls seem not necessary
     try:
         # Run the mash info command and capture its output
         result = subprocess.run(
@@ -337,6 +339,7 @@ def get_k_size(mash_db: str) -> str:
         # Extract the k-size value from the command's output
         lines = result.stdout.splitlines()
         
+        # Assumes k-size is in the 3rd line and 3rd field
         if len(lines) >= 3:
             fields = lines[2].split()
             if len(fields) >= 3:
@@ -414,7 +417,16 @@ def check_mash() -> None:
 
     # Log and validate the results
     if df_check_species == expected_species and rounded_distance == expected_dist:
-        logging.info("Great, the test confirms Mash is running properly.\nExpected species: %s\nReturned species:%s \nExpected distance: %s\nReturned distance: %s", df_check_species, expected_species, expected_dist, rounded_distance)
+        logging.info(
+            "Great, the test confirms Mash is running properly.\n"
+            "* Expected species: %s\n"
+            "* Returned species: %s\n"
+            "* Expected distance: %s\n"
+            "* Returned distance: %s\n",
+            df_check_species,
+            expected_species,
+            expected_dist,
+            rounded_distance)
     else:
         logging.critical(f"The unit test to confirm species and mash value did not return expected results. Exiting.")
         sys.exit(1)
@@ -464,7 +476,7 @@ def update_min_kmer(calculatedKmer: int, min_kmer: int = 2) -> int:
     Parameters
     ----------
     calculatedKmer : int
-        Value calculated based on genomeCoverage/3
+        Value calculated based on genomeCoverage/3 in cal_kmer function
     min_kmer : int, optional, default is 2
         Input K-mer value specified by the user; used if greater than 2
     
@@ -473,9 +485,9 @@ def update_min_kmer(calculatedKmer: int, min_kmer: int = 2) -> int:
     int
         Integer value used for min_kmer with paired-end reads
     """
-    min_kmer = max(min_kmer, 2)
+    min_kmer = max(int(min_kmer), 2)
     if min_kmer > 2:
-        logging.info("User specified a value for minimum K-mer: %s", min_kmer)
+        logging.info("User-specified a value for minimum K-mer: %s", min_kmer)
     else:
         logging.info("Min. K-mer = genome coverage divided by 3. Calculated K-mer = %s", calculatedKmer)
     return max(calculatedKmer, 2)
@@ -540,8 +552,8 @@ def cal_kmer(mash_db: str, threads: int, min_kmer: int) -> Tuple[int, str, str]:
         raise ValueError("Unexpected output format from the command.")
     
     gSize, gCoverage = stderr_lines[0][23:], stderr_lines[1][23:]
-    logging.info("Estimated Genome Size: %s", gSize)
-    logging.info("Estimated Genome Coverage: %s", gCoverage)
+    logging.info("Estimated Genome Size to determine -m flag: %s", gSize)
+    logging.info("Estimated Genome Coverage to determine -m flag: %s", gCoverage)
     
     minKmers = int(float(gCoverage) / 3)
     mFlag = update_min_kmer(minKmers, min_kmer)
@@ -550,7 +562,8 @@ def cal_kmer(mash_db: str, threads: int, min_kmer: int) -> Tuple[int, str, str]:
 
 def get_results(mFlag: int, threads: int, mash_db: str) -> subprocess.CompletedProcess:
     """
-    Runs the mash distance command using value from cal_kmer and extracts genome size and coverage from the command output.
+    Runs the mash distance command using value from cal_kmer and extracts genome size 
+    and coverage from the command output.
     
     Parameters
     ----------
@@ -566,17 +579,17 @@ def get_results(mFlag: int, threads: int, mash_db: str) -> subprocess.CompletedP
     subprocess.CompletedProcess
         The result of the mash command.
     """
-    fastq_cmd = [
+    fastq_cmd2 = [
         'mash', 'dist', '-r', '-m', str(mFlag),
         str(mash_db), 'myCatFile', '-p', str(threads), '-S', '123456'
     ]
     
-    output = run_cmd(fastq_cmd)
+    output = run_cmd(fastq_cmd2)
     stderr_lines = output.stderr.splitlines()
     
     if len(stderr_lines) >= 2:
-        logging.info("Estimated Genome size: %s", stderr_lines[0][23:])
-        logging.info("Estimated Genome coverage: %s", stderr_lines[1][23:])
+        logging.info("Estimated Genome size calculated with the -m flag:: %s", stderr_lines[0][23:])
+        logging.info("Estimated Genome coverage calculated with the -m flag:: %s", stderr_lines[1][23:])
     else:
         logging.warning("Unexpected output format from mash command.")
     
@@ -654,7 +667,7 @@ def no_result(in_file: pd.DataFrame, in_max_dis: float, best_g: str, best_s: str
     Parameters
     ----------
     in_file : pandas.DataFrame
-        Parsed results from running mash.
+        DataFrame containing the mash results with a column 'Mash Dist' representing the mash distances.
     in_max_dis : float
         User-specified maximum mash distance as a cut-off.
     best_g : str
@@ -664,12 +677,14 @@ def no_result(in_file: pd.DataFrame, in_max_dis: float, best_g: str, best_s: str
     
     Returns
     -------
-    tuple
-        Updated best species message and placeholder.
+     Tuple[str, str]
+        A tuple containing:
+        - The updated best species message.
+        - The updated best species placeholder.
     """
     logging.info("Confirming that best match is less than user-specified distance...")
     
-    if in_file['Mash Dist'].iloc[0] < in_max_dis:
+    if in_file['Mash Dist'].values[0] < float(in_max_dis):
         logging.info("A best species match was found with mash distance less than %s", in_max_dis)
     else:
         best_g = f"No matches found with mash distances < {in_max_dis}..."
@@ -755,7 +770,7 @@ if __name__ == '__main__':
 
     for program in req_programs:
         check_program(program)
-    logging.info("All prerequisite programs are accessible...")
+    logging.info("All prerequisite programs are accessible...\n")
 
     check_mash()
     logging.info("Internal system checks passed...")
