@@ -21,8 +21,8 @@ process SPECIES_ID {
 
       script:
       """
-      kSize=\$(mash info  ${inDatabase} | awk 'FNR == 3 {print \$3}')
-      export kSize
+      k_size=\$(mash info  ${inDatabase} | awk 'FNR == 3 {print \$3}')
+      export k_size
       ls -lh
       ## converts .fastq.gz file to .fastq
       gunzip  "${reads[0]}"
