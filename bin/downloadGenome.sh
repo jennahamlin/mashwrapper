@@ -304,25 +304,25 @@ do
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
         
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp1
         
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp #downloaded-$valUp.tsv ## Remove duplicate header
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' temp  ##downloaded-$valUp.tsv
+        sed -i 's/\//-/g' temp2  ##downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
-        sed -i 's/ /_/g' temp  ##downloaded-$valUp.tsv
+        sed -i 's/ /_/g' temp2  ##downloaded-$valUp.tsv
 
         ## Now combine column 1 with underscore and column 2
-        awk '{ print $1 "_" $2 }' temp > temp 
-
+        awk '{ print $1 "_" $2 }' temp2 > temp3 
+       
         ## Remove headers
-        sed -i '1d' temp ##downloaded-$valUp.tsv
-        sed -i '1d' temp ##map2$valUp.txt
+        sed -i '1d' temp3 ##downloaded-$valUp.tsv
+        sed -i '1d' temp3 ##map2$valUp.txt
         #cp temp3  downloaded-$valUp.txt
 
         ## Make final map file
-        cut -f2 temp | paste -d " " temp - > temp
+        cut -f2 temp | paste -d " " temp3 - > temp4
 
         ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
         ## File names that are duplicated between isolates
@@ -333,7 +333,7 @@ do
         done
 
         ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1 }' temp > mapFinal$valUp.txt
+        awk '{ print $2 ".fna" " " $1 }' temp4 > mapFinal$valUp.txt
 
         ## Move to common folder
         mkdir common

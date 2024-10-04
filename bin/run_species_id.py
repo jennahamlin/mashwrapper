@@ -546,7 +546,11 @@ def cal_kmer(mash_db: str, threads: int, min_kmer: int) -> Tuple[int, str, str]:
     """
     fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
     outputFastq1 = run_cmd(fastqCmd1)
-    
+    ###
+    print("Line 550")
+    print(outputFastq1)
+    ###    
+
     stderr_lines = outputFastq1.stderr.splitlines()
     if len(stderr_lines) < 2:
         raise ValueError("Unexpected output format from the command.")
