@@ -304,25 +304,25 @@ do
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
         
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp
         
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp > temp #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
+        sed -i 's/\//-/g' temp  ##downloaded-$valUp.tsv
 
         ## Replaces spaces with dash
-        sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
+        sed -i 's/ /_/g' temp  ##downloaded-$valUp.tsv
 
         ## Now combine column 1 with underscore and column 2
-        awk '{ print $1 "_" $2 }' temp3 > temp4 #   downloaded-$valUp.tsv > map2$valUp.txt
+        awk '{ print $1 "_" $2 }' temp > temp 
 
         ## Remove headers
-        sed -i '1d' temp3 ##downloaded-$valUp.tsv
-        sed -i '1d' temp4 ##map2$valUp.txt
+        sed -i '1d' temp ##downloaded-$valUp.tsv
+        sed -i '1d' temp ##map2$valUp.txt
         #cp temp3  downloaded-$valUp.txt
 
         ## Make final map file
-        cut -f2 temp3 | paste -d " " temp4 - > temp5
+        cut -f2 temp | paste -d " " temp - > temp
 
         ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
         ## File names that are duplicated between isolates
@@ -333,7 +333,7 @@ do
         done
 
         ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
+        awk '{ print $2 ".fna" " " $1 }' temp > mapFinal$valUp.txt
 
         ## Move to common folder
         mkdir common
@@ -349,8 +349,8 @@ do
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
-       # rm -r common 
-       # rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+        rm -r common 
+        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder

@@ -12,7 +12,6 @@ WorkflowMashwrapper.initialise(params, log)
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input reads samplesheet not specified!' }
 ch_conda = params.enable_conda
-//ch_assembly = params.assembly_level
 
 if (params.get_database) {
 
@@ -32,7 +31,7 @@ if (params.get_database) {
       You must specify a flag either:  use a database (--use_database) or generate the database (--get_database),
       followed by either the name of the mash database (.msh) or list of organisms to download as a text file (.txt).
 
-          --use_database: User provides path to a pre-built mash database. Assumes sketch size of and XXX
+          --use_database: User provides path to a pre-built mash database. Assumes sketch size of 10000
 
           --get_database: User provided text file of organisms to download written with on organism per row.
                           Can either be written as genus species (legionalla pneumophila) or genus (legionella)

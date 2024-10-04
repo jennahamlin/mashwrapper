@@ -20,21 +20,24 @@ process DOWNLOAD_GENOMES {
       script:
       """
       ## Original downloadGenome.sh script allows user to specify using conda
-      ## environment, incorporate a boolean for conda to be used with -c flag
+      ## environment, incorporated a boolean for conda to be used with -c flag
 
-      ## export nf variable to tell downloadGenome script if nextflow is in use
+      ## Export nf variable to tell downloadGenome script if nextflow is in use
+      ## Honestly, don't remember how I figured this out but if not using nextflow
+      ## then nothing will be in the nf variable that is exported for checking, which
+      ## is used in the downloadGenome.sh script
+
       nf="This is script is running via NextFlow"
       export nf
 
-      #if [[ "$assembly" != false ]]; then
-      #    ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
-      #else
+      if [[ "$assembly" != false ]]; then
+          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
+      else
           ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
-      #fi
+      fi
 
       cat <<-END_VERSIONS > versions.yml
       "${task.process}":
-      ##  datasets: \$(datasets version | sed 's/Datasets //g')
           datasets: \$(datasets version | sed 's/Datasets //g' | cut -d" " -f3)
           dataformat: \$(dataformat version | sed 's/Dataformat //g')
       END_VERSIONS

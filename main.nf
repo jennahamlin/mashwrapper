@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/mashwrapper
+    mashwrapper
 ========================================================================================
-    Github : https://github.com/nf-core/mashwrapper
-    Website: https://nf-co.re/mashwrapper
-    Slack  : https://nfcore.slack.com/channels/mashwrapper
+    Github : https://github.com/jennahamlin/mashwrapper
 ----------------------------------------------------------------------------------------
 */
 
