@@ -276,9 +276,11 @@ do
  
           rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
         done < "$TO_BE_DEL"
-
+   
+        sort excluded_genomes.txt | uniq > excluded_genomes.uniq
+        cp excluded_genomes.uniq excluded_genomes.txt
         cp excluded_genomes.txt $basefolder
-        rm excluded_genomes.tmp
+        rm excluded_genomes.tmp excluded_genomes.uniq
         
         cd $valUp/ncbi_dataset/data
           
@@ -302,28 +304,28 @@ do
         echo "Making $valUp map file for file name conversion and converting file names..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
-        
+       
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
         grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp1
         
         awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' temp2  ##downloaded-$valUp.tsv
+        Replace with dash
+        sed -i 's/\//-/g' temp2 
 
-        ## Replaces spaces with dash
-        sed -i 's/ /_/g' temp2  ##downloaded-$valUp.tsv
-
+        ## Replaces spaces with under dash
+        sed -i 's/ /_/g' temp2 
+        
         ## Now combine column 1 with underscore and column 2
         awk '{ print $1 "_" $2 }' temp2 > temp3 
        
         ## Remove headers
-        sed -i '1d' temp3 ##downloaded-$valUp.tsv
-        sed -i '1d' temp3 ##map2$valUp.txt
-        #cp temp3  downloaded-$valUp.txt
-
+        sed -i '1d' temp1 
+        sed -i '1d' temp3
+        
         ## Make final map file
-        cut -f2 temp | paste -d " " temp3 - > temp4
-
+        cut -f2 temp1 | paste -d " " temp3 - > temp4
+        
         ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
         ## File names that are duplicated between isolates
         for d in */
@@ -339,13 +341,14 @@ do
         mkdir common
         
         cp */*.fna common
-        
+       
         cp mapFinal$valUp.txt common
 
         ## Rename files using mapfile
         cd common
+        echo "This is line 347"
         awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
-
+        
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
