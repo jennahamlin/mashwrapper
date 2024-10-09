@@ -277,10 +277,10 @@ do
           rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
         done < "$TO_BE_DEL"
    
-        sort excluded_genomes.txt | uniq > excluded_genomes.uniq
-        cp excluded_genomes.uniq excluded_genomes.txt
+        #sort excluded_genomes.txt | uniq > excluded_genomes.uniq
+        #cp excluded_genomes.uniq excluded_genomes.txt
         cp excluded_genomes.txt $basefolder
-        rm excluded_genomes.tmp excluded_genomes.uniq
+        rm excluded_genomes.tmp 
         
         cd $valUp/ncbi_dataset/data
           
@@ -310,7 +310,7 @@ do
         
         awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        Replace with dash
+        ##  Replace with dash
         sed -i 's/\//-/g' temp2 
 
         ## Replaces spaces with under dash
@@ -346,14 +346,14 @@ do
 
         ## Rename files using mapfile
         cd common
-        echo "This is line 347"
+        
         awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
         
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
         rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+        # rm temp temp2 temp3 temp4 mapFinal$valUp.txt
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
