@@ -117,7 +117,7 @@ workflow MASHWRAPPER {
       //
       // MODULE: Make individual mash files for all genomes downloaded
       //
-      MAKE_MASH( ch_fna, ch_kmer)
+      MAKE_MASH( ch_fna, ch_kmer )
 
       ch_msh = ch_msh.mix(MAKE_MASH.out.msh).collect()
       ch_versions = ch_versions.mix(MAKE_MASH.out.versions)
