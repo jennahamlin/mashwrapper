@@ -406,8 +406,8 @@ number of files that were copied to the allDownload directory.";
         else
           echo "Hmm, the number of isolates in the speciesCount file does not match \
 the number of files that were copied to the allDownload directory. You \
-#can either investigate the output/error files or just try running the script\
-#again as sometimes there are communication issues between HPC and NCBI.";
+can either investigate the output/error files or just try running the script\
+again as sometimes there are communication issues between HPC and NCBI.";
         exit 1
         fi
 

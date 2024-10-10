@@ -1,10 +1,6 @@
 #!/usr/bin/env python3.7
 
-## Requires python 3.7 because that is what singularity container is 
-## IMPORTANT
-## When just testing this script not in the NF context, must do module load Mash/2.0
-## when doing qlogin on rosalind
-
+## Requires python 3.7 due to singularity container
 import argparse
 import os
 import sys
@@ -152,7 +148,6 @@ def make_output_log(log: str) -> None:
         # Handle cases where `os.uname` is not available 
         logging.warning("System information is not available on this platform")
 
-## TODO Cant add to log file because it has not created 
 def extract_base_name(filename: str) -> str:
     """
     Extract the base name from a filename, stripping common read suffixes.
