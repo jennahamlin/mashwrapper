@@ -277,8 +277,6 @@ do
           rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
         done < "$TO_BE_DEL"
    
-        #sort excluded_genomes.txt | uniq > excluded_genomes.uniq
-        #cp excluded_genomes.uniq excluded_genomes.txt
         cp excluded_genomes.txt $basefolder
         rm excluded_genomes.tmp 
         
