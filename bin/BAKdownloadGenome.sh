@@ -1,4 +1,6 @@
-uthor J. Hamlin
+#!/bin/bash 
+
+## Author J. Hamlin
 ## Date 01/05/2022
 ## This script is to download all available *legionella* and
 ## *legionella*-associated genomes from NCBI using the NCBI datasets command
@@ -274,9 +276,9 @@ do
  
           rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
         done < "$TO_BE_DEL"
-
+   
         cp excluded_genomes.txt $basefolder
-        rm excluded_genomes.tmp
+        rm excluded_genomes.tmp 
         
         cd $valUp/ncbi_dataset/data
           
@@ -300,28 +302,28 @@ do
         echo "Making $valUp map file for file name conversion and converting file names..."
 
         dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
-        
+       
         ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
+        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp1
         
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
+        awk 'FNR==1 { header = $0; print }  $0 != header' temp1 > temp2 #downloaded-$valUp.tsv ## Remove duplicate header
         
-        sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
+        ##  Replace with dash
+        sed -i 's/\//-/g' temp2 
 
-        ## Replaces spaces with dash
-        sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
-
+        ## Replaces spaces with under dash
+        sed -i 's/ /_/g' temp2 
+        
         ## Now combine column 1 with underscore and column 2
-        awk '{ print $1 "_" $2 }' temp3 > temp4 
-
+        awk '{ print $1 "_" $2 }' temp2 > temp3 
+       
         ## Remove headers
-        sed -i '1d' temp3 ##downloaded-$valUp.tsv
-        sed -i '1d' temp4 ##map2$valUp.txt
-        #cp temp3  downloaded-$valUp.txt
-
+        sed -i '1d' temp1 
+        sed -i '1d' temp3
+        
         ## Make final map file
-        cut -f2 temp3 | paste -d " " temp4 - > temp5
-
+        cut -f2 temp1 | paste -d " " temp3 - > temp4
+        
         ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
         ## File names that are duplicated between isolates
         for d in */
@@ -331,24 +333,25 @@ do
         done
 
         ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
+        awk '{ print $2 ".fna" " " $1 }' temp4 > mapFinal$valUp.txt
 
         ## Move to common folder
         mkdir common
         
         cp */*.fna common
-        
+       
         cp mapFinal$valUp.txt common
 
         ## Rename files using mapfile
         cd common
+        
         awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
-
+        
         ## Move all converted *.fna files from species common to alldownload
         mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
         cd ..
         rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+        # rm temp temp2 temp3 temp4 mapFinal$valUp.txt
         
         ## Move back to base directory of genomesDownloaded_timestamp
         cd $subfolder
@@ -403,8 +406,8 @@ number of files that were copied to the allDownload directory.";
         else
           echo "Hmm, the number of isolates in the speciesCount file does not match \
 the number of files that were copied to the allDownload directory. You \
-#can either investigate the output/error files or just try running the script\
-#again as sometimes there are communication issues between HPC and NCBI.";
+can either investigate the output/error files or just try running the script\
+again as sometimes there are communication issues between HPC and NCBI.";
         exit 1
         fi
 
