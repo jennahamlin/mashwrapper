@@ -366,19 +366,14 @@ do
 		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt | \
 		awk 'FNR==1 { header = $0; print }  $0 != header' | \
 		grep -v 'Legionella sp\. ' | \
-		grep -v 'Legionella sp\.' >> downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
+		grep -v 'Legionella sp\. ' >> downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 
 		## Create a txt file of a count of all species downloaded
 		cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort | uniq -c > speciesCount.txt
 
 		## Get total number of isolates; store and compare to those in allDownload directory
 		countFile=$(awk '{ SUM+=$1}END{print SUM }' speciesCount.txt)
-
 		awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
-
-		## Remove temp file within base directory genomesDownloaded_timestamp
-		rm temp1 temp2 temp3 temp4 
-		
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
