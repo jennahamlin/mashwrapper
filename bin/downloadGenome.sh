@@ -157,22 +157,22 @@ error_handler_assembly()
 
 for val in "${species[@]}";
 do
-	echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
-  	valUp="${val:1:-1}"                                                           ## Remove quotes
-  	valUp=${val//[[:blank:]]/}                                                    ## Remove space
+	echo "This species will be downloaded to make the mash database:	$val"
+  	valUp="${val:1:-1}"				## Remove quotes
+  	valUp=${val//[[:blank:]]/}		## Remove space
 
 	echo "Beginning to dowload genomes from NCBI..."
 
 		if [[ -z "$assembly" ]] ; then
-			echo "Assembly level is not specified as the parameter is empty..."
+			echo "Assembly level is not specified..."
 
-		## Changed complete_genome to complete and no longer required to specify which files to exclude
+		## complete_genome -> complete & no longer required to specify files to exclude
 		## with datasets version change 12.2.0 -> 15.2.0
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
 		elif [[ -n "$assembly"  ]]; then
-			echo "Assembly level is specified and will only download $assembly..."
+			echo "Assembly level specified. Downloading only $assembly..."
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler_assembly
 		fi
@@ -226,6 +226,7 @@ do
 			## Get fasta header /^>/ 
 			## Assign header with plasmid to p
 			## Remove plasmid from genome by specifying not P (!p)
+
 			##TODO need to handle if a species list to generate the DB ends with no genomes because of exclusion
 			echo "Checking for plasmids. This can take a some time..."
 			for i in */*.fna
@@ -236,10 +237,6 @@ do
 
 			find . \( -name "chrunnamed*.unlocalized.scaf.fna" -o -name "cds_from_genomic.fna" -o -size 0 -type f \) -exec rm -rf {} +
 			find . -name "*.fna" -exec grep -l "plasmid" {} \; -exec rm {} +
-			#find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;				## These are plasmid files also
-			#find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-			#find . -name "cds_from_genomic.fna" -exec rm -rf {} \;							## Remove these files. Downloaded via conda
-			#find . -size 0 -type f -delete													## Remove files with zero bytes
 
 			## Make summary file of the downloaded data
 			## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking
@@ -286,7 +283,7 @@ do
 			dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force | \
 			grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt | \
 			awk 'FNR==1 { header = $0; print }  $0 != header' | \
-			grep -v 'Legionella sp\. ' | \
+			grep -v 'Legionella sp\.' | \
 			grep -v 'Legionella sp\. ' >> downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 	
 			## Create a txt file of a count of all species downloaded
