@@ -187,18 +187,18 @@ do
 
 			# Check for genomes with NCBI taxonomy issues and add GenBank/RefSeq IDs to the exclusion list
 			# If a genome GCA ID is added to the list, it will be deleted
-			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
+			#cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | 
+			awk '{if (!/OK/) print $1}' "$basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl" | grep -o "GCA_..........." >> excluded_genomes.tmp
 
 			## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
-			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  awk '{if(/uncultured/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
+			awk '{if(/uncultured/) print $1}' $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "GCA_..........." >> excluded_genomes.tmp
 
-			## I want to exclude genomes which have a lower level of completeness (< 93.00), 
-			## but all fields in the assembly file are not consistent between isolates. For example 
-			## some do not have a contamiation estimate, so I get the data which does and then parse 
-			## it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
-			## These genome GCA IDs get added to the excluded_genomes list
-			## Value of 93.00 was chosen based on most isolates were higher than this value. 
-			## TODO; Determine number of isolates with completeness estimate of 93.00 or higher
+			## Exclude genomes with completeness below 93.00., 
+			## Inconsistencies exist in the assembly file fields between isolates; for example,
+			## some lack contamination estimates. 
+			## This script retrieves data from genomes with completeness ≥ 93.00 
+			##(printing fields $1 and $3) and those without (printing fields $1 and $4).
+			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
 	
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
