@@ -86,7 +86,7 @@ then
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
 
 	  ## Inform user that the tools are accessible for when conda is false
-  echo "Great tools available to access NCBI and run Mash. Continuing.."
+  echo "Great tools available to access NCBI and run Mash. Continuing..."
 else
   echo 'Unable to activate a conda environment, find the tools in a bin folder,
 or confirm that the tool is using a container. Exiting.'
@@ -98,7 +98,6 @@ condaOrNot
 #################
 ##BEGIN PROCESS##
 #################
-echo " "
 echo "Beginning the process..."
 
 mkdir genomesDownloaded_$timestamp
@@ -154,44 +153,40 @@ error_handler_assembly()
 	echo "----------------------------------------"
 }
 
-
 for val in "${species[@]}";
 do
-	echo "This is one of the species that will be downloaded to make the mash database: ${species[@]}"
-  	valUp="${val:1:-1}"                                                           ## Remove quotes
-  	valUp=${val//[[:blank:]]/}                                                    ## Remove space
+	echo "This species will be downloaded to make the mash database:	$val"
+  	valUp="${val:1:-1}"				## Remove quotes
+  	valUp=${val//[[:blank:]]/}		## Remove space
 
 	echo "Beginning to dowload genomes from NCBI..."
 
 		if [[ -z "$assembly" ]] ; then
-			echo "Assembly level is not specified as the parameter is empty..."
+			echo "Assembly level is not specified..."
 
-		## Changed complete_genome to complete and no longer required to specify which files to exclude
+		## complete_genome -> complete & no longer required to specify files to exclude
 		## with datasets version change 12.2.0 -> 15.2.0
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
 		elif [[ -n "$assembly"  ]]; then
-			echo "Assembly level is specified and will only download $assembly..."
+			echo "Assembly level specified. Downloading only $assembly..."
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler_assembly
 		fi
 
 		## Confirm zip file avaiable
-		count=`ls -1 *.zip 2>/dev/null | wc -l`
-		if [ i$count != 0 ]; then
-		
-			echo "Checking to see if there are any zip files, which there should be after downloading data..."
-			echo "The number of zipped files is:"
-			echo $count
+		count=$(ls -1 *.zip 2>/dev/null | wc -l)
+		if [[ $count -ne 0 ]]; then
+			echo "Checking for zip files, should be present after downloading data..."
+			echo "Number of zip files: $count"
 			echo "Unzipping the associated files..."
 			unzip $valUp.zip -d $valUp
-			echo " "
 
 			datasets rehydrate --directory $valUp
 
-			## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list (excluded_genomes)
-			## Ultimately if genome GCA ID added to list, it will be deleted 
+			# Check for genomes with NCBI taxonomy issues and add GenBank/RefSeq IDs to the exclusion list
+			# If a genome GCA ID is added to the list, it will be deleted
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
 
 			## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
@@ -226,6 +221,7 @@ do
 			## Get fasta header /^>/ 
 			## Assign header with plasmid to p
 			## Remove plasmid from genome by specifying not P (!p)
+
 			##TODO need to handle if a species list to generate the DB ends with no genomes because of exclusion
 			echo "Checking for plasmids. This can take a some time..."
 			for i in */*.fna
@@ -236,10 +232,6 @@ do
 
 			find . \( -name "chrunnamed*.unlocalized.scaf.fna" -o -name "cds_from_genomic.fna" -o -size 0 -type f \) -exec rm -rf {} +
 			find . -name "*.fna" -exec grep -l "plasmid" {} \; -exec rm {} +
-			#find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;				## These are plasmid files also
-			#find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-			#find . -name "cds_from_genomic.fna" -exec rm -rf {} \;							## Remove these files. Downloaded via conda
-			#find . -size 0 -type f -delete													## Remove files with zero bytes
 
 			## Make summary file of the downloaded data
 			## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking
@@ -286,7 +278,7 @@ do
 			dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force | \
 			grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt | \
 			awk 'FNR==1 { header = $0; print }  $0 != header' | \
-			grep -v 'Legionella sp\. ' | \
+			grep -v 'Legionella sp\.' | \
 			grep -v 'Legionella sp\. ' >> downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 	
 			## Create a txt file of a count of all species downloaded
@@ -324,6 +316,8 @@ do
 			else
 			   echo "No .fna files generated"
 			fi
+		else
+			echo "No zip files found."
 			echo "Exiting the program."
 			echo "-----------------------------"
 	fi
