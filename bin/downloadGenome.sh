@@ -293,37 +293,30 @@ do
 		  mv ${i%\.*}_cleaned.fna $i
 		done
 
-		find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;        ## These are plasmid files also
+		find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;				## These are plasmid files also
 		find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-		find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                    ## Remove these files. Downloaded via conda
-		find . -size 0 -type f -delete                                            ## Remove files with zero bytes
+		find . -name "cds_from_genomic.fna" -exec rm -rf {} \;							## Remove these files. Downloaded via conda
+		find . -size 0 -type f -delete													## Remove files with zero bytes
 
 		## Make summary file of the downloaded data
+		## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking
 		echo "Making $valUp map file for file name conversion and converting file names..."
 
-		dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
-		
-		## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
-		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
-		
-		awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
-		
-		sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
-
-		## Replaces spaces with dash
-		sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
-
-		## Now combine column 1 with underscore and column 2
-		awk '{ print $1 "_" $2 }' temp3 > temp4 
+		dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force  | \
+		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt  | \
+		awk 'FNR==1 { header = $0; print }  $0 != header' | \
+		sed 's/\//-/g' | \
+		sed 's/ /_/g' | tee temp | \
+		awk '{ print $1 "_" $2 }' > temp2 				## Now combine column 1 with underscore and column 2
 
 		## Remove headers
-		sed -i '1d' temp3 ##downloaded-$valUp.tsv
-		sed -i '1d' temp4 ##map2$valUp.txt
-		#cp temp3  downloaded-$valUp.txt
+		sed -i '1d' temp ##downloaded-$valUp.tsv
+		sed -i '1d' temp2 ##map2$valUp.txt
 
 		## Make final map file
-		cut -f2 temp3 | paste -d " " temp4 - > temp5
-
+		cut -f2 temp | paste -d " " temp2 - | \
+		awk '{ print $2 ".fna" " " $1 }' > mapFinal$valUp.txt 				## Makes file of two columns old file name and new file name
+        
 		## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
 		## File names that are duplicated between isolates
 		for d in */
@@ -331,26 +324,15 @@ do
 		  FILEPATH=$d*.fna 
 		  mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
 		done
-
-		## Makes file of two columns old file name and new file name
-		awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
-
-		## Move to common folder
-		mkdir common
+        
+		cp */*.fna $basefolder/genomesDownloaded_$timestamp/allDownload
 		
-		cp */*.fna common
+		#cp mapFinal$valUp.txt $basefolder/genomesDownloaded_$timestamp/allDownload
 		
-		cp mapFinal$valUp.txt common
-
 		## Rename files using mapfile
-		cd common
-		awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
-
-		## Move all converted *.fna files from species common to alldownload
-		mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-		cd ..
-		rm -r common 
-		rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+		cd $basefolder/genomesDownloaded_$timestamp/allDownload 
+		awk -F " " 'system("mv " $1 " " $2 ".fna")'  $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/mapFinal$valUp.txt
+		rm mapFinal$valUp.txt
 		
 		## Move back to base directory of genomesDownloaded_timestamp
 		cd $subfolder
@@ -359,8 +341,8 @@ do
 ####################
 ##CREATE SUMMARIES##
 ####################
-## This uses NCBI command line tool dataformat on the zipped files
-## Output is a tsv file with species and genebank accession downloaded
+## INPUT TSV file form NCBI command line tool dataformat 
+## OUTPUT TSV file with species and genebank accession downloaded
 		
 		dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force | \
 		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt | \
@@ -375,9 +357,7 @@ do
 		countFile=$(awk '{ SUM+=$1}END{print SUM }' speciesCount.txt)
 		awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
-#################################
-##SECOND FILE CLEANUP AND CHECK##
-#################################
+## TODO clean up
 		cd allDownload
 
 		## Exclude legionella that is not identified to species and endosymbionts
@@ -392,13 +372,9 @@ do
 		countFolder=$(ls | wc -l)
 
 		if [[ $countFile  -eq  $countFolder ]]; then
-		  echo "Good, the number of isolates in the speciesCount file matches the \
-number of files that were copied to the allDownload directory.";
+		  echo "Good, the number of isolates in the speciesCount file matches the number of files in allDownload directory.";
 		else
-		  echo "Hmm, the number of isolates in the speciesCount file does not match \
-the number of files that were copied to the allDownload directory. You \
-#can either investigate the output/error files or just try running the script\
-#again as sometimes there are communication issues between HPC and NCBI.";
+		  echo "Mismatch between speciesCount file and downloaded files. Investigate or retry the script.";
 		exit 1
 		fi
 
@@ -406,7 +382,7 @@ the number of files that were copied to the allDownload directory. You \
 		count=`ls -1 *.fna 2>/dev/null | wc -l`
 		if [ $count != 0 ]; then
 		  mv *.fna $basefolder ## should be mv     
-		  rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+		  #rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 		else
 		   echo "There were no .fna files generated"
 		fi
