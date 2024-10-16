@@ -42,7 +42,8 @@ if [[ -z $conda || -z $species ]]; then
 	exit 1
 fi
 
-##TODO - this needs ALOT of work
+##TODO - condaOrNot needs ALOT of work
+
 ## Determine what to do based on input from -c (conda) flag
 ## First check if conda is specifed as True
 condaOrNot(){
@@ -135,14 +136,11 @@ fileCheck
 ####################
 ##DOWNLOAD GENOMES##
 ####################
-## Loop through species array and download genomes.
-## Can change source to genbank (GCA) or refseq (GCF.)
-## I use genebank option as this has a larger number of genomes.
-## But with some internal checks to not included questionable genomes
-## like those with an inconclusive taxonomy status. 
-
-# echo "If assembly-level was specified, then this was the level of restriction \
-# for genomes to download: $assembly"
+## Loop through species array to download genomes.
+## The source can be changed to GenBank (GCA) or RefSeq (GCF).
+## I prefer using the GenBank option due to its larger genome selection.
+## Internal checks will exclude questionable genomes, 
+## such as those with inconclusive taxonomy status.
 
 error_handler_assembly()
 {
@@ -199,6 +197,8 @@ do
 			## This script retrieves data from genomes with completeness ≥ 93.00 
 			##(printing fields $1 and $3) and those without (printing fields $1 and $4).
 			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
+			
+			## TODO -pick back up here
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
 	
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
@@ -209,7 +209,7 @@ do
 			TO_BE_DEL="excluded_genomes.txt"
 			while read -r file ; do
  
-				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
+				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null  2>&1  ## does this do what I really want
 			done < "$TO_BE_DEL"
 
 			cp excluded_genomes.txt $basefolder
@@ -222,7 +222,7 @@ do
 			## Assign header with plasmid to p
 			## Remove plasmid from genome by specifying not P (!p)
 
-			##TODO need to handle if a species list to generate the DB ends with no genomes because of exclusion
+			##TODO handle explicit species list with no genomes because of exclusion L. donaldsonii
 			echo "Checking for plasmids. This can take a some time..."
 			for i in */*.fna
 			do
@@ -312,7 +312,7 @@ do
 			count=$(ls -1 *.fna 2>/dev/null | wc -l)
 			if [[ $count -gt 0 ]]; then
 				mv *.fna "$basefolder" || echo "Failed to move .fna files."    
-				#rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+				rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 			else
 			   echo "No .fna files generated"
 			fi
