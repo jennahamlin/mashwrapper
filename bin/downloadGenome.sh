@@ -317,8 +317,7 @@ do
 		cut -f2 temp | paste -d " " temp2 - | \
 		awk '{ print $2 ".fna" " " $1 }' > mapFinal$valUp.txt 				## Makes file of two columns old file name and new file name
         
-		## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
-		## File names that are duplicated between isolates
+		## Rename *.fna to folderName.fna to handle unplaced scaffolds and duplicate file names between isolates
 		for d in */
 		do
 		  FILEPATH=$d*.fna 
@@ -327,12 +326,9 @@ do
         
 		cp */*.fna $basefolder/genomesDownloaded_$timestamp/allDownload
 		
-		#cp mapFinal$valUp.txt $basefolder/genomesDownloaded_$timestamp/allDownload
-		
 		## Rename files using mapfile
 		cd $basefolder/genomesDownloaded_$timestamp/allDownload 
 		awk -F " " 'system("mv " $1 " " $2 ".fna")'  $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/mapFinal$valUp.txt
-		rm mapFinal$valUp.txt
 		
 		## Move back to base directory of genomesDownloaded_timestamp
 		cd $subfolder
@@ -358,33 +354,33 @@ do
 		awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
 ## TODO clean up
-		cd allDownload
+		cd allDownload || { echo "Failed to change directory to allDownload"; exit 1; }
 
 		## Exclude legionella that is not identified to species and endosymbionts
 		if [[ "${species^}" == "Legionella" ]]; then
-		  echo "Removing Legionella files where the isolate is not identified to a recognized species..."
+		  echo "Removing Legionella only identified to genus (e.g., Legionella sp.)..."
 		  rm Legionella_sp._*.fna
 		else
-		  echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
+		  echo "No extra files to remove for non-Legionella species."
 		fi
 
 		## Count number of files in folder with those in speicesCount file for comparison
 		countFolder=$(ls | wc -l)
 
 		if [[ $countFile  -eq  $countFolder ]]; then
-		  echo "Good, the number of isolates in the speciesCount file matches the number of files in allDownload directory.";
+			echo "The number of isolates in the speciesCount file matches the number of files in allDownload directory.";
 		else
-		  echo "Mismatch between speciesCount file and downloaded files. Investigate or retry the script.";
-		exit 1
+			echo "Mismatch between speciesCount file and downloaded files. Investigate or retry the script.";
+			exit 1
 		fi
 
 		## Move files up to basefolder to all easier copying via nextflow process
-		count=`ls -1 *.fna 2>/dev/null | wc -l`
-		if [ $count != 0 ]; then
-		  mv *.fna $basefolder ## should be mv     
-		  #rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+		count=$(ls -1 *.fna 2>/dev/null | wc -l)
+		if [[ $count -gt 0 ]]; then
+			mv *.fna "$basefolder" || echo "Failed to move .fna files."    
+			#rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 		else
-		   echo "There were no .fna files generated"
+		   echo "No .fna files generated"
 		fi
 		echo "Exiting the program."
 		echo "-----------------------------"
