@@ -46,22 +46,22 @@ Example: -s \"legionella\" -s \"tatlockia micdadei\" "
 ## Get the options
 while getopts ":c:s:ah" option; do
    case $option in
-      h) ## Display Help by calling help function
-         Help
-         exit;;
-      a) ## Assembly-level
-         assembly=$OPTARG;;
-      c) ## Activate the conda env? (T/F)
-         conda=$OPTARG;;
-      s) ## Specifiy the organism to download. Can be multiple, seperated by a
-         ## space. Using genus species, place in quotes ("tatlockia micdadei")
-         species+=("$OPTARG");;
-      :) ## This uses the colon before the c
-         echo "You supplied a flag without an argument. Exiting." >&2
-         exit 1 ;;
-      \?) ## Handle invalid options
-         echo 'Invalid Option. Please use the -h flag to display the help menu. Exiting.' >&2 
-         exit 1 ;;
+	  h) ## Display Help by calling help function
+		 Help
+		 exit;;
+	  a) ## Assembly-level
+		 assembly=$OPTARG;;
+	  c) ## Activate the conda env? (T/F)
+		 conda=$OPTARG;;
+	  s) ## Specifiy the organism to download. Can be multiple, seperated by a
+		 ## space. Using genus species, place in quotes ("tatlockia micdadei")
+		 species+=("$OPTARG");;
+	  :) ## This uses the colon before the c
+		 echo "You supplied a flag without an argument. Exiting." >&2
+		 exit 1 ;;
+	  \?) ## Handle invalid options
+		 echo 'Invalid Option. Please use the -h flag to display the help menu. Exiting.' >&2 
+		 exit 1 ;;
    esac
 done
 
@@ -73,19 +73,19 @@ done
 parse() {
 if [[ $conda == "" && $species == "" ]]
 then
-    echo 'Please supply both -c and -s flags along with their required request.
+	echo 'Please supply both -c and -s flags along with their required request.
 Please look at the help menu via -h, if you need additional information. Exiting.'
-    exit 1
+	exit 1
 elif [[ $conda == "" ]]
 then
-    echo 'You did not provide the -c flag (T/F).
+	echo 'You did not provide the -c flag (T/F).
 Please look at the help menu, if you need additional information. Exiting.'
-    exit 1
+	exit 1
 elif [[ $species == "" ]]
 then
-    echo 'You did not provide the -s flag. Exiting.
+	echo 'You did not provide the -s flag. Exiting.
 Please look at the help menu, if you need additional information. '
-    exit 1
+	exit 1
 fi
 }
 
@@ -100,32 +100,32 @@ then
   ## Determine if conda == T request is from nextflow or not, by that I mean
   ## is the conda environment loaded  locally or requested to be used via
   ## nextflow. $nf exported from the downloadGeome.nf module, if from nextflow.
-    if [[ -z "$nf" ]]
-    then
-        echo $nf
-        echo 'The variable check to determine if next flow is running is empty.
+	if [[ -z "$nf" ]]
+	then
+		echo $nf
+		echo 'The variable check to determine if next flow is running is empty.
 Activating your local conda environment. Assumes conda environment is called ncbi_datasets. Continuing...'
-        ## I used to be able to do just the eval statement, now it does not work
-        ## and i don't like that this sources from somewhere that a user might not have (miniconda)...
-        #eval "$(conda shell.bash hook)" ## initialize the shell to use conda
-        source ~/miniconda3/etc/profile.d/conda.sh 
-        conda activate ncbi_datasets
-        condaAct=`echo $CONDA_DEFAULT_ENV`
+		## I used to be able to do just the eval statement, now it does not work
+		## and i don't like that this sources from somewhere that a user might not have (miniconda)...
+		#eval "$(conda shell.bash hook)" ## initialize the shell to use conda
+		source ~/miniconda3/etc/profile.d/conda.sh 
+		conda activate ncbi_datasets
+		condaAct=`echo $CONDA_DEFAULT_ENV`
  i       echo "This is your local conda enviroment that is activated:" $condaAct
 
-        ## If conda == T is not from nextflow; then confirm name of environment
-          if [[ $condaAct == 'ncbi_datasets' ]]
-          then
-            echo 'These are the tools in your local conda enviroment...'
-            conda list -n ncbi_datasets
-          else
-            echo "This tool assumes the ncbi datasets cli conda environment is
+		## If conda == T is not from nextflow; then confirm name of environment
+		  if [[ $condaAct == 'ncbi_datasets' ]]
+		  then
+			echo 'These are the tools in your local conda enviroment...'
+			conda list -n ncbi_datasets
+		  else
+			echo "This tool assumes the ncbi datasets cli conda environment is
 called ncbi_datasets. Exiting."
-            exit 1
-          fi
-        else
-          echo $nf "and the user has requested conda. Continuing..."
-    fi
+			exit 1
+		  fi
+		else
+		  echo $nf "and the user has requested conda. Continuing..."
+	fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
   echo "Confirming both NCBI datasets/dataformat tools are available..."
@@ -136,7 +136,7 @@ then
   command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
   command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
 
-      ## Inform user that the tools are accessible for when conda is false
+	  ## Inform user that the tools are accessible for when conda is false
   echo "Great tools available to access NCBI and run Mash. Continuing.."
 else
   echo 'Unable to activate a conda environment, find the tools in a bin folder,
@@ -164,31 +164,31 @@ echo "Checking your directory..."
 fileCheck(){
 FILE=downloadedData.tsv
 if [[ -f "$FILE" ]]; then
-    echo "$FILE exists, this script will overwrite to previous $FILE \
+	echo "$FILE exists, this script will overwrite to previous $FILE \
 and you will lose that summary file. Exiting."
-    exit 1
+	exit 1
 else
-    echo "Good, a $FILE summary file does not already exist. Continuing..."
+	echo "Good, a $FILE summary file does not already exist. Continuing..."
 fi
 
 FILE2=speciesCount.txt
 if [[ -f "$FILE2" ]]; then
-    echo "$FILE2 exists, this script will overwrite to previous $FILE2 \
+	echo "$FILE2 exists, this script will overwrite to previous $FILE2 \
 and you will lose that summary file. Exiting"
-    exit 1
+	exit 1
 else
-    echo "Good, the $FILE2 summary file doesn't already exist. Continuing..."
+	echo "Good, the $FILE2 summary file doesn't already exist. Continuing..."
 fi
 
 DIR=allDownload
 if [[ -d "$DIR" ]]; then
-    echo "$DIR directory exists! Please rename or remove the $DIR directory. \
+	echo "$DIR directory exists! Please rename or remove the $DIR directory. \
 Exiting."
-    exit 1
+	exit 1
 else
-    echo "$DIR directory does not exist, making it now and downloading will \
+	echo "$DIR directory does not exist, making it now and downloading will \
 begin..."
-    mkdir allDownload
+	mkdir allDownload
 fi
 }
 fileCheck
@@ -222,203 +222,200 @@ do
 
   echo "Beginning to dowload genomes from NCBI..."
 
-      if [[ -z "$assembly" ]] ; then
-        echo "Assembly level is not specified as the parameter is empty..."
+	  if [[ -z "$assembly" ]] ; then
+		echo "Assembly level is not specified as the parameter is empty..."
 
-        ## Changed complete_genome to complete and no longer required to specify which files to exclude
-        ## with datasets version change 12.2.0 -> 15.2.0
-        datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
+		## Changed complete_genome to complete and no longer required to specify which files to exclude
+		## with datasets version change 12.2.0 -> 15.2.0
+		datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
-      elif [[ -n "$assembly"  ]]; then
-        echo "Assembly level is specified and will only download $assembly..."
-        datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
+	  elif [[ -n "$assembly"  ]]; then
+		echo "Assembly level is specified and will only download $assembly..."
+		datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler
-      fi
-       
+	  fi
+	   
 
-      ## Confirm zip file avaiable
-      count=`ls -1 *.zip 2>/dev/null | wc -l`
-      if [ i$count != 0 ]; then
-        
-        echo "Checking to see if there are any zip files, which there should be after downloading data..."
-        echo "The number of zipped files is:"
-        echo $count
-        echo "Unzipping the associated files..."
-        unzip $valUp.zip -d $valUp
-        echo " "
+	  ## Confirm zip file avaiable
+	  count=`ls -1 *.zip 2>/dev/null | wc -l`
+	  if [ i$count != 0 ]; then
+		
+		echo "Checking to see if there are any zip files, which there should be after downloading data..."
+		echo "The number of zipped files is:"
+		echo $count
+		echo "Unzipping the associated files..."
+		unzip $valUp.zip -d $valUp
+		echo " "
 
-        datasets rehydrate --directory $valUp
+		datasets rehydrate --directory $valUp
 
-        ## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list (excluded_genomes)
-        ## Ultimately if genome GCA ID added to list, it will be deleted 
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
-        
-        ## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  awk '{if(/uncultured/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
-        
-        ## I want to exclude genomes which have a lower level of completeness (< 93.00), 
-        ## but all fields in the assembly file are not consistent between isolates. For example 
-        ## some do not have a contamiation estimate, so I get the data which does and then parse 
-        ## it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
-        ## These genome GCA IDs get added to the excluded_genomes list
-        ## Value of 93.00 was chosen based on most isolates were higher than this value. 
-        ## TODO; Determine number of isolates with completeness estimate of 93.00 or higher
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
+		## Checking for genomes where NCBI taxonomy is NOT OK, adding the genebank/refseq id to a list (excluded_genomes)
+		## Ultimately if genome GCA ID added to list, it will be deleted 
+		cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | awk '{if (!/OK/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
+		
+		## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
+		cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  awk '{if(/uncultured/) print $1}' | grep -o "GCA_..........." >> excluded_genomes.tmp
+		
+		## I want to exclude genomes which have a lower level of completeness (< 93.00), 
+		## but all fields in the assembly file are not consistent between isolates. For example 
+		## some do not have a contamiation estimate, so I get the data which does and then parse 
+		## it here (print $1 $3) and below I get the data that does not and parse it (print $1 $4)
+		## These genome GCA IDs get added to the excluded_genomes list
+		## Value of 93.00 was chosen based on most isolates were higher than this value. 
+		## TODO; Determine number of isolates with completeness estimate of 93.00 or higher
+		cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
  
-        cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
+		cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
 
-        cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
+		cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
  
-        ## Now remove folders for genomes listed in exclusion file
-        TO_BE_DEL="excluded_genomes.txt"
-        while read -r file ; do
+		## Now remove folders for genomes listed in exclusion file
+		TO_BE_DEL="excluded_genomes.txt"
+		while read -r file ; do
  
-          rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
-        done < "$TO_BE_DEL"
+		  rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null 
+		done < "$TO_BE_DEL"
 
-        cp excluded_genomes.txt $basefolder
-        rm excluded_genomes.tmp
-        
-        cd $valUp/ncbi_dataset/data
-          
-        ## Check for plasmids and remove
-        ## Get fasta header /^>/ 
-        ## Assign header with plasmid to p
-        ## Remove plasmid from genome by specifying not P (!p)
-        echo "Checking for plasmids. This can take a some time..."
-        for i in */*.fna
-        do
-          awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
-          mv ${i%\.*}_cleaned.fna $i
-        done
+		cp excluded_genomes.txt $basefolder
+		rm excluded_genomes.tmp
+		
+		cd $valUp/ncbi_dataset/data
+		  
+		## Check for plasmids and remove
+		## Get fasta header /^>/ 
+		## Assign header with plasmid to p
+		## Remove plasmid from genome by specifying not P (!p)
+		echo "Checking for plasmids. This can take a some time..."
+		for i in */*.fna
+		do
+		  awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
+		  mv ${i%\.*}_cleaned.fna $i
+		done
 
-        find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;        ## These are plasmid files also
-        find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
-        find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                    ## Remove these files. Downloaded via conda
-        find . -size 0 -type f -delete                                            ## Remove files with zero bytes
+		find . -name "chrunnamed*.unlocalized.scaf.fna" -exec rm -rf {} \;        ## These are plasmid files also
+		find . -name "*.fna" -exec grep "plasmid" {} \; -exec rm {} \;
+		find . -name "cds_from_genomic.fna" -exec rm -rf {} \;                    ## Remove these files. Downloaded via conda
+		find . -size 0 -type f -delete                                            ## Remove files with zero bytes
 
-        ## Make summary file of the downloaded data
-        echo "Making $valUp map file for file name conversion and converting file names..."
+		## Make summary file of the downloaded data
+		echo "Making $valUp map file for file name conversion and converting file names..."
 
-        dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
-        
-        ## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
-        
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
-        
-        sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
+		dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp
+		
+		## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking because deleted
+		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp > temp2
+		
+		awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3 #downloaded-$valUp.tsv ## Remove duplicate header
+		
+		sed -i 's/\//-/g' temp3  ##downloaded-$valUp.tsv
 
-        ## Replaces spaces with dash
-        sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
+		## Replaces spaces with dash
+		sed -i 's/ /_/g' temp3  ##downloaded-$valUp.tsv
 
-        ## Now combine column 1 with underscore and column 2
-        awk '{ print $1 "_" $2 }' temp3 > temp4 
+		## Now combine column 1 with underscore and column 2
+		awk '{ print $1 "_" $2 }' temp3 > temp4 
 
-        ## Remove headers
-        sed -i '1d' temp3 ##downloaded-$valUp.tsv
-        sed -i '1d' temp4 ##map2$valUp.txt
-        #cp temp3  downloaded-$valUp.txt
+		## Remove headers
+		sed -i '1d' temp3 ##downloaded-$valUp.tsv
+		sed -i '1d' temp4 ##map2$valUp.txt
+		#cp temp3  downloaded-$valUp.txt
 
-        ## Make final map file
-        cut -f2 temp3 | paste -d " " temp4 - > temp5
+		## Make final map file
+		cut -f2 temp3 | paste -d " " temp4 - > temp5
 
-        ## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
-        ## File names that are duplicated between isolates
-        for d in */
-        do
-          FILEPATH=$d*.fna 
-          mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
-        done
+		## Change *.fna to only folderName.fna. This deals with unplaced scaffolds and
+		## File names that are duplicated between isolates
+		for d in */
+		do
+		  FILEPATH=$d*.fna 
+		  mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
+		done
 
-        ## Makes file of two columns old file name and new file name
-        awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
+		## Makes file of two columns old file name and new file name
+		awk '{ print $2 ".fna" " " $1 }' temp5 > mapFinal$valUp.txt
 
-        ## Move to common folder
-        mkdir common
-        
-        cp */*.fna common
-        
-        cp mapFinal$valUp.txt common
+		## Move to common folder
+		mkdir common
+		
+		cp */*.fna common
+		
+		cp mapFinal$valUp.txt common
 
-        ## Rename files using mapfile
-        cd common
-        awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
+		## Rename files using mapfile
+		cd common
+		awk -F " " 'system("mv " $1 " " $2 ".fna")'  mapFinal$valUp.txt
 
-        ## Move all converted *.fna files from species common to alldownload
-        mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-        cd ..
-        rm -r common 
-        rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
-        
-        ## Move back to base directory of genomesDownloaded_timestamp
-        cd $subfolder
-        echo "Summarizing the entire download..."
+		## Move all converted *.fna files from species common to alldownload
+		mv *.fna $basefolder/genomesDownloaded_$timestamp/allDownload
+		cd ..
+		rm -r common 
+		rm temp temp2 temp3 temp4 temp5 mapFinal$valUp.txt
+		
+		## Move back to base directory of genomesDownloaded_timestamp
+		cd $subfolder
+		echo "Summarizing the entire download..."
 
 ####################
 ##CREATE SUMMARIES##
 ####################
 ## This uses NCBI command line tool dataformat on the zipped files
 ## Output is a tsv file with species and genebank accession downloaded
+		
+		dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force | \
+		grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt | \
+		awk 'FNR==1 { header = $0; print }  $0 != header' | \
+		grep -v 'Legionella sp\. ' | \
+		grep -v 'Legionella sp\.' >> downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
 
-        
-        dataformat tsv genome --package $valUp.zip --fields organism-name,accession,assminfo-paired-assmaccession --force >> temp1
-        grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt temp1 >> temp2
+		## Create a txt file of a count of all species downloaded
+		cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort | uniq -c > speciesCount.txt
 
-        awk 'FNR==1 { header = $0; print }  $0 != header' temp2 > temp3    ## Remove duplicate header if doing multiple species
+		## Get total number of isolates; store and compare to those in allDownload directory
+		countFile=$(awk '{ SUM+=$1}END{print SUM }' speciesCount.txt)
 
-        grep -v 'Legionella sp\. ' temp3 > temp4
-        grep -v 'Legionella sp\.' temp4 > downloadedData.tsv    ## Must include space before or get rid of Lp unknown species
+		awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
 
-        ## Create a txt file of a count of all species downloaded
-        cat downloadedData.tsv | sed 1d | cut -f1 | cut -f2 -d ' ' | sort | uniq -c > speciesCount.txt
-
-        ## Get total number of isolates; store and compare to those in allDownload directory
-        countFile=$(awk '{ SUM+=$1}END{print SUM }' speciesCount.txt)
-
-        awk '{ SUM+=$1}END{print SUM " Total Isolates"}' speciesCount.txt >> speciesCount.txt
-
-        ## Remove temp file within base directory genomesDownloaded_timestamp
-        rm temp1 temp2 temp3 temp4 
-        
+		## Remove temp file within base directory genomesDownloaded_timestamp
+		rm temp1 temp2 temp3 temp4 
+		
 
 #################################
 ##SECOND FILE CLEANUP AND CHECK##
 #################################
-        cd allDownload
+		cd allDownload
 
-        ## Exclude legionella that is not identified to species and endosymbionts
-        if [[ "${species^}" == "Legionella" ]]; then
-          echo "Removing Legionella files where the isolate is not identified to a recognized species..."
-          rm Legionella_sp._*.fna
-        else
-          echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
-        fi
+		## Exclude legionella that is not identified to species and endosymbionts
+		if [[ "${species^}" == "Legionella" ]]; then
+		  echo "Removing Legionella files where the isolate is not identified to a recognized species..."
+		  rm Legionella_sp._*.fna
+		else
+		  echo "This was not Legionella identified to only to sp. (Legionella sp.). Thus, no extra files to remove..."
+		fi
 
-        ## Count number of files in folder with those in speicesCount file for comparison
-        countFolder=$(ls | wc -l)
+		## Count number of files in folder with those in speicesCount file for comparison
+		countFolder=$(ls | wc -l)
 
-        if [[ $countFile  -eq  $countFolder ]]; then
-          echo "Good, the number of isolates in the speciesCount file matches the \
+		if [[ $countFile  -eq  $countFolder ]]; then
+		  echo "Good, the number of isolates in the speciesCount file matches the \
 number of files that were copied to the allDownload directory.";
-        else
-          echo "Hmm, the number of isolates in the speciesCount file does not match \
+		else
+		  echo "Hmm, the number of isolates in the speciesCount file does not match \
 the number of files that were copied to the allDownload directory. You \
 #can either investigate the output/error files or just try running the script\
 #again as sometimes there are communication issues between HPC and NCBI.";
-        exit 1
-        fi
+		exit 1
+		fi
 
-        ## Move files up to basefolder to all easier copying via nextflow process
-        count=`ls -1 *.fna 2>/dev/null | wc -l`
-        if [ $count != 0 ]; then
-          mv *.fna $basefolder ## should be mv     
-          rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
-        else
-           echo "There were no .fna files generated"
-        fi
-        echo "Exiting the program."
-        echo "-----------------------------"
+		## Move files up to basefolder to all easier copying via nextflow process
+		count=`ls -1 *.fna 2>/dev/null | wc -l`
+		if [ $count != 0 ]; then
+		  mv *.fna $basefolder ## should be mv     
+		  rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+		else
+		   echo "There were no .fna files generated"
+		fi
+		echo "Exiting the program."
+		echo "-----------------------------"
   fi
 done
