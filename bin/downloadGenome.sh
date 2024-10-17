@@ -153,7 +153,7 @@ error_handler_assembly()
 
 for val in "${species[@]}";
 do
-	echo "This species will be downloaded to make the mash database:	$val"
+	echo "This species will be downloaded to make the mash database: $val"
   	valUp="${val:1:-1}"				## Remove quotes
   	valUp=${val//[[:blank:]]/}		## Remove space
 
@@ -162,8 +162,8 @@ do
 		if [[ -z "$assembly" ]] ; then
 			echo "Assembly level is not specified..."
 
+		## With datasets version change 12.2.0 -> 15.2.0
 		## complete_genome -> complete & no longer required to specify files to exclude
-		## with datasets version change 12.2.0 -> 15.2.0
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
@@ -184,14 +184,13 @@ do
 			datasets rehydrate --directory $valUp
 
 			# Check for genomes with NCBI taxonomy issues and add GenBank/RefSeq IDs to the exclusion list
-			# If a genome GCA ID is added to the list, it will be deleted
-			#cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | 
+			# If a genome GCA ID is added to the list, it will be deleted 
 			awk '{if (!/OK/) print $1}' "$basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl" | grep -o "GCA_..........." >> excluded_genomes.tmp
 
 			## Get 'unculture' legionella species GCA ids and adde to a list (excluded_genomes)
 			awk '{if(/uncultured/) print $1}' $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "GCA_..........." >> excluded_genomes.tmp
 
-			## Exclude genomes with completeness below 93.00., 
+			## Exclude genomes with completeness below 93.00 (range 0 - 100). 
 			## Inconsistencies exist in the assembly file fields between isolates; for example,
 			## some lack contamination estimates. 
 			## This script retrieves data from genomes with completeness ≥ 93.00 
@@ -209,7 +208,7 @@ do
 			TO_BE_DEL="excluded_genomes.txt"
 			while read -r file ; do
  
-				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null  2>&1  ## does this do what I really want
+				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null  2>&1
 			done < "$TO_BE_DEL"
 
 			cp excluded_genomes.txt $basefolder
@@ -218,8 +217,7 @@ do
 			cd $valUp/ncbi_dataset/data
 
 			## Check for plasmids and remove
-			## Get fasta header /^>/ 
-			## Assign header with plasmid to p
+			## Get fasta header /^>/ & assign header with plasmid to p
 			## Remove plasmid from genome by specifying not P (!p)
 
 			##TODO handle explicit species list with no genomes because of exclusion L. donaldsonii
@@ -235,7 +233,7 @@ do
 
 			## Make summary file of the downloaded data
 			## Get opposite of grep, so do not pass excluded genome information for file manipulation/checking
-			echo "Making $valUp map file for file name conversion and converting file names..."
+			echo "Making $val map file for file name conversion and converting file names..."
 
 			dataformat tsv genome --inputfile *.jsonl --fields organism-name,accession,assminfo-paired-assmaccession --force  | \
 			grep -vFwf $basefolder/genomesDownloaded_$timestamp/excluded_genomes.txt  | \
@@ -312,7 +310,7 @@ do
 			count=$(ls -1 *.fna 2>/dev/null | wc -l)
 			if [[ $count -gt 0 ]]; then
 				mv *.fna "$basefolder" || echo "Failed to move .fna files."    
-				rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
+				#rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 			else
 			   echo "No .fna files generated"
 			fi
