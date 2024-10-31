@@ -20,13 +20,14 @@ process DOWNLOAD_GENOMES {
       script:
       """
       # Export variable to indicate script is running via NextFlow
-      export nf="This script is running via NextFlow"
-
+      nf="This script is running via NextFlow"
+      export nf
+      
       # Execute the downloadGenome command
       if [[ "$assembly" != false ]]; then
-          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}" -a "${assembly}"
+          ${projectDir}/bin/downloadGenome.sh -c "$conda" -s "$organism" -a "$assembly"
       else
-          ${projectDir}/bin/downloadGenome.sh -c "${conda}" -s "${organism}"
+          ${projectDir}/bin/downloadGenome.sh -c "$conda" -s "$organism"
       fi
 
       # Create versions.yml file with dataset and dataformat versions

@@ -22,7 +22,7 @@ Help() {
 }
 
 # Parse command-line options
-while getopts ":c:s:ah" option; do
+while getopts ":c:s:a:h" option; do
 	case $option in
 		h) Help; exit;;
 		a) assembly=$OPTARG;;
@@ -63,7 +63,7 @@ Activating your local conda environment. Assumes conda environment is called ncb
 		source ~/miniconda3/etc/profile.d/conda.sh 
 		conda activate ncbi_datasets
 		condaAct=`echo $CONDA_DEFAULT_ENV`
- i       echo "This is your local conda enviroment that is activated:" $condaAct
+        echo "This is your local conda enviroment that is activated:" $condaAct
 
 		## If conda == T is not from nextflow; then confirm name of environment
 		  if [[ $condaAct == 'ncbi_datasets' ]]
@@ -80,6 +80,7 @@ called ncbi_datasets. Exiting."
 	fi
 elif [[ $conda == @(False|false|F|f) && $species ]]
 then
+  echo $nf
   echo "Confirming both NCBI datasets/dataformat tools are available..."
 
   ## Check that both tools are available. If not then exit. 
@@ -153,11 +154,7 @@ error_handler_assembly()
 
 for val in "${species[@]}";
 do
-<<<<<<< HEAD
-	echo "This species will be downloaded to make the mash database: $val"
-=======
 	echo "This is what will be downloaded to make the mash database:	$val"
->>>>>>> dev
   	valUp="${val:1:-1}"				## Remove quotes
   	valUp=${val//[[:blank:]]/}		## Remove space
 
@@ -172,7 +169,7 @@ do
 --filename $valUp.zip --assembly-level complete,chromosome,scaffold,contig 
 
 		elif [[ -n "$assembly"  ]]; then
-			echo "Assembly level specified. Downloading only $assembly..."
+			echo "Assembly level specified. Downloading only $assembly ..."
 			datasets download genome taxon "$val" --dehydrated --assembly-source genbank \
  --filename $valUp.zip --assembly-level "$assembly"   2>/dev/null || error_handler_assembly
 		fi
