@@ -72,27 +72,39 @@ c_green = "\033[0;32m";
         Nextflow Compile Timestamp : ${workflow.nextflow.timestamp}
         """
         .stripIndent()
-        if (params.email_addy && params.email_cc) {
-        sendMail(to: params.email_addy, 
-                 cc: params.email_cc,
-                 subject: "Results from mashWrapper for identifying species - ${params.email_subject}", 
-                 body: msg, 
-                 attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
-        } else { 
-               if (params.email_addy && !params.email_cc) {
-               sendMail(to: params.email_addy,
-                        subject: "Results from mashWrapper for identifying species - ${params.email_subject}",
-                        body: msg,
-                        attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+        if (params.email_addy) {
+            String emailMessage = "Results will be emailed to: ${params.email_addy}"
+    
+            if (params.email_cc) {
+                emailMessage += " (CC: ${params.email_cc})"
+            }
+    
+            println(emailMessage)
+
+            if (params.email_cc) {
+                sendMail(to: params.email_addy, 
+                    cc: params.email_cc,
+                    subject: " ${params.email_subject}", 
+                    body: msg, 
+                    attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+            } else {
+                sendMail(to: params.email_addy,
+                    subject: "${params.email_subject}",
+                    body: msg,
+                    attach: "${params.outdir}/combinedOutput/collated_species_id_results.txt" )
+            }
+        } else if (params.email_cc) {
+            println("Error: The email_cc flag is specified, but email_addy is required for sending results.")
+            println("Please provide a valid recipient email address using the email_addy flag.")
+            println("However, your results can be viewed and the folder is called: ${c_green}${params.outdir}")
        } else {
-                println("""
-                Results will not be emailed. 
-                Please check your specified out directory for the results. 
-                Your results folder is called: ${c_green}${params.outdir}
-                """)
+            println(""" 
+            Results will not be emailed. 
+            Please check your specified out directory for the results. 
+            Your results folder is called: ${c_green}${params.outdir}
+            """)
        }
-    }
-  }
+    }  
 
 /*
 ========================================================================================
