@@ -49,7 +49,7 @@ condaOrNot(){
 if [[ $conda == @(True|true|T|t) && $species ]]
 then
   ## Determine if conda == T request is from nextflow or not, by that I mean
-  ## is the conda environment loaded  locally or requested to be used via
+  ## is the conda environment loaded locally or requested to be used via
   ## nextflow. $nf exported from the downloadGeome.nf module, if from nextflow.
 	if [[ -z "$nf" ]]
 	then
@@ -146,7 +146,7 @@ fileCheck
 
 error_handler_assembly()
 {
-	echo "No $assembly" files available. Creating a file place holder for this species: $valUp. Exiting.
+	echo "No $assembly" files available. Creating a file place holder for: $valUp. Exiting.
 	cd ..
 	echo "There are no $assembly files available at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
 	echo "Exiting from this isolate..."
@@ -155,7 +155,7 @@ error_handler_assembly()
 
 for val in "${species[@]}";
 do
-	echo "This species will be downloaded to make the mash database:	$val"
+	echo "This is what will be downloaded to make the mash database:	$val"
   	valUp="${val:1:-1}"				## Remove quotes
   	valUp=${val//[[:blank:]]/}		## Remove space
 
