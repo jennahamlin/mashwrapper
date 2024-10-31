@@ -378,9 +378,27 @@ def check_program(program_name: str) -> None:
     else:
         logging.info("Great, the program %s is loaded." % program_name)
 
+def is_file_empty(mash_db) -> bool:
+    """
+    Checks if the specified file is empty.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to the file to check.
+
+    Returns
+    -------
+    bool
+        True if the file is empty, otherwise False.
+    """
+    if os.path.exists(mash_db) and os.path.getsize(mash_db) == 0:
+        logging.critical("The mash database is empty")
+        sys.exit(1)
+
 def check_mash() -> None:
     """
-    Checks the output of the Mash command and verifies the results.
+    Checks that Mash is running as expected.
 
     Returns
     -------
@@ -510,7 +528,7 @@ def run_cmd(command: List[str]) -> subprocess.CompletedProcess:
         )
         logging.info("Executed command: %s", ' '.join(command))
     except subprocess.CalledProcessError as e:
-        logging.critical("CRITICAL ERROR. The following command had an error:\n%s", e)
+        logging.critical("The following command had an error:\n%s", e)
         sys.exit(1)
     
     return result
@@ -538,7 +556,7 @@ def cal_kmer(mash_db: str, threads: int, min_kmer: int) -> Tuple[int, str, str]:
             Estimated genome size.
         - gCoverage : str
             Estimated genome coverage.
-    """
+    """    
     fastqCmd1 = ['mash', 'dist', str(mash_db), '-r', 'myCatFile', '-p', str(threads), '-S', '42']
     outputFastq1 = run_cmd(fastqCmd1)   
 
@@ -644,6 +662,14 @@ def is_tie(df: pd.DataFrame) -> Tuple[str, str]:
         - A string indicating the best genus, either a specific genus or a tie message.
         - A string indicating the best species, either a specific species or a blank string if tied.
     """
+    logging.info("Checking the number of entries in the DataFrame...")
+    
+    # Check if there is only one entry
+    if len(df) == 1:
+        best = df.iloc[0]
+        logging.info("Only one entry found. Returning that entry.")
+        return best['Genus'], best['Species']
+    
     df_sort = df.sort_values('KmersCount', ascending=False)
     logging.info("Checking if k-mers count is tied for top 2 results...")
     
@@ -769,6 +795,9 @@ if __name__ == '__main__':
 
     check_mash()
     logging.info("Internal system checks passed...")
+
+    is_file_empty(mash_db)
+    logging.info("Mash database is not empty")
 
     cat_files(read1, read2)
     logging.info("Files concatenated successfully...")

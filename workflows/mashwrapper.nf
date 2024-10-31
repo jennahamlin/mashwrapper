@@ -75,7 +75,6 @@ workflow MASHWRAPPER {
     ch_log = Channel.empty()
     ch_info = Channel.empty()
     ch_incon = Channel.empty()
-    ch_assembly = Channel.empty()
     ch_assembly = params.assembly_level
 
     //

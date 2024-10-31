@@ -64,7 +64,7 @@
                 },
                 "assembly_level": {
                     "type": "string",
-                    "description": "Restrict level of genomes to downlowad:  chromosome, complete_genome, scaffolds, contig. Can be a comma separated list"
+                    "description": "Restrict level of genomes to downlowad:  chromosome, complete, scaffolds, contig. Can be a comma separated list"
                 }
             }
         },

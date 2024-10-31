@@ -13,11 +13,11 @@ Help() {
 	echo "Download all genomes from NCBI and convert file names to Genus_species_GCA#.fna"
 	echo "Syntax: downloadGenome.sh [-a|c|s|h]"
 	echo "Options:"
-	echo " -a   Optional: Assembly-level restrictions."
+	echo " -a   Optional: Assembly-level restrictions: complete, scaffold, contig, chromosome"
 	echo " -c   Required: Activate the conda environment? (T/F). Assumes conda environment named ncbi_datasets."
 	echo " -s   Required: Download genus or species. Can use multiple -s flags. Place in quotes."
 	echo " -h   Print this help."
-	echo "Example command: downloadGenome.sh -c F -s \"legionella pneumophila\" -a complete_genome"
+	echo "Example command: downloadGenome.sh -c F -s \"legionella pneumophila\" -a complete"
 	echo " "
 }
 
@@ -195,7 +195,7 @@ do
 			## Inconsistencies exist in the assembly file fields between isolates; for example,
 			## some lack contamination estimates. 
 			## This script retrieves data from genomes with completeness ≥ 93.00 
-			##(printing fields $1 and $3) and those without (printing fields $1 and $4).
+			## (printing fields $1 and $3) and those without (printing fields $1 and $4).
 			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
 			
 			## TODO -pick back up here
