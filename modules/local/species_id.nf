@@ -23,20 +23,15 @@ process SPECIES_ID {
       """
       k_size=\$(mash info  ${inDatabase} | awk 'FNR == 3 {print \$3}')
       export k_size
+
       ls -lh
       ## converts .fastq.gz file to .fastq
       gunzip  "${reads[0]}"
       gunzip "${reads[1]}"
-      
-      
+            
       ## stores in variable so we can strip off .gz in the command below
       readsIn0="${reads[0]}"
       readsIn1="${reads[1]}"
-
-      ## with work directory in /scicomp/scratch/userID
-      
-      #chmod 755 "\${readsIn0%.gz}"
-      #chmod 755 "\${readsIn1%.gz}"
 
       ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" -d ${params.max_dist} -m ${params.kmer_min} -p ${params.num_threads}
 

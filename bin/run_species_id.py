@@ -378,13 +378,13 @@ def check_program(program_name: str) -> None:
     else:
         logging.info("Great, the program %s is loaded." % program_name)
 
-def is_file_empty(mash_db) -> bool:
+def is_file_empty(mash_db: str) -> bool:
     """
     Checks if the specified file is empty.
 
     Parameters
     ----------
-    file_path : str
+    mash_db : str
         Path to the file to check.
 
     Returns
@@ -392,9 +392,16 @@ def is_file_empty(mash_db) -> bool:
     bool
         True if the file is empty, otherwise False.
     """
-    if os.path.exists(mash_db) and os.path.getsize(mash_db) == 0:
-        logging.critical("The mash database is empty")
-        sys.exit(1)
+    if os.path.exists(mash_db):
+        if os.path.getsize(mash_db) == 0:
+            logging.critical("The mash database is empty.")
+            sys.exit(1)
+            return True
+        else:
+            return False
+    else:
+        logging.error("The specified file does not exist: %s", mash_db)
+        return False
 
 def check_mash() -> None:
     """
@@ -797,7 +804,7 @@ if __name__ == '__main__':
     logging.info("Internal system checks passed...")
 
     is_file_empty(mash_db)
-    logging.info("Mash database is not empty")
+    logging.info("Mash database is not empty...")
 
     cat_files(read1, read2)
     logging.info("Files concatenated successfully...")
