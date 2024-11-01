@@ -173,20 +173,18 @@ do
 			## (printing fields $1 and $3) and those without (printing fields $1 and $4).
 			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
 			
-			## TODO -pick back up here
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl |  grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $3 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $2 }' >> excluded_genomes.tmp
 	
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
 
-			cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
-			#cat excluded_genomes.tmp | uniq -u >> excluded_genomes.tmp
-			#cat excluded_genomes.tmp >> excluded_genomes.txt
+			cat excluded_genomes.tmp | uniq -u >> excluded_genomes.tmp
+			cat excluded_genomes.tmp >> excluded_genomes.txt
 	
 			## Now remove folders for genomes listed in exclusion file
 			TO_BE_DEL="excluded_genomes.txt"
 			while read -r file ; do
  
-				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null  2>&1
+				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null
 			done < "$TO_BE_DEL"
 
 			cp excluded_genomes.txt $basefolder
@@ -200,32 +198,12 @@ do
 
 			##TODO handle explicit species list with no genomes because of exclusion L. donaldsonii
 			echo "Checking for plasmids. This can take a some time..."
-			ls
-
-			#if find . -maxdepth 1 -type d | grep -q .; then
-			#				# Create a new directory if no subdirectories are found
-			#	new_dir="GCA_temp"
-			#	mkdir -p "$new_dir"
-
-			#	# Create a temporary file within the new directory
-			#	cd "$new_dir"
-			#	touch GCA_temp.fna
-			#	echo ">This is a temp file" >> GCA_.fna
-			#	echo "No subdirectories found. Creating directory: $new_dir"
-			#	echo $PWD
-			#	ls
-			#	cd ..
-			#	echo $PWD
-			#else
-   			#	echo "Subdirectories found."
-			#fi
-
 			for i in */*.fna
 			do
 				awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
 				mv ${i%\.*}_cleaned.fna $i
 			done
-
+			
 			find . \( -name "chrunnamed*.unlocalized.scaf.fna" -o -name "cds_from_genomic.fna" -o -size 0 -type f \) -exec rm -rf {} +
 			find . -name "*.fna" -exec grep -l "plasmid" {} \; -exec rm {} +
 
@@ -302,8 +280,7 @@ do
 				echo "The number of isolates in the speciesCount file matches the number of files in allDownload directory.";
 			else
 				echo "Mismatch between speciesCount file and downloaded files. Investigate or retry the script.";
-				continue 
-				#exit 1
+				exit 1
 			fi
 	
 			## Move files up to basefolder to all easier copying via nextflow process
@@ -312,10 +289,9 @@ do
 				mv *.fna "$basefolder" || echo "Failed to move .fna files."    
 			else
 				echo "No .fna files generated" 2>/dev/null
-				continue
 			fi
 		else
 			echo "Exiting the program."
 			echo "----------------------------------------"
-	fi
+		fi
 done
