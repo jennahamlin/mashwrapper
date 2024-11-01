@@ -26,7 +26,7 @@ while getopts ":c:s:a:h" option; do
 	case $option in
 		h) Help; exit;;
 		a) assembly=$OPTARG;;
-		c) conda=$OPTARG;;  ## outside of nextflow
+		c) conda=$OPTARG;;				## outside of nextflow
 		s) species+=("$OPTARG");;
 		:) echo "Flag without an argument. Exiting." >&2; exit 1;;
 		\?) echo 'Invalid Option. Use -h for help. Exiting.' >&2; exit 1;;
@@ -42,58 +42,31 @@ if [[ -z $conda || -z $species ]]; then
 	exit 1
 fi
 
-##TODO - condaOrNot needs ALOT of work
+## Conda should be false, because running in NF
+condaOrNot() {
+    # Check if conda is false and species is set
+    if [[ $conda == @(False|false|F|f) && $species ]]; then
+        echo $nf
+        echo "Confirming both NCBI datasets/dataformat tools are available..."
 
-## Determine what to do based on input from -c (conda) flag
-## First check if conda is specifed as True
-condaOrNot(){
-if [[ $conda == @(True|true|T|t) && $species ]]
-then
-  ## Determine if conda == T request is from nextflow or not, by that I mean
-  ## is the conda environment loaded locally or requested to be used via
-  ## nextflow. $nf exported from the downloadGeome.nf module, if from nextflow.
-	if [[ -z "$nf" ]]
-	then
-		echo $nf
-		echo 'The variable check to determine if next flow is running is empty.
-Activating your local conda environment. Assumes conda environment is called ncbi_datasets. Continuing...'
-		## I used to be able to do just the eval statement, now it does not work
-		## and i don't like that this sources from somewhere that a user might not have (miniconda)...
-		#eval "$(conda shell.bash hook)" ## initialize the shell to use conda
-		source ~/miniconda3/etc/profile.d/conda.sh 
-		conda activate ncbi_datasets
-		condaAct=`echo $CONDA_DEFAULT_ENV`
-        echo "This is your local conda enviroment that is activated:" $condaAct
+        # Check that both tools are available. If not, then exit. 
+        command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed. Exiting."; exit 1; }
+        command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed. Exiting."; exit 1; }
 
-		## If conda == T is not from nextflow; then confirm name of environment
-		  if [[ $condaAct == 'ncbi_datasets' ]]
-		  then
-			echo 'These are the tools in your local conda enviroment...'
-			conda list -n ncbi_datasets
-		  else
-			echo "This tool assumes the ncbi datasets cli conda environment is
-called ncbi_datasets. Exiting."
-			exit 1
-		  fi
-		else
-		  echo $nf "and the user has requested conda. Continuing..."
-	fi
-elif [[ $conda == @(False|false|F|f) && $species ]]
-then
-  echo $nf
-  echo "Confirming both NCBI datasets/dataformat tools are available..."
+        # Inform user that the tools are accessible for when conda is false
+        echo "Great tools available to access NCBI and run Mash. Continuing..."
+        return  # Exit the function successfully
 
-  ## Check that both tools are available. If not then exit. 
-  command -v dataformat >/dev/null 2>&1 || { echo >&2 "NCBI dataformat is not installed.  Exiting."; exit 1; }
-  command -v datasets >/dev/null 2>&1 || { echo >&2 "NCBI datasets is not installed.  Exiting."; exit 1; }
-
-	  ## Inform user that the tools are accessible for when conda is false
-  echo "Great tools available to access NCBI and run Mash. Continuing..."
-else
-  echo 'Unable to activate a conda environment, find the tools in a bin folder,
+    # Check if conda is true and species is set
+    elif [[ $conda == @(True|true|T|t) && $species ]]; then
+        echo $nf
+        echo "Conda is set to true, but local conda environment activation is skipped. Exiting."
+        exit 1
+    else
+        echo 'Unable to activate a conda environment, find the tools in a bin folder,
 or confirm that the tool is using a container. Exiting.'
-  exit 1
-fi
+        exit 1
+    fi
 }
 condaOrNot
 
@@ -156,7 +129,7 @@ error_handler_assembly()
 
 for val in "${species[@]}";
 do
-	echo "This is what will be downloaded to make the mash database:	$val"
+	echo "This is what will be downloaded to make the mash database: $val"
   	valUp="${val:1:-1}"				## Remove quotes
   	valUp=${val//[[:blank:]]/}		## Remove space
 
@@ -197,7 +170,7 @@ do
 			## Inconsistencies exist in the assembly file fields between isolates; for example,
 			## some lack contamination estimates. 
 			## This script retrieves data from genomes with completeness ≥ 93.00 
-			##(printing fields $1 and $3) and those without (printing fields $1 and $4).
+			## (printing fields $1 and $3) and those without (printing fields $1 and $4).
 			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
 			
 			## TODO -pick back up here
@@ -206,6 +179,8 @@ do
 			cat $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/assembly_data_report.jsonl | grep -o "completeness.*" | grep -o ".*organism" | awk -F , '{ print $1 $4 }' | grep -v "contamination" | awk -F\" '{ print $2 " " $5 }' | awk -F : '{ print $2 }' | awk '{ if( $1 < 93.00) print $1 " " $2 }' | grep GCA | awk '{ print $2 }' >> excluded_genomes.tmp
 
 			cat excluded_genomes.tmp | uniq -u >> excluded_genomes.txt
+			#cat excluded_genomes.tmp | uniq -u >> excluded_genomes.tmp
+			#cat excluded_genomes.tmp >> excluded_genomes.txt
 	
 			## Now remove folders for genomes listed in exclusion file
 			TO_BE_DEL="excluded_genomes.txt"
@@ -225,6 +200,26 @@ do
 
 			##TODO handle explicit species list with no genomes because of exclusion L. donaldsonii
 			echo "Checking for plasmids. This can take a some time..."
+			ls
+
+			#if find . -maxdepth 1 -type d | grep -q .; then
+			#				# Create a new directory if no subdirectories are found
+			#	new_dir="GCA_temp"
+			#	mkdir -p "$new_dir"
+
+			#	# Create a temporary file within the new directory
+			#	cd "$new_dir"
+			#	touch GCA_temp.fna
+			#	echo ">This is a temp file" >> GCA_.fna
+			#	echo "No subdirectories found. Creating directory: $new_dir"
+			#	echo $PWD
+			#	ls
+			#	cd ..
+			#	echo $PWD
+			#else
+   			#	echo "Subdirectories found."
+			#fi
+
 			for i in */*.fna
 			do
 				awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
@@ -261,7 +256,7 @@ do
 			done
 	
 			cp */*.fna $basefolder/genomesDownloaded_$timestamp/allDownload
-			
+
 			## Rename files using mapfile
 			cd $basefolder/genomesDownloaded_$timestamp/allDownload 
 			awk -F " " 'system("mv " $1 " " $2 ".fna")'  $basefolder/genomesDownloaded_$timestamp/$valUp/ncbi_dataset/data/mapFinal$valUp.txt
@@ -299,23 +294,25 @@ do
 				echo "No extra files to remove for non-Legionella species."
 			fi
 	
-			## Count number of files in folder with those in speicesCount file for comparison
+			## Count number of files in allDownload folder with those in speicesCount file for comparison
 			countFolder=$(ls | wc -l)
-	
+			#countFolder=$(ls | grep -v "GCA_temp" | wc -l)
+
 			if [[ $countFile  -eq  $countFolder ]]; then
 				echo "The number of isolates in the speciesCount file matches the number of files in allDownload directory.";
 			else
 				echo "Mismatch between speciesCount file and downloaded files. Investigate or retry the script.";
-				exit 1
+				continue 
+				#exit 1
 			fi
 	
 			## Move files up to basefolder to all easier copying via nextflow process
 			count=$(ls -1 *.fna 2>/dev/null | wc -l)
 			if [[ $count -gt 0 ]]; then
 				mv *.fna "$basefolder" || echo "Failed to move .fna files."    
-				#rm -rf $basefolder/genomesDownloaded_$timestamp/$valUp
 			else
-			   echo "No .fna files generated"
+				echo "No .fna files generated" 2>/dev/null
+				continue
 			fi
 		else
 			echo "Exiting the program."
