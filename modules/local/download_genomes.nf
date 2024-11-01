@@ -22,7 +22,7 @@ process DOWNLOAD_GENOMES {
       # Export variable to indicate script is running via NextFlow
       nf="This script is running via NextFlow"
       export nf
-      
+
       # Execute the downloadGenome command
       if [[ "$assembly" != false ]]; then
           ${projectDir}/bin/downloadGenome.sh -c "$conda" -s "$organism" -a "$assembly"

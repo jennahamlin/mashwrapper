@@ -145,9 +145,11 @@ fileCheck
 
 error_handler_assembly()
 {
-	echo "No $assembly" files available. Creating a file place holder for: $valUp. Exiting.
+	echo "No $assembly" files available. Creating a file place holder for: $species. Exiting.
 	cd ..
 	echo "There are no $assembly files available at the level specified. Exiting." > $valUp-$assembly-noFNA.fna
+	touch "excluded_genomes.txt"
+	echo "No genome data for $species at the $assembly genome level"  >> excluded_genomes.txt
 	echo "Exiting from this isolate..."
 	echo "----------------------------------------"
 }
@@ -195,7 +197,7 @@ do
 			## Inconsistencies exist in the assembly file fields between isolates; for example,
 			## some lack contamination estimates. 
 			## This script retrieves data from genomes with completeness ≥ 93.00 
-			## (printing fields $1 and $3) and those without (printing fields $1 and $4).
+			##(printing fields $1 and $3) and those without (printing fields $1 and $4).
 			## Genome GCA IDs that are excluded are added to the excluded_genomes list.
 			
 			## TODO -pick back up here
@@ -316,8 +318,7 @@ do
 			   echo "No .fna files generated"
 			fi
 		else
-			echo "No zip files found."
 			echo "Exiting the program."
-			echo "-----------------------------"
+			echo "----------------------------------------"
 	fi
 done
