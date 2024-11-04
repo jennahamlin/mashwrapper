@@ -183,7 +183,7 @@ do
 			TO_BE_DEL="excluded_genomes.txt"
 			while read -r file ; do
  
-				rm -r $valUp/ncbi_dataset/data/"$file" >/dev/null
+				rm -r $valUp/ncbi_dataset/data/"$file" > /dev/null 2>> error.log
 			done < "$TO_BE_DEL"
 
 			cp excluded_genomes.txt $basefolder
@@ -199,28 +199,22 @@ do
 			
 			#echo "Checking for .fna files..."
 			#shopt -s nullglob  # Enable nullglob to handle empty glob results
-			#files=(*/ *.fna)
+			files=( */*.fna )
 
-			#if [ ${#files[@]} -eq 0 ]; then
-			#	echo "No .fna files found. Creating a placeholder file." 2>/dev/null || error_handler_assembly
-			#	touch temp_file-noFNA.fna
-			#	echo "There were no genomes found, this is a temperory file" >> temp_file-noFNA.fna
-			#	#touch "$basefolder/genomesDownloaded_$timestamp/allDownload/placeholder.fna"
-			#	#echo "No genomes found for $val. This is a placeholder file." >> "$basefolder/genomesDownloaded_$timestamp/allDownload/placeholder.fna"
-			#else
-			#	for i in "${files[@]}"; do
-			#		echo "Checking for plasmids. This can take a some time..."
-			#		awk '/^>/ { p = ($0 ~ /plasmid/) } !p' "$i" > "${i%.*}_cleaned.fna"
-			#		mv "${i%.*}_cleaned.fna" "$i"
-			#	done
-			#fi
+			if [ ${#files[@]} -eq 0 ]; then
+				echo "No .fna files found. Creating a placeholder file." >> temp_file-noFNA.fna
+			else
+				for i in "${files[@]}"; do
+					if [ -f "$i" ]; then  # Check if it's a file
+						echo "Checking for plasmids in $i. This can take some time..."
+						awk '/^>/ { p = ($0 ~ /plasmid/) } !p' "$i" > "${i%.*}_cleaned.fna"
+						mv "${i%.*}_cleaned.fna" "$i"
+					else
+						echo "$i is not a file, skipping..." > /dev/null 2>> error.log
+					fi
+				done
+			fi
 
-			for i in */*.fna
-			do
-				awk '/^>/ { p = ($0 ~ /plasmid/) } !p' $i > ${i%\.*}_cleaned.fna
-				mv ${i%\.*}_cleaned.fna $i
-			done
-			
 			find . \( -name "chrunnamed*.unlocalized.scaf.fna" -o -name "cds_from_genomic.fna" -o -size 0 -type f \) -exec rm -rf {} +
 			find . -name "*.fna" -exec grep -l "plasmid" {} \; -exec rm {} +
 
@@ -247,18 +241,18 @@ do
 			for d in */
 			do
 				FILEPATH=$d*.fna 
-				mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna"
+				mv $FILEPATH "$(dirname "$FILEPATH")/$(dirname "$FILEPATH").fna" > /dev/null 2>> error.log
 			done
 	
-			#for file in */*.fna; do
+			for file in */*.fna; do
 			#Check if the file does not end with -noFNA.fna
-			#	if [[ ! "$file" == *"-noFNA.fna" ]]; then
-			#		cp "$file" "$basefolder/genomesDownloaded_$timestamp/allDownload"
-			#	else 
-			#		cp "$file" "$basefolder"
-			#	fi
-			#done
-			cp */*.fna $basefolder/genomesDownloaded_$timestamp/allDownload
+				if [[ ! "$file" == *"-noFNA.fna" ]]; then
+					cp "$file" "$basefolder/genomesDownloaded_$timestamp/allDownload" > /dev/null 2>> error.log
+				else 
+					cp "$file" "$basefolder" 
+					
+			fi
+			done
 			
 			## Rename files using mapfile
 			cd $basefolder/genomesDownloaded_$timestamp/allDownload 
@@ -308,12 +302,12 @@ do
 				exit 1
 			fi
 	
-			## Move files up to basefolder to all easier copying via nextflow process
+			## Move files up to basefolder to allow easier copying via nextflow process
 			count=$(ls -1 *.fna 2>/dev/null | wc -l)
 			if [[ $count -gt 0 ]]; then
-				mv *.fna "$basefolder" || echo "Failed to move .fna files."    
+				mv *.fna "$basefolder" || echo "Failed to move .fna files. Exiting"    
 			else
-				echo "No .fna files generated" >> $basefolder/genomesDownloaded_$timestamp/$valUp-noFNA.fna
+				echo "No .fna files generated. This is a placeholder. " >> $basefolder/$valUp-noFNA.fna
 			fi
 		else
 			echo "Exiting the program."
