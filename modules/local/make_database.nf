@@ -16,20 +16,18 @@ process MAKE_DATABASE {
 	script:
 	"""
 	currentDate=`date +"%Y-%m-%d_%T"`
-
-	ls
 	
 	if ls *noMash.msh &> /dev/null; then
 		rm *noMash.msh;
-		echo 'removing noMash.msh files, these were temporary files';
+		echo 'Removing noMash.msh files, these were temporary files';
 		if ls *.msh &> /dev/null; then
 			mash sketch *.msh -o myMashDatabase.\$currentDate.msh -S 42
 		else
-			echo "No mash files available. Exiting"
+			echo "No *.msh files available to generate Mash database. Exiting"
 			exit 1
 		fi
 	else
-		echo 'only .msh files in directory';
+		echo 'Only .msh files in directory';
 		mash sketch *.msh -o myMashDatabase.\$currentDate.msh -S 42; 
 	fi
 

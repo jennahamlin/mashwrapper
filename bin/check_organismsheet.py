@@ -10,10 +10,10 @@ import sys
 def parse_args(args=None):
     Description = "Check contents of organism list. Assumes either genus species\
  or species per row."
-    Epilog = "Example usage: python check_samplesheet.py <FILE_IN>"
+    Epilog = "Example usage: python check_organismsheet.py <FILE_IN>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
-    parser.add_argument("FILE_IN", help="Input samplesheet file.")
+    parser.add_argument("FILE_IN", help="Input organism file.")
     parser.add_argument("FILE_OUT", help="Output file.")
     return parser.parse_args(args)
 
@@ -72,7 +72,6 @@ def is_space(d):
         print_error("The delimiter is something other than a space! Exiting.", \
  "Samplesheet: {}".format(d))
 
-
 def check_organismsheet(file_in, file_out):
     """
     This function checks that the organismsheet follows the following structure:
@@ -98,7 +97,8 @@ def check_organismsheet(file_in, file_out):
         # Writing each line from input file to
         # output file using loop
             for line in input:
-                output.write(line)
+                if line.strip():  # Check if the line is not empty
+                    output.write(line)
 
 def main(args=None):
     args = parse_args(args)
