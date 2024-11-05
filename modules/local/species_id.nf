@@ -26,8 +26,8 @@ process SPECIES_ID {
 
       ls -lh
       ## converts .fastq.gz file to .fastq
-      gunzip  "${reads[0]}"
-      gunzip "${reads[1]}"
+      gunzip -f "${reads[0]}"
+      gunzip -f "${reads[1]}"
             
       ## stores in variable so we can strip off .gz in the command below
       readsIn0="${reads[0]}"
