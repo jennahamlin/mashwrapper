@@ -44,9 +44,11 @@ include { MAKE_MASH } from '../modules/local/make_mash'
 include { MAKE_DATABASE } from '../modules/local/make_database'
 include { SPECIES_ID } from '../modules/local/species_id'
 include { COMBINED_OUTPUT } from '../modules/local/combined_output'
+include { INPUT_CHECK } from '../modules/local/input_check'
 
+// JH note - is it necessary to have a subwork flow folder? 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+//include { INPUT_CHECK } from '../subworkflows/local/input_check'
 
 /*
 ========================================================================================

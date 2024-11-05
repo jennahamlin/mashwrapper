@@ -23,7 +23,7 @@ process MAKE_DATABASE {
 		if ls *.msh &> /dev/null; then
 			mash sketch *.msh -o myMashDatabase.\$currentDate.msh -S 42
 		else
-			echo "No *.msh files available to generate Mash database. Exiting"
+			echo "After removal there are no *.msh files available to generate Mash database. Exiting"
 			exit 1
 		fi
 	else
