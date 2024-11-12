@@ -33,7 +33,8 @@ process SPECIES_ID {
       readsIn0="${reads[0]}"
       readsIn1="${reads[1]}"
 
-      ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" -d ${params.max_dist} -m ${params.kmer_min} -p ${params.num_threads}
+      ${projectDir}/bin/run_species_id.py -b ${inDatabase} -r1 "\${readsIn0%.gz}"  -r2 "\${readsIn1%.gz}" -d ${params.max_dist} -m ${params.kmer_min} -p ${params.num_threads} -v ${workflow.manifest.version}
+
 
       echo $inDatabase >  "database.info"
       mash info $inDatabase >> "database.info"

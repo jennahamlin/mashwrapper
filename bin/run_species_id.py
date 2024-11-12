@@ -102,6 +102,8 @@ def argparser():
     optional.add_argument("--num_threads", "-p", default=2,
                         help="Number of computing threads to use (default: 2)",
                         type=lambda x: parser.is_valid_int(parser, x))
+
+    optional.add_argument("--version", "-v" )
     return parser
 
 ###############
@@ -301,7 +303,7 @@ def check_files(read1: str, read2: str, mash_db: str) -> None:
     if read1 == read2:
         raise ValueError(f"Read1 ({read1}) and Read2 ({read2}) are the same file.")
 
-##TODO - check for corrupt gzip files or empty?
+##TODO - check for corrupt gzip files or empty - I think NF does this. 
 
 def get_k_size(mash_db: str) -> str:
 
@@ -760,7 +762,8 @@ def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: floa
         f.write(f"Maximum Mash distance (-d): {max_dist}\n")
         f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
         f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
-        f.write(f"Mash Database name: {mash_db}\n\n")
+        f.write(f"Mash Database name: {mash_db}\n")
+        f.write(f"mashwrapper version: {mw_version}\n\n")
         f.write(f"Best species match: {results[0]} {results[1]}\n\n")
         f.write("Top 5 results:\n")
         f.write(u'\u2500' * 100 + "\n")
@@ -779,6 +782,7 @@ if __name__ == '__main__':
     threads = args.num_threads
     read1 = args.read1
     read2 = args.read2
+    mw_version = args.version
 
     now = datetime.now()
     date_time = now.strftime("%Y-%m-%d")
