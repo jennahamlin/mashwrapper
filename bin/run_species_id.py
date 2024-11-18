@@ -723,7 +723,7 @@ def no_result(in_file: pd.DataFrame, in_max_dis: float, best_g: str, best_s: str
     
     return best_g, best_s
 
-def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: float, results: Tuple[str, str, pd.DataFrame], m_flag: Tuple[int, int]) -> None:
+def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: float, k_size: str, results: Tuple[str, str, pd.DataFrame], m_flag: Tuple[int]) -> None:
     """
     Parse results into a text output file including relevant variables.
     
@@ -739,13 +739,15 @@ def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: floa
         Path to the second query file.
     max_dist : float
         User-specified maximum mash distance.
+    k_size : str
+        Size of the K-mer.
     results : tuple
         Output from running and parsing mash commands, where:
         - results[0] is the best genus.
         - results[1] is the best species.
         - results[2] is a pandas DataFrame of the top results.
     m_flag : tuple
-        Contains the minimum k-mer copy number and k-mer size.
+        Contains the minimum k-mer copy number.
     
     Returns
     -------
@@ -761,7 +763,7 @@ def make_table(date_time: str, name: str, read1: str, read2: str, max_dist: floa
         f.write(f"Input query file 2: {read2}\n")
         f.write(f"Maximum Mash distance (-d): {max_dist}\n")
         f.write(f"Minimum K-mer copy number (-m) to be included in the sketch: {m_flag[0]}\n")
-        f.write(f"K-mer size used for sketching: {m_flag[1]}\n")
+        f.write(f"K-mer size used for sketching: {k_size}\n")
         f.write(f"Mash Database name: {mash_db}\n")
         f.write(f"mashwrapper version: {mw_version}\n\n")
         f.write(f"Best species match: {results[0]} {results[1]}\n\n")
@@ -814,7 +816,7 @@ if __name__ == '__main__':
     logging.info("Files concatenated successfully...")
 
     mFlag = cal_kmer(mash_db, threads, min_kmer)
-    logging.info("Minimum copies of each K-mer identified...")
+    logging.info("Minimum copies of each K-mer identified...") 
 
     outputFastq2 = get_results(mFlag[0], threads, mash_db)
     logging.info("Mash dist command completed...")
@@ -822,6 +824,6 @@ if __name__ == '__main__':
     results = parse_results(outputFastq2, max_dis)
     logging.info("Results parsed successfully...")
 
-    make_table(date_time, name, read1, read2, max_dis, results, mFlag)
+    make_table(date_time, name, read1, read2, max_dis, get_k_size(mash_db), results, mFlag)
     logging.info("Analysis completed for sample: %s", name)
     logging.info("EXITING!")
